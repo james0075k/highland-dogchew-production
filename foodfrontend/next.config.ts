@@ -23,7 +23,7 @@ const nextConfig = {
         pathname: '/uploads/**',
       },
 
-      // ✅ VPS API domain (THIS WAS MISSING)
+      // VPS API domain
       {
         protocol: 'http',
         hostname: 'api.highlanddogchew.co.uk',

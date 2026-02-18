@@ -3,7 +3,9 @@ import {
   loginAdmin,
   registerAdmin,
   changeAdminPassword,
-  getCurrentAdmin
+  getCurrentAdmin,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/adminController.js";
 import {
   authenticate,
@@ -14,8 +16,9 @@ const adminRoute = Router();
 
 adminRoute.post("/login", loginAdmin);
 adminRoute.post("/register", registerAdmin);
+adminRoute.post("/forgot-password", forgotPassword);
+adminRoute.post("/reset-password/:token", resetPassword);
 
-// ✅ Add authenticate middleware here
 adminRoute.put("/change-password", authenticate, changeAdminPassword);
 adminRoute.get("/", authenticate, getCurrentAdmin);
 

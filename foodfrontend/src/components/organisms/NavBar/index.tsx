@@ -144,7 +144,7 @@ export default function Navbar() {
               <Link href="/cart" className="relative ml-1" aria-label="Shopping cart">
                 <FaShoppingCart className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#2E1F14] text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
+                  <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
@@ -173,7 +173,7 @@ export default function Navbar() {
           <Link href="/cart" className="relative" aria-label="Shopping cart">
             <FaShoppingCart className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#2E1F14] text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
+              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             )}
@@ -209,7 +209,7 @@ export default function Navbar() {
               <Link
                 href="/products"
                 onClick={handleMenuItemClick}
-                className="block border border-[#2E1F14] text-[#2E1F14] text-xs text-center px-4 py-3 rounded-full tracking-[0.2em] uppercase transition-all duration-300 hover:bg-[#2E1F14] hover:text-white"
+                className="block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs text-center px-4 py-3 rounded-full tracking-[0.2em] uppercase transition-all duration-300 hover:from-amber-600 hover:to-orange-600 shadow-sm"
               >
                 Shop Now
               </Link>

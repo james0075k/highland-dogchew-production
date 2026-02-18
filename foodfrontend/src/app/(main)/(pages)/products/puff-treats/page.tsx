@@ -38,63 +38,71 @@ export default function PuffTreatsPage() {
     }
   };
 
+  const sorted = [...products].sort((a, b) => {
+    if ((b.rating || 0) === (a.rating || 0)) return (b.reviews || 0) - (a.reviews || 0);
+    return (b.rating || 0) - (a.rating || 0);
+  });
+
   return (
-    <div className="min-h-screen pt-28 pb-16 px-4">
-      <div className="max-w-7xl mx-auto">
-        <Link
-          href="/products"
-          className="inline-flex items-center gap-2 mb-8 text-orange-500 hover:text-orange-600 font-medium transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          All Products
-        </Link>
+    <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0]">
+      <section className="pt-32 pb-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 mb-8 text-amber-600 hover:text-amber-700 font-medium transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            All Products
+          </Link>
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-amber-900 mb-4">
-            Puff Treats
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Light, crunchy puffed treats made from yak milk — A delicious reward your dog will love.
-          </p>
+          <div className="text-center mb-12">
+            <span className="inline-block text-amber-600 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Light & Crunchy</span>
+            <h1 className="text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4">
+              Puff Treats
+            </h1>
+            <p className="text-lg text-[#7A5C4F] max-w-2xl mx-auto">
+              Light, crunchy puffed treats made from yak milk — A delicious reward your dog will love.
+            </p>
+          </div>
+
+          {loading && (
+            <div className="py-16 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading puff treats...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="py-16 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-red-600 mb-4">Error: {error}</p>
+                <button
+                  onClick={fetchProducts}
+                  className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && products.length === 0 && (
+            <div className="py-16 text-center">
+              <p className="text-gray-500 text-lg">No puff treats found</p>
+            </div>
+          )}
+
+          {!loading && !error && sorted.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {sorted.map((product, index) => (
+                <ProductCard key={product._id} product={product} priority={index === 0} />
+              ))}
+            </div>
+          )}
         </div>
-
-        {loading && (
-          <div className="py-16 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading puff treats...</p>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="py-16 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">Error: {error}</p>
-              <button
-                onClick={fetchProducts}
-                className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && products.length === 0 && (
-          <div className="py-16 text-center">
-            <p className="text-gray-500 text-lg">No puff treats found</p>
-          </div>
-        )}
-
-        {!loading && !error && products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
-          </div>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

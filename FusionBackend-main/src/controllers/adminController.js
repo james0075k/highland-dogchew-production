@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import AdminModel from "../models/adminModel.js";
 import Config from "../config/Config.js";
 import handleError from "../utils/errorHandler.js";
+import sendEmail from "../utils/sendEmail.js";
 
 // 🔐 Admin Login
 export const loginAdmin = async (req, res) => {
@@ -191,6 +193,98 @@ export const getCurrentAdmin = async (req, res) => {
 
 
 
+
+// 🔒 Forgot Password
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const admin = await AdminModel.findOne({ email });
+    if (!admin) {
+      // Don't reveal if email exists
+      return res.status(200).json({ success: true, message: "If an account with that email exists, a reset link has been sent." });
+    }
+
+    // Generate secure random token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    admin.resetPasswordToken = hashedToken;
+    admin.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await admin.save({ validateBeforeSave: false });
+
+    // Build reset URL
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const resetUrl = `${frontendUrl}/admin/reset-password/${resetToken}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #f8fafc; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #0c1e35; margin: 0;">Highland Dog Chew</h1>
+          <p style="color: #64748b; font-size: 14px;">Password Reset Request</p>
+        </div>
+        <div style="background: white; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <p style="color: #334155;">Hello <strong>${admin.fullName}</strong>,</p>
+          <p style="color: #334155;">You requested a password reset. Click the button below to set a new password:</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${resetUrl}" style="background: #f59e0b; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px;">This link expires in 1 hour. If you didn't request this, ignore this email.</p>
+        </div>
+      </div>
+    `;
+
+    await sendEmail({
+      to: admin.email,
+      subject: "Password Reset - Highland Dog Chew Admin",
+      html,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "If an account with that email exists, a reset link has been sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({ success: false, message: "Failed to send reset email. Please try again." });
+  }
+};
+
+// 🔓 Reset Password
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const admin = await AdminModel.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    }).select("+password");
+
+    if (!admin) {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    admin.password = password;
+    admin.resetPasswordToken = null;
+    admin.resetPasswordExpires = null;
+    await admin.save();
+
+    return res.status(200).json({ success: true, message: "Password has been reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({ success: false, message: "Failed to reset password" });
+  }
+};
 
 // 🔑 Generate Tokens
 const generateTokens = (admin) => {

@@ -228,43 +228,15 @@ export default async function Home() {
 
   return (
     <>
-    <RhodeHero/>
-      <section className="">
-       
-  <YakMilkSection/>
-    
-      </section>
-
-      <PuffTreatsSection/>
-
-    <HighlandMixChewSection/>
-        <VarietiesSection/>
-
-    <HimalayanStorySection/>
-
-    <SizeGuideSection/>
-
-       
-     {/* <HimalayanDelightHero/> */}
-      
-
-{/* <TeamSection/> */}  
-    
-     {/* <DogChewHeroBanner/> */}
-
-     <InstagramFeedSection/>
-
-     <TestimonialSection/>
-    
-
-
-
-  
-   
-
-    
-
-   
+      <RhodeHero />
+      <YakMilkSection />
+      <PuffTreatsSection />
+      <HighlandMixChewSection />
+      <VarietiesSection />
+      <HimalayanStorySection />
+      <SizeGuideSection />
+      <InstagramFeedSection />
+      <TestimonialSection />
     </>
   );
 }

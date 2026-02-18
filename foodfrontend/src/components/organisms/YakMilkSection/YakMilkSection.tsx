@@ -73,9 +73,15 @@ export default function YakMilkSection() {
     );
   }
 
+  const sorted = [...products].sort((a, b) => {
+    if ((b.rating || 0) === (a.rating || 0)) return (b.reviews || 0) - (a.reviews || 0);
+    return (b.rating || 0) - (a.rating || 0);
+  });
+
   return (
-    <div className="py-16 px-4">
-      <div className="max-w-7xl mx-auto text-center mb-12">
+    <section className="py-16 md:py-20 px-4">
+      <div className="max-w-7xl mx-auto text-center mb-10">
+        <span className="inline-block text-amber-600 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Best Sellers</span>
         <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4 tracking-[-0.01em]">
           Yak Milk Chews
         </h2>
@@ -84,11 +90,11 @@ export default function YakMilkSection() {
         </p>
       </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {products.map((product) => (
-          <ProductCard key={product._id} product={product} />
+      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {sorted.map((product, index) => (
+          <ProductCard key={product._id} product={product} priority={index === 0} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

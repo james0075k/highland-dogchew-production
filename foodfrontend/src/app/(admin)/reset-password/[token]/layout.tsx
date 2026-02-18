@@ -1,7 +1,7 @@
-import '../../globals.css';
+import '../../../globals.css';
 
 export const metadata = {
-  title: 'Admin Login | Highland Dog Chew',
+  title: 'Reset Password | Highland Dog Chew Admin',
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
