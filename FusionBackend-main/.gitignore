@@ -1,0 +1,6 @@
+ .env
+node_modules
+uploads
+/.claude
+/nul
+.env

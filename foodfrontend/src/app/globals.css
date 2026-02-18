@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --font-playfair: var(--font-playfair), 'Playfair Display', serif;
+  --font-cormorant: var(--font-cormorant), 'Cormorant Garamond', serif;
+  --font-antique-serif: var(--font-antique-serif), 'DM Serif Display', serif;
+}
+
+@layer base {
+  :root {
+    --color-primary: rgb(242, 138, 21);
+    --font-dm-sans: 'DM Sans', sans-serif;
+
+    /* Antique Luxury Color Palette */
+    --color-parchment: #F4EDE4;
+    --color-parchment-light: #F9F5EF;
+    --color-cream: #FBF7F0;
+    --color-dark-brown: #2E1F14;
+    --color-warm-brown: #5C4033;
+    --color-medium-brown: #7A5C4F;
+    --color-gold: #B8976A;
+    --color-gold-light: #D4BC8E;
+    --color-gold-hover: #9A7B52;
+    --color-antique-border: #D8CCBA;
+    --color-sand: #E8DFD1;
+
+    /* Global Spacing System */
+    --global-spacer: 2rem;
+    --spacer-y: var(--global-spacer);
+    --section-spacer: calc(var(--global-spacer) * 2);
+  }
+
+  body {
+    font-family: var(--font-dm-sans);
+    @apply overflow-x-hidden;
+  }
+}
+
+/* Hide scrollbar for all browsers */
+body, html {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* Internet Explorer and Edge */
+}
+
+body::-webkit-scrollbar, html::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari, Opera */
+}
+
+@layer utilities {
+  .text-primary { color: var(--color-primary); }
+  .bg-primary { background-color: var(--color-primary); }
+  .border-primary { border-color: var(--color-primary); }
+  .bg-light-beige { background-color: #EBE8E2; }
+  .bg-gray-warm { background-color: #F5F5F4; }
+
+  /* Antique heading utilities */
+  .font-heading {
+    font-family: var(--font-playfair), 'Playfair Display', serif;
+  }
+  .font-subheading {
+    font-family: var(--font-cormorant), 'Cormorant Garamond', serif;
+  }
+  .font-antique {
+    font-family: var(--font-antique-serif), 'DM Serif Display', serif;
+  }
+}
+
+section {
+  padding-top: 48px;
+  padding-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+  section {
+    padding-top: 32px;
+    padding-bottom: 16px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  section {
+    padding-top: 32px;
+    padding-bottom: 24px;
+  }
+}
+
+@media (min-width: 1025px) {
+  section {
+    padding-top: 64px;
+    padding-bottom: 32px;
+  }
+}
+
+body {
+  background-color: #F5F5F5 !important;
+}
+
+.fade-out-mask {
+  position: relative;
+}
+.fade-out-mask:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2.5em;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%);
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.text-justify {
+  text-align: justify;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}

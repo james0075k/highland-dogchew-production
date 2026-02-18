@@ -1,0 +1,1569 @@
+===== FILE: e:/test/testweb/FusionBackend-main/index.js =====
+import express from 'express'
+import dotenv from 'dotenv'
+import cors from 'cors'
+import cookieParser from 'cookie-parser';
+
+import errorMiddleware from './src/middlewares/ErrorMiddleware/errorMiddleware.js';
+import Connection from './src/config/Connection.js';
+import LogoRoute from './src/routes/LogoRoute.js';
+import testimonialRoute from './src/routes/testimonialRoute.js';
+import faqRoute from './src/routes/faqRoute.js';
+import partnerRoute from './src/routes/partnerRoute.js';
+import blogRoute from './src/routes/blogRoute.js';
+import destinationRoute from './src/routes/destionationRoute.js';
+import statRoute from './src/routes/statRoute.js';
+import contactRoute from './src/routes/contactRoute.js';
+import heroBannerRoute from './src/routes/heroBannerRoute.js';
+import tourPackageRoute from './src/routes/tourPackageRoute.js';
+import BookingRoute from './src/routes/bookingRoute.js';
+import ReviewRoute from './src/routes/reviewRoute.js';
+import adminRoute from './src/routes/adminRoute.js';
+import teamRoute from './src/routes/teamRoute.js';
+import activityRoute from './src/routes/activityRoutes.js';
+import tourCategoryRoute from './src/routes/tourCategoryRoutes.js';
+import paymentRoute from './src/routes/paymentRoute.js';
+import blogCategory from './src/routes/blogCategoryRoute.js';
+import contactinfoRoute from './src/routes/contactinfoRoute.js';
+import privateTripRoute from './src/routes/privatetripRoute.js';
+import termsRoute from './src/routes/termsRoute.js';
+import productRoute from './src/routes/productRoute.js';
+import varietyRoute from './src/routes/varietyRoute.js';
+import paymentGatewayRoute from './src/routes/paymentGatewayRoute.js';
+import webhookRoute from './src/routes/webhookRoute.js';
+import orderRoute from './src/routes/orderRoute.js';
+import categoryRoute from './src/routes/categoryRoute.js';
+import adminCategoryRoute from './src/routes/adminCategoryRoute.js';
+import adminProductRoute from './src/routes/adminProductRoute.js';
+
+
+
+
+dotenv.config();
+
+const app = express();
+const api = process.env.API_URL || 'api'; 
+
+
+const port = process.env.PORT ;
+
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://dogchewuk.vercel.app', 'https://highlanddogchew.co.uk'],  // Your frontend origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(cookieParser());
+
+app.use('/uploads', express.static('uploads'));
+
+
+app.use(`/${api}/webhook`, webhookRoute);
+
+
+app.use(express.json({ 
+  limit: '1000mb',      
+  parameterLimit: 100000,
+}));
+
+app.use(express.urlencoded({ 
+  limit: '1000mb',        
+  extended: true,
+  parameterLimit: 100000
+}));
+
+
+
+// Debugging middleware
+app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.url}`);
+    next();
+  });
+
+  
+  app.use((req, res, next) => {
+  if (req.headers['content-length']) {
+    const size = parseInt(req.headers['content-length']);
+    console.log(`Request size: ${(size / 1024 / 1024).toFixed(2)}MB`);
+    
+    // Log if request is too large
+    if (size > 1000 * 1024 * 1024) {
+      console.log('WARNING: Request exceeds 1GB');
+    }
+  }
+  next();
+});
+
+app.use(`/${api}/logo`, LogoRoute);
+app.use(`/${api}/testimonials`, testimonialRoute);
+app.use(`/${api}/faqs`, faqRoute);
+app.use(`/${api}/partners`, partnerRoute);
+app.use(`/${api}/blogs`, blogRoute);
+app.use(`/${api}/destinations`, destinationRoute);
+app.use(`/${api}/stats`, statRoute);  
+app.use(`/${api}/contact`, contactRoute);
+app.use(`/${api}/herobanner`, heroBannerRoute);
+app.use(`/${api}/tour/tour-packages`, tourPackageRoute  );
+app.use(`/${api}/tour/bookings`, BookingRoute);
+app.use(`/${api}/reviews`, ReviewRoute);
+app.use(`/${api}/admin`, adminRoute);
+app.use(`/${api}/teams`, teamRoute);
+app.use(`/${api}/activities`, activityRoute);
+app.use(`/${api}/category/activities`, tourCategoryRoute);
+app.use(`/${api}/payments`, paymentRoute);
+app.use(`/${api}/payment`, paymentGatewayRoute);
+app.use(`/${api}/order`, orderRoute);
+app.use(`/${api}/category/blogs`, blogCategory);
+app.use(`/${api}/info`, contactinfoRoute);
+app.use(`/${api}/privatetrip`, privateTripRoute);
+app.use(`/${api}/terms`, termsRoute);
+app.use(`/${api}/products`, productRoute);
+app.use(`/${api}/variety`, varietyRoute);
+app.use(`/${api}/categories`, categoryRoute);
+app.use(`/${api}/admin/categories`, adminCategoryRoute);
+app.use(`/${api}/admin/products`, adminProductRoute);
+
+
+//error middleware route pachi
+app.use(errorMiddleware)
+
+
+
+
+// Database connection
+Connection(); 
+
+
+app.listen(port, ()=>{
+    console.log(`Hamro Kam port ${port} ma chaldai xa`)
+})
+
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/package.json =====
+{
+  "name": "fustionbackend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "seed:products": "node src/seeds/seedCategoriesAndProducts.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.14.0",
+    "multer": "^1.4.5-lts.2",
+    "nodemon": "^3.1.10",
+    "pdfkit": "^0.17.1",
+    "slugify": "^1.6.6",
+    "stripe": "^18.2.1"
+  }
+}
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/productCategoryModel.js =====
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+
+const productCategorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Category name is required'],
+    unique: true,
+    trim: true
+  },
+
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true,
+  },
+
+  description: {
+    type: String
+  },
+
+  image: {
+    type: String
+  },
+
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+
+}, { timestamps: true });
+
+// Auto-generate slug
+productCategorySchema.pre('validate', function (next) {
+  if (this.name && !this.slug) {
+    this.slug = slugify(this.name, { 
+      lower: true,
+      strict: true,
+      replacement: '-',
+      trim: true
+    });
+  }
+  next();
+});
+
+const ProductCategoryModel = mongoose.model('ProductCategory', productCategorySchema);
+
+export default ProductCategoryModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/categoryModel.js =====
+import ProductCategoryModel from './productCategoryModel.js';
+
+export default ProductCategoryModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/productModel.js =====
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+
+const sizeSchema = new mongoose.Schema(
+  {
+    label: {
+      type: String,
+      required: true,
+      enum: ['Small', 'Medium', 'Large'],
+      trim: true,
+    },
+    grams: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    // Compatibility for legacy clients that used "value" fields for display.
+    value: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
+const bulkPricingSchema = new mongoose.Schema(
+  {
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    originalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
+const productSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductCategory',
+      default: null,
+      index: true,
+    },
+    // Denormalized display value used by existing frontend cards.
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+      default: 'General',
+    },
+    image: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    images: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    gallery: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    reviews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // Base price kept for compatibility. Size price is used at checkout when selected.
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    originalPrice: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    badge: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    shortDescription: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    features: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    sizes: {
+      type: [sizeSchema],
+      default: [],
+    },
+    bulkPricing: {
+      type: [bulkPricingSchema],
+      default: [],
+    },
+    // Legacy relation retained so existing routes continue to work.
+    variety: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Variety',
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
+productSchema.pre('validate', function (next) {
+  if (this.name && !this.slug) {
+    this.slug = slugify(this.name, {
+      lower: true,
+      strict: true,
+      replacement: '-',
+      trim: true,
+    });
+  }
+
+  const uniqueImages = [];
+  const addImage = (value) => {
+    if (!value || typeof value !== 'string') {
+      return;
+    }
+    const trimmed = value.trim();
+    if (!trimmed || uniqueImages.includes(trimmed)) {
+      return;
+    }
+    uniqueImages.push(trimmed);
+  };
+
+  addImage(this.image);
+  (this.images || []).forEach(addImage);
+  (this.gallery || []).forEach(addImage);
+
+  if (uniqueImages.length > 0) {
+    this.images = uniqueImages;
+    this.image = uniqueImages[0];
+  }
+
+  if ((!this.price || this.price < 0) && Array.isArray(this.sizes) && this.sizes.length > 0) {
+    this.price = Math.min(...this.sizes.map((size) => Number(size.price) || 0));
+  }
+
+  if (!this.originalPrice || this.originalPrice < 0) {
+    this.originalPrice = this.price;
+  }
+
+  if (!this.shortDescription && this.description) {
+    this.shortDescription = this.description.slice(0, 160);
+  }
+
+  next();
+});
+
+const ProductModel = mongoose.model('Product', productSchema);
+
+export default ProductModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/orderModel.js =====
+import mongoose from 'mongoose';
+
+const orderItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    size: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    grams: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+    purchaseOption: {
+      type: String,
+      enum: ['one-time', 'repeat'],
+      default: 'one-time',
+    },
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    lineTotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
+const orderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    items: {
+      type: [orderItemSchema],
+      required: true,
+      validate: {
+        validator: (value) => Array.isArray(value) && value.length > 0,
+        message: 'Order must include at least one item.',
+      },
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    discount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    tax: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    total: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    currency: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+      default: 'gbp',
+    },
+    promoCode: {
+      type: String,
+      default: null,
+      trim: true,
+      uppercase: true,
+    },
+    paymentIntentId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'refunded'],
+      default: 'pending',
+      required: true,
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
+const OrderModel = mongoose.model('Order', orderSchema);
+
+export default OrderModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/paymentAttemptModel.js =====
+import mongoose from 'mongoose';
+
+const paymentAttemptItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    size: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    grams: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+    purchaseOption: {
+      type: String,
+      enum: ['one-time', 'repeat'],
+      default: 'one-time',
+    },
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    lineTotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
+const paymentAttemptSchema = new mongoose.Schema(
+  {
+    paymentIntentId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    userId: {
+      type: String,
+      required: true,
+      default: 'guest',
+      index: true,
+    },
+    items: {
+      type: [paymentAttemptItemSchema],
+      required: true,
+      validate: {
+        validator: (value) => Array.isArray(value) && value.length > 0,
+        message: 'Payment attempt must include at least one item.',
+      },
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    discount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    tax: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    total: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    taxRate: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    currency: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      default: 'gbp',
+    },
+    promoCode: {
+      type: String,
+      default: null,
+      trim: true,
+      uppercase: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['processing', 'succeeded', 'failed'],
+      required: true,
+      default: 'processing',
+      index: true,
+    },
+    lastFailureMessage: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+  },
+  { timestamps: true }
+);
+
+const PaymentAttemptModel = mongoose.model('PaymentAttempt', paymentAttemptSchema);
+
+export default PaymentAttemptModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/models/promoCodeModel.js =====
+import mongoose from 'mongoose';
+
+const promoCodeSchema = new mongoose.Schema(
+  {
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      uppercase: true,
+      index: true,
+    },
+    discountType: {
+      type: String,
+      required: true,
+      enum: ['percentage', 'flat'],
+    },
+    discountValue: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    expiryDate: {
+      type: Date,
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
+promoCodeSchema.pre('validate', function normalizeCode(next) {
+  if (this.code) {
+    this.code = this.code.trim().toUpperCase();
+  }
+  next();
+});
+
+const PromoCodeModel = mongoose.model('PromoCode', promoCodeSchema);
+
+export default PromoCodeModel;
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/controllers/categoryController.js =====
+import slugify from 'slugify';
+import path from 'path';
+import fs from 'fs';
+import mongoose from 'mongoose';
+
+import CategoryModel from '../models/categoryModel.js';
+import ProductModel from '../models/productModel.js';
+import handleError from '../utils/errorHandler.js';
+import handleSuccess from '../utils/sucessHandler.js';
+import { categoryCreateValidationSchema, categoryUpdateValidationSchema } from '../validations/categoryValidationSchema.js';
+import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
+import { __dirname, deleteFile } from '../utils/fileHelpers.js';
+
+const toSlug = (value) =>
+  slugify(String(value || ''), {
+    lower: true,
+    strict: true,
+    replacement: '-',
+    trim: true,
+  });
+
+const parseBoolean = (value, fallback = true) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value.toLowerCase() === 'true') {
+      return true;
+    }
+    if (value.toLowerCase() === 'false') {
+      return false;
+    }
+  }
+  return fallback;
+};
+
+const buildCategoryPayload = (reqBody = {}, reqFile = null, reqMeta = null, existingCategory = null) => {
+  const hasField = (fieldName) => Object.prototype.hasOwnProperty.call(reqBody, fieldName);
+
+  const payload = {
+    name: hasField('name') ? reqBody.name : existingCategory?.name,
+    slug: hasField('slug') ? toSlug(reqBody.slug) : existingCategory?.slug,
+    description: hasField('description') ? reqBody.description || '' : existingCategory?.description || '',
+    image: hasField('image') ? reqBody.image || '' : existingCategory?.image || '',
+    isActive: hasField('isActive')
+      ? parseBoolean(reqBody.isActive, true)
+      : (existingCategory?.isActive ?? true),
+  };
+
+  if (!payload.slug && payload.name) {
+    payload.slug = toSlug(payload.name);
+  }
+
+  if (reqFile && reqMeta) {
+    const relativeUrl = getFileUrl(reqFile.filename);
+    payload.image = `${reqMeta.protocol}://${reqMeta.host}${relativeUrl}`;
+  }
+
+  return payload;
+};
+
+const ensureUniqueCategory = async ({ slug, name, ignoreId = null }) => {
+  const conflictQuery = {
+    $or: [{ slug }, { name }],
+  };
+
+  if (ignoreId) {
+    conflictQuery._id = { $ne: ignoreId };
+  }
+
+  const existing = await CategoryModel.findOne(conflictQuery).lean();
+  if (!existing) {
+    return;
+  }
+
+  if (existing.slug === slug) {
+    throw handleError(409, 'Category slug already exists.');
+  }
+
+  throw handleError(409, 'Category name already exists.');
+};
+
+const removeCategoryImageIfExists = async (imageUrl) => {
+  const imageName = imageUrl?.split('/uploads/')[1];
+  if (!imageName) {
+    return;
+  }
+
+  const imagePath = path.join(__dirname, '../../uploads', imageName);
+  if (fs.existsSync(imagePath)) {
+    await deleteFile(imagePath);
+  }
+};
+
+export const getAllCategories = async (req, res, next) => {
+  try {
+    const includeInactive = req.query.includeInactive === 'true';
+    const filter = includeInactive ? {} : { isActive: true };
+
+    const categories = await CategoryModel.find(filter).sort({ createdAt: 1 }).lean();
+
+    const categoriesWithCount = await Promise.all(
+      categories.map(async (category) => {
+        const productFilter = { categoryId: category._id };
+        if (!includeInactive) {
+          productFilter.isActive = true;
+        }
+        const productCount = await ProductModel.countDocuments(productFilter);
+        return { ...category, productCount };
+      })
+    );
+
+    return handleSuccess(res, 200, 'Categories fetched successfully.', categoriesWithCount);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getCategoryBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const category = await CategoryModel.findOne({ slug: toSlug(slug), isActive: true }).lean();
+
+    if (!category) {
+      return next(handleError(404, 'Category not found.'));
+    }
+
+    const products = await ProductModel.find({
+      categoryId: category._id,
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return handleSuccess(res, 200, 'Category fetched successfully.', {
+      category,
+      products,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const createCategory = async (req, res, next) => {
+  try {
+    const payload = buildCategoryPayload(req.body, req.file, {
+      protocol: req.protocol,
+      host: req.get('host'),
+    });
+
+    const { error } = categoryCreateValidationSchema.validate(payload, { abortEarly: false });
+    if (error) {
+      return next(handleError(400, error.details.map((detail) => detail.message).join(' ')));
+    }
+
+    await ensureUniqueCategory({ slug: payload.slug, name: payload.name });
+
+    const createdCategory = await CategoryModel.create(payload);
+
+    return handleSuccess(res, 201, 'Category created successfully.', createdCategory);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return next(handleError(409, 'Category slug or name already exists.'));
+    }
+    return next(error);
+  }
+};
+
+export const updateCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(handleError(400, 'Invalid category ID.'));
+    }
+
+    const existingCategory = await CategoryModel.findById(id);
+    if (!existingCategory) {
+      return next(handleError(404, 'Category not found.'));
+    }
+
+    const payload = buildCategoryPayload(
+      req.body,
+      req.file,
+      {
+        protocol: req.protocol,
+        host: req.get('host'),
+      },
+      existingCategory
+    );
+
+    const { error } = categoryUpdateValidationSchema.validate(payload, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+    if (error) {
+      return next(handleError(400, error.details.map((detail) => detail.message).join(' ')));
+    }
+
+    if (!payload.slug && payload.name) {
+      payload.slug = toSlug(payload.name);
+    }
+
+    if (payload.slug || payload.name) {
+      await ensureUniqueCategory({
+        slug: payload.slug || existingCategory.slug,
+        name: payload.name || existingCategory.name,
+        ignoreId: id,
+      });
+    }
+
+    if (payload.image && existingCategory.image && payload.image !== existingCategory.image) {
+      await removeCategoryImageIfExists(existingCategory.image);
+    }
+
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(id, payload, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedCategory) {
+      return next(handleError(404, 'Category not found.'));
+    }
+
+    if (payload.name) {
+      await ProductModel.updateMany({ categoryId: updatedCategory._id }, { category: payload.name });
+    }
+
+    return handleSuccess(res, 200, 'Category updated successfully.', updatedCategory);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return next(handleError(409, 'Category slug or name already exists.'));
+    }
+    return next(error);
+  }
+};
+
+export const deleteCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(handleError(400, 'Invalid category ID.'));
+    }
+
+    const deletedCategory = await CategoryModel.findByIdAndDelete(id);
+    if (!deletedCategory) {
+      return next(handleError(404, 'Category not found.'));
+    }
+
+    await ProductModel.updateMany(
+      { categoryId: deletedCategory._id },
+      { categoryId: null, category: 'General' }
+    );
+
+    await removeCategoryImageIfExists(deletedCategory.image);
+
+    return handleSuccess(res, 200, 'Category deleted successfully.');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+
+===== FILE: e:/test/testweb/FusionBackend-main/src/controllers/productController.js =====
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+import path from 'path';
+import fs from 'fs';
+
+import ProductModel from '../models/productModel.js';
+import VarietyModel from '../models/varietyModel.js';
+import CategoryModel from '../models/categoryModel.js';
+import handleError from '../utils/errorHandler.js';
+import handleSuccess from '../utils/sucessHandler.js';
+import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
+import { __dirname, deleteFile } from '../utils/fileHelpers.js';
+import {
+  productCreateValidationSchema,
+  productUpdateValidationSchema,
+  validateSizeLabels,
+} from '../validations/productValidationSchemas.js';
+
+const toSlug = (value) =>
+  slugify(String(value || ''), {
+    lower: true,
+    strict: true,
+    replacement: '-',
+    trim: true,
+  });
+
+const parseBoolean = (value, fallback = true) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value.toLowerCase() === 'true') {
+      return true;
+    }
+    if (value.toLowerCase() === 'false') {
+      return false;
+    }
+  }
+  return fallback;
+};
+
+const parseJsonField = (value, fallbackValue) => {
+  if (value === undefined || value === null || value === '') {
+    return fallbackValue;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallbackValue;
+  }
+};
+
+const toNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeArray = (value) => {
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value;
+  }
+  return [value];
+};
+
+const buildUploadedUrls = ({ files, req }) => {
+  if (!files) {
+    return { primaryImage: null, galleryUrls: [] };
+  }
+
+  const toAbsoluteUrl = (filename) => `${req.protocol}://${req.get('host')}${getFileUrl(filename)}`;
+
+  const mainImageFile = files.image?.[0] || null;
+  const primaryImage = mainImageFile ? toAbsoluteUrl(mainImageFile.filename) : null;
+
+  const galleryUrls = normalizeArray(files.gallery || [])
+    .filter((file) => file?.filename)
+    .map((file) => toAbsoluteUrl(file.filename));
+
+  return { primaryImage, galleryUrls };
+};
+
+const normalizeSizes = (sizes) => {
+  const parsed = parseJsonField(sizes, []);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed
+    .map((size) => ({
+      label: String(size?.label || '').trim(),
+      grams: toNumber(size?.grams, NaN),
+      price: toNumber(size?.price, NaN),
+      stock: toNumber(size?.stock, NaN),
+      value: size?.value ? String(size.value) : null,
+    }))
+    .filter((size) => size.label);
+};
+
+const normalizeBulkPricing = (bulkPricing) => {
+  const parsed = parseJsonField(bulkPricing, []);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed
+    .map((tier) => ({
+      quantity: Math.max(1, Math.trunc(toNumber(tier?.quantity, 1))),
+      price: Math.max(0, toNumber(tier?.price, 0)),
+      originalPrice: Math.max(0, toNumber(tier?.originalPrice, 0)),
+      discount: Math.max(0, toNumber(tier?.discount, 0)),
+    }))
+    .filter((tier) => tier.quantity > 0);
+};
+
+const mergeImageArrays = (...sources) => {
+  const unique = [];
+
+  sources.forEach((source) => {
+    normalizeArray(source).forEach((value) => {
+      if (!value || typeof value !== 'string') {
+        return;
+      }
+      const trimmed = value.trim();
+      if (!trimmed || unique.includes(trimmed)) {
+        return;
+      }
+      unique.push(trimmed);
+    });
+  });
+
+  return unique;
+};
+
+const removeProductImages = async (product) => {
+  const allImages = mergeImageArrays(product?.image, product?.images, product?.gallery);
+
+  await Promise.all(
+    allImages.map(async (imageUrl) => {
+      const imageName = imageUrl?.split('/uploads/')[1];
+      if (!imageName) {
+        return;
+      }
+
+      const imagePath = path.join(__dirname, '../../uploads', imageName);
+      if (fs.existsSync(imagePath)) {
+        await deleteFile(imagePath);
+      }
+    })
+  );
+};
+
+const ensureUniqueSlug = async (slug, ignoreId = null) => {
+  const query = { slug };
+  if (ignoreId) {
+    query._id = { $ne: ignoreId };
+  }
+
+  const existing = await ProductModel.findOne(query).select('_id').lean();
+  if (existing) {
+    throw handleError(409, 'Product slug already exists.');
+  }
+};
+
+const resolveCategory = async (categoryId, fallbackCategoryName = '') => {
+  if (!categoryId) {
+    throw handleError(400, 'categoryId is required.');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+    throw handleError(400, 'Invalid categoryId.');
+  }
+
+  const category = await CategoryModel.findById(categoryId).lean();
+  if (!category) {
+    throw handleError(404, 'Selected category not found.');
+  }
+
+  return {
+    categoryId: category._id,
+    categoryName: fallbackCategoryName || category.name,
+  };
+};
+
+const buildProductPayload = async ({ req, existingProduct = null }) => {
+  const hasField = (fieldName) => Object.prototype.hasOwnProperty.call(req.body, fieldName);
+
+  const payload = {
+    name: hasField('name') ? req.body.name : existingProduct?.name,
+    slug: req.body.slug ? toSlug(req.body.slug) : undefined,
+    categoryId: hasField('categoryId') ? req.body.categoryId : existingProduct?.categoryId || undefined,
+    category: hasField('category') ? req.body.category : existingProduct?.category || '',
+    variety: hasField('variety') ? req.body.variety || null : existingProduct?.variety || null,
+    badge: hasField('badge') ? req.body.badge || null : existingProduct?.badge || null,
+    shortDescription: hasField('shortDescription')
+      ? req.body.shortDescription || ''
+      : existingProduct?.shortDescription || '',
+    description: hasField('description') ? req.body.description : existingProduct?.description,
+    features: hasField('features')
+      ? parseJsonField(req.body.features, [])
+      : existingProduct?.features || [],
+    sizes: hasField('sizes') ? normalizeSizes(req.body.sizes) : existingProduct?.sizes || [],
+    bulkPricing: hasField('bulkPricing')
+      ? normalizeBulkPricing(req.body.bulkPricing)
+      : existingProduct?.bulkPricing || [],
+    rating: hasField('rating') ? toNumber(req.body.rating, 0) : toNumber(existingProduct?.rating, 0),
+    reviews: hasField('reviews')
+      ? Math.max(0, Math.trunc(toNumber(req.body.reviews, 0)))
+      : Math.max(0, Math.trunc(toNumber(existingProduct?.reviews, 0))),
+    isActive: parseBoolean(req.body.isActive, existingProduct?.isActive ?? true),
+    image: hasField('image') ? req.body.image || '' : existingProduct?.image || '',
+    images: hasField('images') ? parseJsonField(req.body.images, []) : existingProduct?.images || [],
+    gallery: hasField('gallery') ? parseJsonField(req.body.gallery, []) : existingProduct?.gallery || [],
+  };
+
+  if (!payload.slug) {
+    if (existingProduct?.slug) {
+      payload.slug = existingProduct.slug;
+    } else if (payload.name) {
+      payload.slug = toSlug(payload.name);
+    }
+  }
+
+  if (!payload.shortDescription && payload.description) {
+    payload.shortDescription = String(payload.description).slice(0, 160);
+  }
+
+  if (payload.variety && !mongoose.Types.ObjectId.isValid(payload.variety)) {
+    throw handleError(400, 'Invalid variety ID.');
+  }
+
+  if (payload.variety) {
+    const varietyExists = await VarietyModel.findById(payload.variety).select('_id').lean();
+    if (!varietyExists) {
+      throw handleError(404, 'Selected variety does not exist.');
+    }
+  }
+
+  const categoryMeta = await resolveCategory(payload.categoryId, payload.category);
+  payload.categoryId = String(categoryMeta.categoryId);
+  payload.category = categoryMeta.categoryName;
+
+  const { primaryImage, galleryUrls } = buildUploadedUrls({ files: req.files, req });
+  if (primaryImage) {
+    payload.image = primaryImage;
+  }
+
+  const baseImages = mergeImageArrays(payload.images, payload.gallery, galleryUrls);
+  const mergedImages = mergeImageArrays(payload.image, baseImages);
+
+  if (mergedImages.length > 0) {
+    payload.images = mergedImages;
+    payload.image = mergedImages[0];
+  } else if (existingProduct?.images?.length) {
+    payload.images = existingProduct.images;
+    payload.image = existingProduct.image;
+  }
+
+  if (!payload.image) {
+    throw handleError(400, 'At least one product image is required.');
+  }
+
+  payload.gallery = mergeImageArrays(payload.gallery, galleryUrls).filter((image) => image !== payload.image);
+
+  const lowestSizePrice =
+    payload.sizes.length > 0 ? Math.min(...payload.sizes.map((size) => Number(size.price) || 0)) : null;
+
+  payload.price = lowestSizePrice !== null ? lowestSizePrice : toNumber(req.body.price, existingProduct?.price || 0);
+  payload.originalPrice = Math.max(
+    payload.price,
+    toNumber(req.body.originalPrice, existingProduct?.originalPrice || payload.price)
+  );
+
+  if (!validateSizeLabels(payload.sizes)) {
+    throw handleError(400, 'Size labels must be unique per product.');
+  }
+
+  return payload;
+};
+
+const cleanForUpdate = (payload) => {
+  const clean = { ...payload };
+  delete clean.createdAt;
+  delete clean.updatedAt;
+  delete clean.__v;
+  return clean;
+};
+
+// Create Product
+export const createProduct = async (req, res, next) => {
+  try {
+    const payload = await buildProductPayload({ req });
+
+    const { error } = productCreateValidationSchema.validate(payload, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+    if (error) {
+      return next(handleError(400, error.details.map((detail) => detail.message).join(' ')));
+    }
+
+    await ensureUniqueSlug(payload.slug);
+
+    const createdProduct = await ProductModel.create(payload);
+    const populated = await ProductModel.findById(createdProduct._id).populate('categoryId variety');
+
+    return handleSuccess(res, 201, 'Product created successfully.', populated);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return next(handleError(409, 'Product slug already exists.'));
+    }
+    return next(error);
+  }
+};
+
+// Get All Products
+export const getAllProducts = async (req, res, next) => {
+  try {
+    const { category, includeInactive } = req.query;
+    const filter = {};
+
+    if (includeInactive !== 'true') {
+      filter.isActive = true;
+    }
+
+    if (category) {
+      const categoryDoc = await CategoryModel.findOne({ slug: toSlug(category) }).select('_id').lean();
+      if (!categoryDoc) {
+        return next(handleError(404, 'Category not found.'));
+      }
+      filter.categoryId = categoryDoc._id;
+    }
+
+    const products = await ProductModel.find(filter)
+      .populate('categoryId variety')
+      .sort({ createdAt: -1 });
+
+    return handleSuccess(res, 200, 'Products fetched successfully.', products);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get Product By Slug
+export const getProductBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const product = await ProductModel.findOne({ slug: toSlug(slug), isActive: true }).populate('categoryId variety');
+
+    if (!product) {
+      return next(handleError(404, 'Product not found.'));
+    }
+
+    return handleSuccess(res, 200, 'Product fetched successfully.', product);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get Product By ID or Slug (for route compatibility)
+export const getProductById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { slug: toSlug(id) };
+
+    const product = await ProductModel.findOne(query).populate('categoryId variety');
+
+    if (!product) {
+      return next(handleError(404, 'Product not found.'));
+    }
+
+    return handleSuccess(res, 200, 'Product fetched successfully.', product);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get Products by Variety ID
+export const getProductsByVariety = async (req, res, next) => {
+  try {
+    const { varietyId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(varietyId)) {
+      return next(handleError(400, 'Invalid variety ID.'));
+    }
+
+    const products = await ProductModel.find({ variety: varietyId, isActive: true })
+      .populate('categoryId variety')
+      .sort({ createdAt: -1 });
+
+    return handleSuccess(res, 200, 'Products fetched by variety successfully.', products);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Update Product
+export const updateProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(handleError(400, 'Invalid product ID.'));
+    }
+
+    const existingProduct = await ProductModel.findById(id);
+    if (!existingProduct) {
+      return next(handleError(404, 'Product not found.'));
+    }
+
+    const payload = await buildProductPayload({ req, existingProduct });
+    const sanitizedPayload = cleanForUpdate(payload);
+
+    const { error } = productUpdateValidationSchema.validate(sanitizedPayload, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+    if (error) {
+      return next(handleError(400, error.details.map((detail) => detail.message).join(' ')));
+    }
+
+    await ensureUniqueSlug(sanitizedPayload.slug, id);
+
+    const previousImages = mergeImageArrays(existingProduct.image, existingProduct.images, existingProduct.gallery);
+    const updatedImages = mergeImageArrays(
+      sanitizedPayload.image,
+      sanitizedPayload.images,
+      sanitizedPayload.gallery
+    );
+
+    const staleImages = previousImages.filter((image) => !updatedImages.includes(image));
+    await Promise.all(
+      staleImages.map(async (imageUrl) => {
+        const imageName = imageUrl?.split('/uploads/')[1];
+        if (!imageName) {
+          return;
+        }
+        const imagePath = path.join(__dirname, '../../uploads', imageName);
+        if (fs.existsSync(imagePath)) {
+          await deleteFile(imagePath);
+        }
+      })
+    );
+
+    const updatedProduct = await ProductModel.findByIdAndUpdate(id, sanitizedPayload, {
+      new: true,
+      runValidators: true,
+    }).populate('categoryId variety');
+
+    if (!updatedProduct) {
+      return next(handleError(404, 'Product not found.'));
+    }
+
+    return handleSuccess(res, 200, 'Product updated successfully.', updatedProduct);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return next(handleError(409, 'Product slug already exists.'));
+    }
+    return next(error);
+  }
+};
+
+// Delete Product
+export const deleteProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(handleError(400, 'Invalid product ID.'));
+    }
+
+    const deletedProduct = await ProductModel.findByIdAndDelete(id);
+    if (!deletedProduct) {
+      return next(handleError(404, 'Product not found.'));
+    }
+
+    await removeProductImages(deletedProduct);
+
+    return handleSuccess(res, 200, 'Product deleted successfully.');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get Products by Category (legacy endpoint)
+export const getProductsByCategory = async (req, res, next) => {
+  try {
+    const { category } = req.params;
+    let filter = { isActive: true };
+
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      filter.categoryId = category;
+    } else {
+      const normalizedCategory = String(category).trim();
+      const categoryBySlug = await CategoryModel.findOne({ slug: toSlug(normalizedCategory) }).select('_id').lean();
+      if (categoryBySlug) {
+        filter.categoryId = categoryBySlug._id;
+      } else {
+        filter.category = normalizedCategory;
+      }
+    }
+
+    const products = await ProductModel.find(filter)
+      .populate('categoryId variety')
+      .sort({ createdAt: -1 });
+
+    return handleSuccess(res, 200, 'Products fetched by category successfully.', products);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Get Featured Products
+export const getFeaturedProducts = async (req, res, next) => {
+  try {
+    const products = await ProductModel.find({
+      isActive: true,
+      badge: { $exists: true, $nin: [null, ''] },
+    })
+      .populate('categoryId variety')
+      .sort({ createdAt: -1 });
+
+    return handleSuccess(res, 200, 'Featured products fetched successfully.', products);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm start)",
+      "Bash(dir:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(npx next dev:*)",
+      "Bash(python -m json.tool)",
+      "Bash(ls:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)",
+      "Bash(ping:*)",
+      "Bash(npx next build:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(find:*)"
+    ]
+  }
+}

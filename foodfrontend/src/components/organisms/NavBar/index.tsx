@@ -1,0 +1,238 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { IoMdClose } from "react-icons/io";
+import { FiMenu } from "react-icons/fi";
+import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
+import Logo from "@/components/atoms/Logo";
+import { useCart } from "@/context/CartContext";
+
+const throttle = (func: Function, limit: number) => {
+  let inThrottle: boolean;
+  return function (this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
+
+const leftLinks = [
+  { name: "About Us", href: "/about" },
+  { name: "Yak Chew Future", href: "/future" },
+  { name: "Promise to Dogs", href: "/process" },
+];
+
+const rightLinks = [
+  { name: "FAQs", href: "/testimonials" },
+  { name: "Contacts", href: "/contact" },
+];
+
+export default function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  const pathname = usePathname();
+  const { cartCount } = useCart();
+
+  const isHomepage = pathname === "/";
+  const isTransparentState = isHomepage && scrollY === 0;
+
+  const navbarClasses = useMemo(() => {
+    const base = "fixed top-0 left-0 w-full z-60 transition-all duration-400 ease-out";
+    const visibility = showNavbar ? "translate-y-0" : "-translate-y-full";
+
+    const theme = isTransparentState
+      ? "bg-transparent text-[#2E1F14]"
+      : "backdrop-blur-md bg-white/70 text-[#2E1F14]";
+
+    return `${base} ${visibility} ${theme}`;
+  }, [showNavbar, isTransparentState]);
+
+  const handleScroll = useMemo(
+    () =>
+      throttle(() => {
+        const currentScrollY = window.scrollY;
+        setScrollY(currentScrollY);
+
+        if (currentScrollY === 0) {
+          setShowNavbar(true);
+        } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          setShowNavbar(false);
+        } else {
+          setShowNavbar(true);
+        }
+
+        setLastScrollY(currentScrollY);
+      }, 100),
+    [lastScrollY]
+  );
+
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleMenuItemClick = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  const allLinks = [...leftLinks, ...rightLinks];
+
+  const linkClass = (href: string) =>
+    `relative text-[11px] tracking-[0.18em] uppercase transition-colors duration-200 whitespace-nowrap ${
+      pathname.startsWith(href)
+        ? "text-[#2E1F14] font-medium"
+        : "text-[#5C4033]/80 hover:text-[#2E1F14]"
+    }`;
+
+  return (
+    <nav className={navbarClasses}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 lg:py-5">
+        {/* Desktop Layout: Left Links | Center Logo | Right Links + Cart */}
+        <div className="hidden md:grid grid-cols-3 items-center">
+          {/* Left Links */}
+          <div className="flex items-center gap-5 lg:gap-7">
+            {leftLinks.map((link) => (
+              <Link key={link.name} href={link.href} className={linkClass(link.href)}>
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Center Logo */}
+          <Link href="/" className="flex flex-col items-center justify-center gap-1 cursor-pointer">
+            <Logo index={isTransparentState ? 1 : 0} />
+            <span className="font-antique text-2xl lg:text-[28px] text-[#2E1F14] tracking-[0.04em] leading-tight font-bold">
+              Highland Dogchew
+            </span>
+          </Link>
+
+          {/* Right Links + Social Icons + Cart */}
+          <div className="flex items-center justify-end gap-5 lg:gap-7">
+            {rightLinks.map((link) => (
+              <Link key={link.name} href={link.href} className={linkClass(link.href)}>
+                {link.name}
+              </Link>
+            ))}
+            <div className="flex items-center gap-3 ml-1">
+              <a href="#" aria-label="Instagram">
+                <FaInstagram className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+              </a>
+              <a href="#" aria-label="TikTok">
+                <FaTiktok className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+              </a>
+              <a href="#" aria-label="Email">
+                <FaEnvelope className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+              </a>
+              <a href="#" aria-label="Facebook">
+                <FaFacebook className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+              </a>
+              <Link href="/cart" className="relative ml-1" aria-label="Shopping cart">
+                <FaShoppingCart className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#2E1F14] text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Layout: Hamburger | Center Logo | Cart */}
+        <div className="flex md:hidden items-center justify-between">
+          <button
+            onClick={toggleMenu}
+            className="text-2xl text-[#2E1F14] p-1"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <IoMdClose /> : <FiMenu />}
+          </button>
+
+          <Link href="/" className="flex items-center gap-2 cursor-pointer">
+            <Logo index={isTransparentState ? 1 : 0} />
+            <span className="font-antique text-xl text-[#2E1F14] tracking-[0.03em] font-bold">
+              Highland Dogchew
+            </span>
+          </Link>
+
+          <Link href="/cart" className="relative" aria-label="Shopping cart">
+            <FaShoppingCart className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-[#2E1F14] text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white/90 backdrop-blur-md text-[#2E1F14] px-4 py-6 absolute top-full left-0 w-full z-50">
+          <ul className="space-y-1">
+            {allLinks.map((link) => (
+              <li key={link.name}>
+                <Link
+                  href={link.href}
+                  onClick={handleMenuItemClick}
+                  className={`block px-4 py-3 text-sm tracking-[0.12em] uppercase transition-colors duration-200 ${
+                    pathname.startsWith(link.href)
+                      ? "text-[#2E1F14] font-medium"
+                      : "text-[#5C4033]/80 hover:text-[#2E1F14]"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
+
+            <li className="px-4 py-2">
+              <div className="border-t border-[#2E1F14]/10" />
+            </li>
+
+            <li className="px-4">
+              <Link
+                href="/products"
+                onClick={handleMenuItemClick}
+                className="block border border-[#2E1F14] text-[#2E1F14] text-xs text-center px-4 py-3 rounded-full tracking-[0.2em] uppercase transition-all duration-300 hover:bg-[#2E1F14] hover:text-white"
+              >
+                Shop Now
+              </Link>
+            </li>
+
+            {/* Mobile social icons */}
+            <li className="flex items-center justify-center gap-5 pt-3 pb-1">
+              <a href="#" aria-label="Instagram">
+                <FaInstagram className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+              </a>
+              <a href="#" aria-label="TikTok">
+                <FaTiktok className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+              </a>
+              <a href="#" aria-label="Email">
+                <FaEnvelope className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+              </a>
+              <a href="#" aria-label="Facebook">
+                <FaFacebook className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+              </a>
+            </li>
+          </ul>
+        </div>
+      )}
+    </nav>
+  );
+}
