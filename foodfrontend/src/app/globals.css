@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-playfair: var(--font-playfair), 'Playfair Display', serif;
   --font-cormorant: var(--font-cormorant), 'Cormorant Garamond', serif;
@@ -92,7 +95,13 @@ section {
 }
 
 body {
-  background-color: #F5F5F5 !important;
+  background-color: #f8f3ea !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background-color: #1a1410 !important;
+  color: #f5e9dc;
 }
 
 .fade-out-mask {
@@ -108,6 +117,9 @@ body {
   pointer-events: none;
   background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%);
   border-radius: 0 0 0.75rem 0.75rem;
+}
+.dark .fade-out-mask:after {
+  background: linear-gradient(to bottom, rgba(26,20,16,0) 0%, #1a1410 100%);
 }
 
 .text-justify {

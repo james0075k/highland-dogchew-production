@@ -10,6 +10,7 @@ import GoToTop from "@/components/organisms/GoToTop/GoToTop";
 import WhatsappWidget from "@/components/organisms/WhatsappWidget/WhatsappWidget";
 import TopNavbar from "@/components/organisms/NavBar/TopNavbar/TopNavbar";
 import { CartProvider } from "@/context/CartContext";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -50,20 +51,19 @@ export default async function RootLayout({
 }) {
 
   return (
-    <html lang="en" className={`${dmSans.variable} ${playfair.variable} ${cormorant.variable} ${dmSerifDisplay.variable}`}>
-      <body className="antialiased ">
-        <CartProvider>
-          {/* <TopNavbar/> */}
-          <Navbar
-          />
-          {children}
-          <Footer
-
-          />
-          <GoToTop/>
-          {/* <ChatbotWidget/> */}
-          <WhatsappWidget/>
-        </CartProvider>
+    <html lang="en" suppressHydrationWarning className={`${dmSans.variable} ${playfair.variable} ${cormorant.variable} ${dmSerifDisplay.variable}`}>
+      <body className="antialiased">
+        <ThemeProvider>
+          <CartProvider>
+            {/* <TopNavbar/> */}
+            <Navbar />
+            {children}
+            <Footer />
+            <GoToTop/>
+            {/* <ChatbotWidget/> */}
+            <WhatsappWidget/>
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

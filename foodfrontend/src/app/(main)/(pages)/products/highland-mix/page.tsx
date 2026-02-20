@@ -44,23 +44,23 @@ export default function HighlandMixPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0]">
+    <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0] dark:from-[#1a1410] dark:to-[#241b16] transition-colors duration-300">
       <section className="pt-32 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 mb-8 text-amber-600 hover:text-amber-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 mb-8 text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             All Products
           </Link>
 
           <div className="text-center mb-12">
-            <span className="inline-block text-amber-600 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Premium Blend</span>
-            <h1 className="text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4">
+            <span className="inline-block text-amber-600 dark:text-amber-500 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Premium Blend</span>
+            <h1 className="text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4">
               Highland Mix Chews
             </h1>
-            <p className="text-lg text-[#7A5C4F] max-w-2xl mx-auto">
+            <p className="text-lg text-[#7A5C4F] dark:text-[#c8b6a6] max-w-2xl mx-auto">
               A premium blend of Himalayan ingredients for a unique chewing experience.
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function HighlandMixPage() {
             <div className="py-16 flex items-center justify-center">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading highland mix chews...</p>
+                <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Loading highland mix chews...</p>
               </div>
             </div>
           )}
@@ -90,7 +90,7 @@ export default function HighlandMixPage() {
 
           {!loading && !error && products.length === 0 && (
             <div className="py-16 text-center">
-              <p className="text-gray-500 text-lg">No highland mix chews found</p>
+              <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-lg">No highland mix chews found</p>
             </div>
           )}
 

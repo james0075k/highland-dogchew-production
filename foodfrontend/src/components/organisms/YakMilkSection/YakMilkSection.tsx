@@ -43,7 +43,7 @@ export default function YakMilkSection() {
       <div className="py-16 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading yak milk chews...</p>
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Loading yak milk chews...</p>
         </div>
       </div>
     );
@@ -68,7 +68,7 @@ export default function YakMilkSection() {
   if (products.length === 0) {
     return (
       <div className="py-16 text-center">
-        <p className="text-gray-500 text-lg">No yak milk chews found</p>
+        <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-lg">No yak milk chews found</p>
       </div>
     );
   }
@@ -79,13 +79,13 @@ export default function YakMilkSection() {
   });
 
   return (
-    <section className="py-16 md:py-20 px-4">
+    <section className="py-16 md:py-20 px-4 transition-colors duration-300">
       <div className="max-w-7xl mx-auto text-center mb-10">
-        <span className="inline-block text-amber-600 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Best Sellers</span>
-        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4 tracking-[-0.01em]">
+        <span className="inline-block text-amber-600 dark:text-amber-500 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Best Sellers</span>
+        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4 tracking-[-0.01em]">
           Yak Milk Chews
         </h2>
-        <p className="text-lg text-[#7A5C4F]">
+        <p className="text-lg text-[#7A5C4F] dark:text-[#c8b6a6]">
           100% Natural, Full Of Protein & Calcium
         </p>
       </div>

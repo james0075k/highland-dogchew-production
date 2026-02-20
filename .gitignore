@@ -2,3 +2,35 @@ node_modules/
 .env
 .env.local
 .env.production
+.vscode
+# Ignore everything by default
+*
+
+# Allow testweb folder
+!testweb/
+
+# Inside testweb, ignore everything
+testweb/*
+
+# Allow ONLY these two folders
+!testweb/foodfrontend/
+!testweb/FusionBackend-main/
+
+# Allow their contents
+!testweb/foodfrontend/**
+!testweb/FusionBackend-main/**
+
+# Ignore node_modules everywhere
+node_modules/
+
+# Ignore env files
+.env
+.env.local
+.env.production
+
+# Ignore vscode
+.vscode/
+# Ignore Claude folder
+.claude/
+
+testweb/.claude/

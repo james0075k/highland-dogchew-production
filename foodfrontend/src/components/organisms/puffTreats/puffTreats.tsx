@@ -43,7 +43,7 @@ export default function PuffTreatsSection() {
       <div className="py-16 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading puff treats...</p>
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Loading puff treats...</p>
         </div>
       </div>
     );
@@ -73,13 +73,13 @@ export default function PuffTreatsSection() {
   });
 
   return (
-    <section className="py-16 md:py-20 px-4">
+    <section className="py-16 md:py-20 px-4 transition-colors duration-300">
       <div className="max-w-7xl mx-auto text-center mb-10">
-        <span className="inline-block text-amber-600 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Light & Crunchy</span>
-        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4 tracking-[-0.01em]">
+        <span className="inline-block text-amber-600 dark:text-amber-500 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Light & Crunchy</span>
+        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4 tracking-[-0.01em]">
           Puff Treats
         </h2>
-        <p className="text-lg md:text-xl text-[#7A5C4F] font-medium tracking-[0.3px]">
+        <p className="text-lg md:text-xl text-[#7A5C4F] dark:text-[#c8b6a6] font-medium tracking-[0.3px]">
           100% Natural, Full Of Protein & Calcium
         </p>
       </div>

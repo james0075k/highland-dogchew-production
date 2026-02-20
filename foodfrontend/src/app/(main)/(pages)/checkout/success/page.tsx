@@ -39,7 +39,6 @@ export default function CheckoutSuccessPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Clear cart on successful payment
     clearCart();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -69,17 +68,16 @@ export default function CheckoutSuccessPage() {
       }
     };
 
-    // Small delay to allow webhook/order creation to complete
     const timer = setTimeout(fetchOrder, 1500);
     return () => clearTimeout(timer);
   }, [paymentIntent]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-orange-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading your order...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-amber-600 dark:text-amber-400 mx-auto mb-4" />
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Loading your order...</p>
         </div>
       </div>
     );
@@ -87,16 +85,16 @@ export default function CheckoutSuccessPage() {
 
   if (error && !order) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Received</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">Payment Received</h1>
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6] mb-6">
             Your payment was successful but we&apos;re still processing your order. You&apos;ll receive a confirmation email shortly.
           </p>
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-xl transition-colors"
           >
             Continue Shopping
           </Link>
@@ -106,21 +104,21 @@ export default function CheckoutSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] py-12 transition-colors duration-300">
       <div className="max-w-2xl mx-auto px-4">
         {/* Success header */}
         <div className="text-center mb-8">
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">Order Confirmed!</h1>
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">
             Thank you for your order. We&apos;ll send you an email confirmation shortly.
           </p>
         </div>
 
         {order && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white dark:bg-[#241b16] rounded-xl shadow-sm dark:shadow-[0_10px_25px_rgba(0,0,0,0.4)] border border-amber-100 dark:border-[#3a2c23] overflow-hidden transition-colors">
             {/* Order number */}
-            <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
+            <div className="bg-[#2f1e14] dark:bg-[#2a1f18] text-white px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Package className="w-5 h-5" />
                 <span className="font-bold">Order {order.orderNumber}</span>
@@ -132,15 +130,15 @@ export default function CheckoutSuccessPage() {
 
             {/* Items */}
             <div className="p-6">
-              <h3 className="font-bold text-gray-900 mb-3">Items</h3>
+              <h3 className="font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-3">Items</h3>
               <div className="space-y-3">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">{item.size} x {item.quantity}</p>
+                      <p className="font-medium text-[#2f1e14] dark:text-[#f5e9dc]">{item.name}</p>
+                      <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">{item.size} x {item.quantity}</p>
                     </div>
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">
                       £{(item.unitPrice * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -148,29 +146,29 @@ export default function CheckoutSuccessPage() {
               </div>
 
               {/* Totals */}
-              <div className="border-t border-gray-200 mt-4 pt-4 space-y-2 text-sm">
+              <div className="border-t border-amber-200 dark:border-[#3a2c23] mt-4 pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>£{order.subtotal.toFixed(2)}</span>
+                  <span className="text-[#7A5C4F] dark:text-[#c8b6a6]">Subtotal</span>
+                  <span className="text-[#2f1e14] dark:text-[#f5e9dc]">£{order.subtotal.toFixed(2)}</span>
                 </div>
                 {order.totalDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-green-600 dark:text-green-400">
                     <span>Discount</span>
                     <span>-£{order.totalDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tax</span>
-                  <span>£{order.totalTax.toFixed(2)}</span>
+                  <span className="text-[#7A5C4F] dark:text-[#c8b6a6]">Tax</span>
+                  <span className="text-[#2f1e14] dark:text-[#f5e9dc]">£{order.totalTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Delivery</span>
-                  <span>£{order.totalDelivery.toFixed(2)}</span>
+                  <span className="text-[#7A5C4F] dark:text-[#c8b6a6]">Delivery</span>
+                  <span className="text-[#2f1e14] dark:text-[#f5e9dc]">£{order.totalDelivery.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-gray-200 pt-3">
+                <div className="border-t border-amber-200 dark:border-[#3a2c23] pt-3">
                   <div className="flex justify-between">
-                    <span className="text-lg font-bold text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-orange-600">
+                    <span className="text-lg font-bold text-[#2f1e14] dark:text-[#f5e9dc]">Total</span>
+                    <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
                       £{order.grandTotal.toFixed(2)}
                     </span>
                   </div>
@@ -178,9 +176,9 @@ export default function CheckoutSuccessPage() {
               </div>
 
               {/* Shipping */}
-              <div className="border-t border-gray-200 mt-4 pt-4">
-                <h3 className="font-bold text-gray-900 mb-2">Shipping To</h3>
-                <p className="text-gray-600 text-sm">
+              <div className="border-t border-amber-200 dark:border-[#3a2c23] mt-4 pt-4">
+                <h3 className="font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">Shipping To</h3>
+                <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm">
                   {order.shippingAddress.fullName}<br />
                   {order.shippingAddress.city}, {order.shippingAddress.postcode}
                 </p>
@@ -192,7 +190,7 @@ export default function CheckoutSuccessPage() {
         <div className="text-center mt-8">
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-xl transition-colors"
           >
             Continue Shopping
           </Link>

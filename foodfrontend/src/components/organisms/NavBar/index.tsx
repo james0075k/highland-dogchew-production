@@ -48,8 +48,8 @@ export default function Navbar() {
     const visibility = showNavbar ? "translate-y-0" : "-translate-y-full";
 
     const theme = isTransparentState
-      ? "bg-transparent text-[#2E1F14]"
-      : "backdrop-blur-md bg-white/70 text-[#2E1F14]";
+      ? "bg-transparent text-[#2E1F14] dark:text-[#f5e9dc]"
+      : "backdrop-blur-md bg-white/70 dark:bg-[#1a1410]/80 text-[#2E1F14] dark:text-[#f5e9dc]";
 
     return `${base} ${visibility} ${theme}`;
   }, [showNavbar, isTransparentState]);
@@ -95,8 +95,8 @@ export default function Navbar() {
   const linkClass = (href: string) =>
     `relative text-[11px] tracking-[0.18em] uppercase transition-colors duration-200 whitespace-nowrap ${
       pathname.startsWith(href)
-        ? "text-[#2E1F14] font-medium"
-        : "text-[#5C4033]/80 hover:text-[#2E1F14]"
+        ? "text-[#2E1F14] dark:text-[#f5e9dc] font-medium"
+        : "text-[#5C4033]/80 dark:text-[#c8b6a6]/80 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]"
     }`;
 
   return (
@@ -116,7 +116,7 @@ export default function Navbar() {
           {/* Center Logo */}
           <Link href="/" className="flex flex-col items-center justify-center gap-1 cursor-pointer">
             <Logo index={isTransparentState ? 1 : 0} />
-            <span className="font-antique text-2xl lg:text-[28px] text-[#2E1F14] tracking-[0.04em] leading-tight font-bold">
+            <span className="font-antique text-2xl lg:text-[28px] text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.04em] leading-tight font-bold">
               Highland Dogchew
             </span>
           </Link>
@@ -130,19 +130,19 @@ export default function Navbar() {
             ))}
             <div className="flex items-center gap-3 ml-1">
               <a href="#" aria-label="Instagram">
-                <FaInstagram className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
               </a>
               <a href="#" aria-label="TikTok">
-                <FaTiktok className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
               </a>
               <a href="#" aria-label="Email">
-                <FaEnvelope className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
               </a>
               <a href="#" aria-label="Facebook">
-                <FaFacebook className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
               </a>
               <Link href="/cart" className="relative ml-1" aria-label="Shopping cart">
-                <FaShoppingCart className="text-[#2E1F14] text-lg hover:text-[#7A5C4F] transition-colors duration-200" />
+                <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
                     {cartCount > 9 ? "9+" : cartCount}
@@ -157,7 +157,7 @@ export default function Navbar() {
         <div className="flex md:hidden items-center justify-between">
           <button
             onClick={toggleMenu}
-            className="text-2xl text-[#2E1F14] p-1"
+            className="text-2xl text-[#2E1F14] dark:text-[#f5e9dc] p-1"
             aria-label="Toggle menu"
           >
             {isMenuOpen ? <IoMdClose /> : <FiMenu />}
@@ -165,13 +165,13 @@ export default function Navbar() {
 
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
             <Logo index={isTransparentState ? 1 : 0} />
-            <span className="font-antique text-xl text-[#2E1F14] tracking-[0.03em] font-bold">
+            <span className="font-antique text-xl text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.03em] font-bold">
               Highland Dogchew
             </span>
           </Link>
 
           <Link href="/cart" className="relative" aria-label="Shopping cart">
-            <FaShoppingCart className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
+            <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
             {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
                 {cartCount > 9 ? "9+" : cartCount}
@@ -183,7 +183,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white/90 backdrop-blur-md text-[#2E1F14] px-4 py-6 absolute top-full left-0 w-full z-50">
+        <div className="md:hidden bg-white/90 dark:bg-[#241b16]/95 backdrop-blur-md text-[#2E1F14] dark:text-[#f5e9dc] px-4 py-6 absolute top-full left-0 w-full z-50 border-t border-amber-100 dark:border-[#3a2c23]">
           <ul className="space-y-1">
             {allLinks.map((link) => (
               <li key={link.name}>
@@ -192,8 +192,8 @@ export default function Navbar() {
                   onClick={handleMenuItemClick}
                   className={`block px-4 py-3 text-sm tracking-[0.12em] uppercase transition-colors duration-200 ${
                     pathname.startsWith(link.href)
-                      ? "text-[#2E1F14] font-medium"
-                      : "text-[#5C4033]/80 hover:text-[#2E1F14]"
+                      ? "text-[#2E1F14] dark:text-[#f5e9dc] font-medium"
+                      : "text-[#5C4033]/80 dark:text-[#c8b6a6]/80 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]"
                   }`}
                 >
                   {link.name}
@@ -202,7 +202,7 @@ export default function Navbar() {
             ))}
 
             <li className="px-4 py-2">
-              <div className="border-t border-[#2E1F14]/10" />
+              <div className="border-t border-[#2E1F14]/10 dark:border-[#3a2c23]" />
             </li>
 
             <li className="px-4">
@@ -218,16 +218,16 @@ export default function Navbar() {
             {/* Mobile social icons */}
             <li className="flex items-center justify-center gap-5 pt-3 pb-1">
               <a href="#" aria-label="Instagram">
-                <FaInstagram className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+                <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
               </a>
               <a href="#" aria-label="TikTok">
-                <FaTiktok className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+                <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
               </a>
               <a href="#" aria-label="Email">
-                <FaEnvelope className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+                <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
               </a>
               <a href="#" aria-label="Facebook">
-                <FaFacebook className="text-[#2E1F14] text-xl hover:text-[#7A5C4F] transition-colors" />
+                <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
               </a>
             </li>
           </ul>

@@ -70,7 +70,7 @@ const VarietiesSection = () => {
   return (
     <section className="max-w-7xl mx-auto px-6 py-4">
       <div className="text-center mb-12">
-        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4 tracking-[-0.01em]">
+        <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4 tracking-[-0.01em]">
           Our Special Varieties
         </h2>
       </div>
@@ -147,7 +147,7 @@ const VarietiesSection = () => {
           {currentIndex > 0 && (
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg z-10"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-[#241b16]/80 hover:bg-white dark:hover:bg-[#241b16] text-[#2E1F14] dark:text-[#f5e9dc] p-3 rounded-full shadow-lg z-10"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -156,7 +156,7 @@ const VarietiesSection = () => {
           {currentIndex < maxIndex && (
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg z-10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-[#241b16]/80 hover:bg-white dark:hover:bg-[#241b16] text-[#2E1F14] dark:text-[#f5e9dc] p-3 rounded-full shadow-lg z-10"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
@@ -171,8 +171,8 @@ const VarietiesSection = () => {
               onClick={() => goToSlide(index)}
               className={`transition-all duration-300 rounded-full ${
                 index === currentIndex
-                  ? 'w-8 h-3 bg-cyan-500'
-                  : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                  ? 'w-8 h-3 bg-amber-500 dark:bg-amber-600'
+                  : 'w-3 h-3 bg-[#2E1F14]/20 dark:bg-[#f5e9dc]/20 hover:bg-[#2E1F14]/40 dark:hover:bg-[#f5e9dc]/40'
               }`}
             />
           ))}

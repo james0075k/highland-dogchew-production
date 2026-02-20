@@ -91,18 +91,18 @@ const InstagramFeedSection = () => {
   ];
 
   return (
-    <section className="w-full  py-4">
+    <section className="w-full py-4 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] mb-4 tracking-[-0.01em]">
+          <h2 className="font-antique text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4 tracking-[-0.01em]">
             Follow Us On Instagram
           </h2>
           <a
             href="https://instagram.com/yourhandle"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-lg text-gray-600 hover:text-pink-600 transition-colors"
+            className="inline-flex items-center gap-2 text-lg text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
           >
             <Instagram className="w-6 h-6" />
             @highlandchurpi
@@ -117,7 +117,7 @@ const InstagramFeedSection = () => {
               href={post.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative aspect-square overflow-hidden rounded-lg bg-gray-200 hover:shadow-2xl transition-all duration-300"
+              className="group relative aspect-square overflow-hidden rounded-lg bg-[#e8dfd1] dark:bg-[#241b16] hover:shadow-2xl transition-all duration-300"
             >
               {/* Thumbnail */}
               <img
@@ -167,7 +167,7 @@ const InstagramFeedSection = () => {
         <div className="text-center mt-8">
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="inline-flex items-center justify-center w-12 h-12 bg-white hover:bg-gray-100 text-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+            className="inline-flex items-center justify-center w-12 h-12 bg-white dark:bg-[#241b16] hover:bg-[#f8f3ea] dark:hover:bg-[#2a1f18] text-[#2E1F14] dark:text-[#f5e9dc] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
             aria-label="Scroll to top"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
