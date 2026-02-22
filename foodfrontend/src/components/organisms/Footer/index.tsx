@@ -4,6 +4,7 @@ import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex
 import { FiMail, FiPhone, FiMapPin } from "react-icons/fi";
 import Logo from "@/components/atoms/Logo";
 import { ContactInfo } from "@/types";
+import { useState, useEffect } from "react";
 
 const companyLinks = [
   { label: "About Us", href: "/about" },
@@ -26,29 +27,39 @@ interface FooterProps {
   contactInfo?: ContactInfo;
 }
 
-export default function Footer({ destinations = [], activities = [], contactInfo }: FooterProps) {
+export default function Footer({ destinations = [], activities = [], contactInfo: contactInfoProp }: FooterProps) {
+  const [contactInfo, setContactInfo] = useState<ContactInfo | undefined>(contactInfoProp);
+
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL;
+    fetch(`${API}/info`)
+      .then(r => r.json())
+      .then(data => { if (data.success && data.data) setContactInfo(data.data); })
+      .catch(() => {});
+  }, []);
+
   const socialLinks = [
     {
       Icon: FaInstagram,
-      link: contactInfo?.socialLinks?.instagram || "#",
+      link: contactInfo?.socialLinks?.instagram || "",
       label: "Instagram"
     },
     {
       Icon: FaFacebookF,
-      link: contactInfo?.socialLinks?.facebook || "#",
+      link: contactInfo?.socialLinks?.facebook || "",
       label: "Facebook"
     },
     {
       Icon: FaYoutube,
-      link: "#",
+      link: "",
       label: "YouTube"
     },
     {
       Icon: FaLinkedin,
-      link: contactInfo?.socialLinks?.linkedin || "#",
+      link: contactInfo?.socialLinks?.linkedin || "",
       label: "LinkedIn"
     },
-  ];
+  ].filter(s => s.link !== "");
 
   return (
     <footer className="bg-gradient-to-b from-[#F4EDE4] to-[#E8DFD1] dark:from-[#1f1812] dark:to-[#18120e] transition-colors duration-300">
@@ -118,24 +129,30 @@ export default function Footer({ destinations = [], activities = [], contactInfo
           <div>
             <h4 className="text-sm font-bold text-[#2E1F14] dark:text-[#f5e9dc] uppercase tracking-[0.15em] mb-5">Get In Touch</h4>
             <ul className="space-y-3.5 text-sm">
-              <li>
-                <a href="mailto:highlandchew12@gmail.com" className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
-                  <FiMail className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
-                  <span>highlandchew12@gmail.com</span>
-                </a>
-              </li>
-              <li>
-                <a href="tel:+441972537122" className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
-                  <FiPhone className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
-                  <span>+44 1972 537122</span>
-                </a>
-              </li>
-              <li>
-                <div className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6]">
-                  <FiMapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600" />
-                  <span>Highland, UK</span>
-                </div>
-              </li>
+              {contactInfo?.email && (
+                <li>
+                  <a href={`mailto:${contactInfo.email}`} className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
+                    <FiMail className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
+                    <span>{contactInfo.email}</span>
+                  </a>
+                </li>
+              )}
+              {(contactInfo?.phone || contactInfo?.phones?.[0]) && (
+                <li>
+                  <a href={`tel:${contactInfo.phone || contactInfo.phones?.[0]}`} className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
+                    <FiPhone className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
+                    <span>{contactInfo.phone || contactInfo.phones?.[0]}</span>
+                  </a>
+                </li>
+              )}
+              {contactInfo?.address && (
+                <li>
+                  <div className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6]">
+                    <FiMapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600" />
+                    <span>{contactInfo.address}</span>
+                  </div>
+                </li>
+              )}
             </ul>
           </div>
 

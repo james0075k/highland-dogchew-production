@@ -3,11 +3,31 @@
 import Link from "next/link";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 import { IoMdClose } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
 import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
 import Logo from "@/components/atoms/Logo";
 import { useCart } from "@/context/CartContext";
+
+function ThemeToggle({ className = "" }: { className?: string }) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="w-7 h-7" />;
+
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      aria-label="Toggle theme"
+      className={`flex items-center justify-center w-7 h-7 rounded-full transition-colors duration-200 text-[#2E1F14] dark:text-[#c8b6a6] hover:text-[#7A5C4F] dark:hover:text-amber-400 ${className}`}
+    >
+      {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+    </button>
+  );
+}
 
 const throttle = (func: Function, limit: number) => {
   let inThrottle: boolean;
@@ -149,6 +169,7 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -170,14 +191,17 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <Link href="/cart" className="relative" aria-label="Shopping cart">
-            <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
-                {cartCount > 9 ? "9+" : cartCount}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link href="/cart" className="relative" aria-label="Shopping cart">
+              <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 

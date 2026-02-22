@@ -48,10 +48,11 @@ export default function AdminLoginPage() {
       }
 
       if (data.data?.accessToken) {
-        Cookies.set('token', data.data.accessToken);
+        Cookies.set('token', data.data.accessToken, { expires: 1, path: '/' }); // 1-day persistent cookie
+        localStorage.setItem('adminToken', data.data.accessToken); // localStorage fallback
       }
       if (data.data?.refreshToken) {
-        Cookies.set('refreshToken', data.data.refreshToken);
+        Cookies.set('refreshToken', data.data.refreshToken, { expires: 7, path: '/' }); // 7-day persistent cookie
       }
 
       router.push('/dashboard');

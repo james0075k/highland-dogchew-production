@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
 
   // Protect all /dashboard routes
   if (pathname.startsWith('/dashboard')) {
-    const token = request.cookies.get('token');
+    // Check both the JS-accessible cookie set by login page and the httpOnly cookie from backend
+    const token = request.cookies.get('token') || request.cookies.get('accessToken');
     if (!token) {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
