@@ -4,8 +4,8 @@ import { authenticate, authorizeRoles } from '../middlewares/authMiddleware/auth
 
 const contactinfoRoute = Router();
 
-contactinfoRoute.post('/',  authenticate, authorizeRoles('admin'), saveContactInfo);   // Create or Update
+contactinfoRoute.post('/',  authenticate, authorizeRoles('admin', 'superadmin'), saveContactInfo);   // Create or Update
 contactinfoRoute.get('/', getContactInfo);         // Get
-contactinfoRoute.delete('/', authenticate, authorizeRoles('admin'), deleteContactInfo);   // Delete
+contactinfoRoute.delete('/', authenticate, authorizeRoles('admin', 'superadmin'), deleteContactInfo);   // Delete
 
 export default contactinfoRoute;
