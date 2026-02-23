@@ -9,7 +9,15 @@ const sizeSchema = new mongoose.Schema({
   value: {
     type: String,
     required: true,
-  }
+  },
+  price: {
+    type: Number,
+    default: null,
+  },
+  originalPrice: {
+    type: Number,
+    default: null,
+  },
 }, { _id: false });
 
 const bulkPricingSchema = new mongoose.Schema({

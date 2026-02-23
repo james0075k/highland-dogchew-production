@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import {
   X,
   Plus,
@@ -33,7 +34,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     rating: '0',
     reviews: '0',
     features: [''],
-    sizes: [{ label: '', value: '' }],
+    sizes: [{ label: '', value: '', price: '', originalPrice: '' }],
     bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
     // Advanced pricing settings
     taxPercentage: '0',
@@ -151,7 +152,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   const removeFeature = (index) =>
     setFormData((prev) => ({ ...prev, features: prev.features.filter((_, i) => i !== index) }));
 
-  const addSize = () => setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, { label: '', value: '' }] }));
+  const addSize = () => setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, { label: '', value: '', price: '', originalPrice: '' }] }));
   const updateSize = (index, field, value) => {
     const newSizes = [...formData.sizes];
     newSizes[index][field] = value;
@@ -187,7 +188,14 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       rating: (product.rating ?? 0).toString(),
       reviews: (product.reviews ?? 0).toString(),
       features: product.features?.length ? product.features : [''],
-      sizes: product.sizes?.length ? product.sizes : [{ label: '', value: '' }],
+      sizes: product.sizes?.length
+        ? product.sizes.map((s: any) => ({
+            label: s.label || '',
+            value: s.value || '',
+            price: (s.price != null ? s.price : '').toString(),
+            originalPrice: (s.originalPrice != null ? s.originalPrice : '').toString(),
+          }))
+        : [{ label: '', value: '', price: '', originalPrice: '' }],
       bulkPricing: product.bulkPricing?.length
         ? product.bulkPricing
         : [{ quantity: '', price: '', originalPrice: '', discount: '' }],
@@ -218,7 +226,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       rating: '0',
       reviews: '0',
       features: [''],
-      sizes: [{ label: '', value: '' }],
+      sizes: [{ label: '', value: '', price: '', originalPrice: '' }],
       bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
       taxPercentage: '0',
       deliveryCharge: '0',
@@ -244,7 +252,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       const response = await fetch(`${API_BASE}/products/${productToDelete._id}`, {
         method: 'DELETE',
@@ -304,7 +312,16 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       formDataToSend.append('reviews', formData.reviews);
 
       formDataToSend.append('features', JSON.stringify(formData.features.filter((f) => f.trim() !== '')));
-      formDataToSend.append('sizes', JSON.stringify(formData.sizes.filter((s) => s.label && s.value)));
+      formDataToSend.append('sizes', JSON.stringify(
+        formData.sizes
+          .filter((s) => s.label && s.value)
+          .map((s) => ({
+            label: s.label,
+            value: s.value,
+            ...(s.price ? { price: parseFloat(s.price) } : {}),
+            ...(s.originalPrice ? { originalPrice: parseFloat(s.originalPrice) } : {}),
+          }))
+      ));
       formDataToSend.append('bulkPricing', JSON.stringify(formData.bulkPricing.filter((bp) => bp.quantity && bp.price)));
 
       // Advanced pricing settings
@@ -324,7 +341,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
         formDataToSend.append('gallery', file);
       });
 
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       const url = editingProduct
         ? `${API_BASE}/products/${editingProduct._id}`
@@ -705,7 +722,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
 
             <div className="border-b pb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Sizes</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-700">Sizes</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Price per size is optional — leave blank to use the product base price</p>
+                </div>
                 <button
                   type="button"
                   onClick={addSize}
@@ -716,26 +736,50 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                 </button>
               </div>
               <div className="space-y-3">
+                <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-500 px-1">
+                  <span>Label (Display)</span>
+                  <span>Value (ID)</span>
+                  <span>Sale Price £</span>
+                  <span>Original Price £</span>
+                </div>
                 {formData.sizes.map((size, index) => (
-                  <div key={index} className="flex gap-2">
+                  <div key={index} className="flex gap-2 items-center">
                     <input
                       type="text"
                       value={size.label}
                       onChange={(e) => updateSize(index, 'label', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
                       placeholder="Small 30-40g"
                     />
                     <input
                       type="text"
                       value={size.value}
                       onChange={(e) => updateSize(index, 'value', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="SMALL 30-40G"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      placeholder="small-30-40g"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={size.price}
+                      onChange={(e) => updateSize(index, 'price', e.target.value)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      placeholder="4.49"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={size.originalPrice}
+                      onChange={(e) => updateSize(index, 'originalPrice', e.target.value)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                      placeholder="7.50"
                     />
                     <button
                       type="button"
                       onClick={() => removeSize(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                      className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

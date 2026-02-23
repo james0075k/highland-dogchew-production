@@ -14,6 +14,8 @@ export interface CartItem {
   originalPrice: number;
   tax: number;       // per-item tax
   delivery: number;  // per-item delivery
+  isSubscription?: boolean;
+  subscriptionInterval?: string;
 }
 
 export interface PromoInfo {

@@ -58,7 +58,7 @@ export const getTestimonialById = async (req, res, next) => {
 export const updateTestimonial = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, message, designation } = req.body;
+    const { name, message, position, rating, location } = req.body;
 
     const testimonial = await TestimonialModel.findById(id);
     if (!testimonial) {
@@ -68,7 +68,9 @@ export const updateTestimonial = async (req, res, next) => {
     // Update text fields
     if (name) testimonial.name = name;
     if (message) testimonial.message = message;
-    if (designation) testimonial.designation = designation;
+    if (position) testimonial.position = position;
+    if (location) testimonial.location = location;
+    if (rating) testimonial.rating = parseFloat(rating);
 
     // Handle image replacement
     if (req.file) {

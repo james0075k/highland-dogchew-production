@@ -8,7 +8,7 @@ import {
   FiCheck, FiSettings, FiMessageCircle, FiAlertCircle,
   FiTrash2, FiPlus, FiLock, FiEye, FiEyeOff, FiShield,
 } from "react-icons/fi";
-import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter, FaTiktok } from "react-icons/fa";
 
 /* ─── types ──────────────────────────────────────────────────────────── */
 type TabType = "general" | "faq" | "password" | "terms";
@@ -100,7 +100,7 @@ export default function SettingsPage() {
   const [contactData, setContactData] = useState({
     _id: "", address: "", phone: "", email: "", phones: [] as string[],
     whatsappNumber: "",
-    socialLinks: { facebook: "", instagram: "", linkedin: "", twitter: "" },
+    socialLinks: { facebook: "", instagram: "", linkedin: "", twitter: "", tiktok: "" },
   });
   const [contactSaving, setContactSaving] = useState(false);
 
@@ -147,6 +147,7 @@ export default function SettingsPage() {
               instagram: i.socialLinks?.instagram || "",
               linkedin:  i.socialLinks?.linkedin  || "",
               twitter:   i.socialLinks?.twitter   || "",
+              tiktok:    i.socialLinks?.tiktok    || "",
             },
           });
         }
@@ -435,6 +436,7 @@ export default function SettingsPage() {
                     { key: "instagram", icon: <FaInstagram className="text-pink-500"  size={13} /> },
                     { key: "linkedin",  icon: <FaLinkedin  className="text-sky-600"   size={13} /> },
                     { key: "twitter",   icon: <FaTwitter   className="text-sky-400"   size={13} /> },
+                    { key: "tiktok",    icon: <FaTiktok    className="text-gray-800"  size={13} /> },
                   ] as const).map(({ key, icon }) => (
                     <div key={key} className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2">{icon}</span>

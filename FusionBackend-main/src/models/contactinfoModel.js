@@ -17,6 +17,7 @@ const contactInfoSchema = new mongoose.Schema(
       linkedin: { type: String, default: '' },
       twitter: { type: String, default: '' },
       instagram: { type: String, default: '' },
+      tiktok: { type: String, default: '' },
     },
   },
   { timestamps: true }

@@ -10,6 +10,7 @@ import { FiMenu } from "react-icons/fi";
 import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
 import Logo from "@/components/atoms/Logo";
 import { useCart } from "@/context/CartContext";
+import { ContactInfo } from "@/types";
 
 function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, setTheme } = useTheme();
@@ -56,6 +57,7 @@ export default function Navbar() {
   const [scrollY, setScrollY] = useState(0);
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
 
   const pathname = usePathname();
   const { cartCount } = useCart();
@@ -110,6 +112,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL;
+    fetch(`${API}/info`)
+      .then(r => r.json())
+      .then(data => { if (data.success && data.data) setContactInfo(data.data); })
+      .catch(() => {});
+  }, []);
+
   const allLinks = [...leftLinks, ...rightLinks];
 
   const linkClass = (href: string) =>
@@ -149,18 +159,26 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="flex items-center gap-3 ml-1">
-              <a href="#" aria-label="Instagram">
-                <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
-              </a>
-              <a href="#" aria-label="TikTok">
-                <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
-              </a>
-              <a href="#" aria-label="Email">
-                <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
-              </a>
-              <a href="#" aria-label="Facebook">
-                <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
-              </a>
+              {contactInfo?.socialLinks?.instagram && (
+                <a href={contactInfo.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
+                </a>
+              )}
+              {contactInfo?.socialLinks?.tiktok && (
+                <a href={contactInfo.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                  <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
+                </a>
+              )}
+              {contactInfo?.email && (
+                <a href={`mailto:${contactInfo.email}`} aria-label="Email">
+                  <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
+                </a>
+              )}
+              {contactInfo?.socialLinks?.facebook && (
+                <a href={contactInfo.socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
+                </a>
+              )}
               <Link href="/cart" className="relative ml-1" aria-label="Shopping cart">
                 <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
                 {cartCount > 0 && (
@@ -241,18 +259,26 @@ export default function Navbar() {
 
             {/* Mobile social icons */}
             <li className="flex items-center justify-center gap-5 pt-3 pb-1">
-              <a href="#" aria-label="Instagram">
-                <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
-              </a>
-              <a href="#" aria-label="TikTok">
-                <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
-              </a>
-              <a href="#" aria-label="Email">
-                <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
-              </a>
-              <a href="#" aria-label="Facebook">
-                <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
-              </a>
+              {contactInfo?.socialLinks?.instagram && (
+                <a href={contactInfo.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
+                </a>
+              )}
+              {contactInfo?.socialLinks?.tiktok && (
+                <a href={contactInfo.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                  <FaTiktok className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
+                </a>
+              )}
+              {contactInfo?.email && (
+                <a href={`mailto:${contactInfo.email}`} aria-label="Email">
+                  <FaEnvelope className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
+                </a>
+              )}
+              {contactInfo?.socialLinks?.facebook && (
+                <a href={contactInfo.socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
+                </a>
+              )}
             </li>
           </ul>
         </div>

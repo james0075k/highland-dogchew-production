@@ -69,6 +69,7 @@ export interface SocialLinks {
   instagram?: string;
   linkedin?: string;
   twitter?: string;
+  tiktok?: string;
 }
 
 export interface ContactInfo {
