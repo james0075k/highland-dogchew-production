@@ -123,10 +123,10 @@ export default function Navbar() {
   const allLinks = [...leftLinks, ...rightLinks];
 
   const linkClass = (href: string) =>
-    `relative text-[11px] tracking-[0.18em] uppercase transition-colors duration-200 whitespace-nowrap ${
+    `relative text-[13px] tracking-[0.10em] uppercase transition-colors duration-200 whitespace-nowrap font-medium ${
       pathname.startsWith(href)
-        ? "text-[#2E1F14] dark:text-[#f5e9dc] font-medium"
-        : "text-[#5C4033]/80 dark:text-[#c8b6a6]/80 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]"
+        ? "text-[#2E1F14] dark:text-[#f5e9dc] after:absolute after:bottom-[-3px] after:left-0 after:w-full after:h-[2px] after:bg-amber-500 after:rounded-full"
+        : "text-[#5C4033]/70 dark:text-[#c8b6a6]/70 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]"
     }`;
 
   return (
@@ -158,7 +158,9 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <div className="flex items-center gap-3 ml-1">
+            {/* Divider */}
+            <div className="h-4 w-px bg-[#2E1F14]/15 dark:bg-[#f5e9dc]/15 mx-0.5" />
+            <div className="flex items-center gap-3">
               {contactInfo?.socialLinks?.instagram && (
                 <a href={contactInfo.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                   <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
@@ -232,7 +234,7 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   onClick={handleMenuItemClick}
-                  className={`block px-4 py-3 text-sm tracking-[0.12em] uppercase transition-colors duration-200 ${
+                  className={`block px-4 py-3 text-[13px] tracking-[0.10em] uppercase font-medium transition-colors duration-200 ${
                     pathname.startsWith(link.href)
                       ? "text-[#2E1F14] dark:text-[#f5e9dc] font-medium"
                       : "text-[#5C4033]/80 dark:text-[#c8b6a6]/80 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]"

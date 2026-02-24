@@ -32,6 +32,7 @@ import cartPaymentRoute from './src/routes/cartPaymentRoute.js';
 import promoCodeRoute from './src/routes/promoCodeRoute.js';
 import orderRoute from './src/routes/orderRoute.js';
 import productWebhookRoute from './src/routes/productWebhookRoute.js';
+import newsletterRoute from './src/routes/newsletterRoute.js';
 
 
 
@@ -117,6 +118,7 @@ app.use(`/${api}/variety`, varietyRoute);
 app.use(`/${api}/cart-payments`, cartPaymentRoute);
 app.use(`/${api}/promo`, promoCodeRoute);
 app.use(`/${api}/orders`, orderRoute);
+app.use(`/${api}/newsletter`, newsletterRoute);
 
 
 //error middleware route pachi

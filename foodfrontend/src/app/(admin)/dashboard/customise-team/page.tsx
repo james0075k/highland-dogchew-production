@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
 import {
   Upload, Trash2, Save, Edit2, Users, X, Plus, ChevronRight, ChevronLeft,
   Phone, Briefcase, AlertCircle, Check, Loader2,
@@ -46,8 +47,13 @@ const SOCIAL_ICONS: Record<string, string> = {
   instagram: '📷',
 };
 
+function getAuthToken(): string | null {
+  return Cookies.get('token') || (typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null) || null;
+}
+
 export default function TeamDashboard() {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+  const router = useRouter();
 
   const [formData, setFormData] = useState<FormState>(emptyForm);
   const [image, setImage] = useState<File | null>(null);
@@ -160,9 +166,15 @@ export default function TeamDashboard() {
 
   const confirmDelete = async () => {
     if (!memberToDelete?._id) return;
+    const token = getAuthToken();
+    if (!token) {
+      setMessage({ type: 'error', text: 'Session expired. Please log in again.' });
+      setShowDeleteModal(false);
+      setTimeout(() => router.push('/login'), 1500);
+      return;
+    }
     try {
       setLoading(true);
-      const token = Cookies.get('token');
       const res = await fetch(`${API_BASE}/teams/${memberToDelete._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
@@ -195,6 +207,13 @@ export default function TeamDashboard() {
       return;
     }
 
+    const token = getAuthToken();
+    if (!token) {
+      setMessage({ type: 'error', text: 'Session expired. Please log in again.' });
+      setTimeout(() => router.push('/login'), 1500);
+      return;
+    }
+
     setLoading(true);
     setMessage({ type: '', text: '' });
 
@@ -213,7 +232,6 @@ export default function TeamDashboard() {
       fd.append('socialLinks', JSON.stringify(formData.socialLinks));
       if (image) fd.append('image', image);
 
-      const token = Cookies.get('token');
       const url = editingMember
         ? `${API_BASE}/teams/${editingMember._id}`
         : `${API_BASE}/teams`;

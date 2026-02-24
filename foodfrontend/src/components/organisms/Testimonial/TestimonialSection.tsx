@@ -1,200 +1,268 @@
-'use client'
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+'use client';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Quote, Star, BadgeCheck } from 'lucide-react';
 import TextHeader from '@/components/atoms/headings';
 
+interface Testimonial {
+  _id: string;
+  name: string;
+  position?: string;
+  location?: string;
+  rating: number;
+  message: string;
+  profileImage?: string;
+}
+
+// Fallback data shown while API loads or if API returns empty
+const FALLBACK: Testimonial[] = [
+  {
+    _id: 'f1',
+    name: 'Sarah Johnson',
+    position: 'Dog Owner',
+    location: 'UK',
+    rating: 5,
+    message: "My golden retriever absolutely loves these Highland chews! They last so much longer than other treats and I love that they're all-natural. The quality is outstanding.",
+    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+  },
+  {
+    _id: 'f2',
+    name: 'Michael Chen',
+    position: 'Veterinarian',
+    location: 'UK',
+    rating: 5,
+    message: "As a veterinarian, I'm always careful about what I recommend. HimShree's Churpi chews are one of the few products I confidently suggest — safe, healthy, and dogs genuinely love them.",
+    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
+  },
+  {
+    _id: 'f3',
+    name: 'Emma Williams',
+    position: 'Pet Parent',
+    location: 'Scotland',
+    rating: 5,
+    message: "Incredible product! My rescue dog used to be anxious but these long-lasting chews keep him calm and happy for hours. The natural ingredients give me total peace of mind.",
+    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
+  },
+];
+
 const TestimonialSection = () => {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const testimonials = [
-    {
-      id: 1,
-      name: 'Shreejan Koirala',
-      role: 'Ceo & Founder',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
-      quote: "At HimShree, we're dedicated to crafting top-quality, natural dog chews that dogs adore. As a pet parent myself, I ensure each treat meets our high standards. Try HimShree, and see why we're the go-to choice for health-conscious pet owners.",
-      rating: 5
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      role: 'Dog Owner & Customer',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
-      quote: "My golden retriever absolutely loves these Highland chews! They last so much longer than other treats, and I love that they're all-natural. The quality is outstanding, and I can see the difference in my dog's happiness.",
-      rating: 5
-    },
-    {
-      id: 3,
-      name: 'Michael Chen',
-      role: 'Veterinarian',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
-      quote: "As a veterinarian, I'm always careful about what I recommend to pet owners. HimShree's Churpi chews are one of the few products I confidently suggest. They're safe, healthy, and dogs genuinely enjoy them.",
-      rating: 5
-    }
-  ];
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+    fetch(`${API}/testimonials`)
+      .then((r) => r.json())
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        if (arr.length > 0) setTestimonials(arr);
+      })
+      .catch(() => {});
+  }, []);
 
-  const nextTestimonial = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-  };
+  const goTo = useCallback((idx: number, dir: 'left' | 'right') => {
+    if (isAnimating) return;
+    setDirection(dir);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex(idx);
+      setIsAnimating(false);
+    }, 350);
+  }, [isAnimating]);
 
-  const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
+  const next = useCallback(() => {
+    goTo((currentIndex + 1) % testimonials.length, 'right');
+  }, [currentIndex, testimonials.length, goTo]);
 
-  const goToTestimonial = (index) => {
-    setCurrentIndex(index);
-  };
+  const prev = useCallback(() => {
+    goTo((currentIndex - 1 + testimonials.length) % testimonials.length, 'left');
+  }, [currentIndex, testimonials.length, goTo]);
 
-  const currentTestimonial = testimonials[currentIndex];
+  // Auto-play every 5 s
+  useEffect(() => {
+    timerRef.current = setInterval(next, 5000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [next]);
+
+  const pauseAutoPlay = () => { if (timerRef.current) clearInterval(timerRef.current); };
+  const resumeAutoPlay = () => { timerRef.current = setInterval(next, 5000); };
+
+  const t = testimonials[currentIndex];
 
   return (
-    <section className="w-full py-4 px-6 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16">
-         <TextHeader
-  text="What Our Client Says"
-  
-  align="center"
-  size="custom"
-  textcolor="gray-900"
-  className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4"
-/>
+    <section
+      className="w-full py-16 px-6 bg-gradient-to-b from-[#f9f5ef] to-[#f0ebe0] dark:from-[#1a130d] dark:to-[#150e09]"
+      onMouseEnter={pauseAutoPlay}
+      onMouseLeave={resumeAutoPlay}
+    >
+      <div className="max-w-5xl mx-auto">
 
-          <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto rounded-full" />
+        {/* Header */}
+        <div className="text-center mb-14">
+          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 uppercase mb-3">
+            Trusted by Dog Owners
+          </span>
+          <TextHeader
+            text="What Our Customers Say"
+            align="center"
+            size="custom"
+            textcolor="gray-900"
+            className="text-4xl md:text-5xl font-bold mb-4"
+          />
+          <div className="w-20 h-1 bg-gradient-to-r from-amber-400 to-orange-500 mx-auto rounded-full" />
         </div>
 
-        {/* Testimonial Card */}
+        {/* Card */}
         <div className="relative">
-          {/* Large Quote Icon */}
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
-            <Quote className="w-20 h-20 md:w-24 md:h-24 text-amber-500 dark:text-amber-600 fill-amber-500 dark:fill-amber-600 opacity-80" />
+          {/* Giant quote icon */}
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+            <Quote className="w-16 h-16 text-amber-400/70 fill-amber-200/50 drop-shadow-md" />
           </div>
 
-          {/* Main Card */}
-          <div className="relative bg-white dark:bg-[#241b16] rounded-3xl shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.4)] p-8 md:p-12 lg:p-16 mt-12 border border-gray-100 dark:border-[#3a2c23]">
-            {/* Decorative gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-[#2a1f18]/50 dark:to-[#241b16]/50 rounded-3xl" />
+          {/* Main card */}
+          <div
+            className="relative rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] mt-10"
+            style={{ background: 'linear-gradient(135deg,#fffdf8 0%,#fff8ee 100%)' }}
+          >
+            {/* Decorative gradient bg */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/80 via-white/60 to-orange-50/60 dark:from-[#2a1f18]/80 dark:to-[#1a130d]/60" />
+
+            {/* Animated border top */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 animate-shimmer" />
 
             {/* Content */}
-            <div className="relative z-10">
-              {/* Quote Text */}
-              <p className="text-lg md:text-xl lg:text-2xl text-[#5b4636] dark:text-[#c8b6a6] text-center leading-relaxed mb-12 max-w-4xl mx-auto font-light">
-                &ldquo;{currentTestimonial.quote}&rdquo;
+            <div
+              className={`relative z-10 px-8 md:px-16 lg:px-20 py-14 md:py-16 text-center transition-all duration-350 ${
+                isAnimating
+                  ? direction === 'right'
+                    ? 'opacity-0 translate-x-8'
+                    : 'opacity-0 -translate-x-8'
+                  : 'opacity-100 translate-x-0'
+              }`}
+              style={{ transition: 'opacity 350ms ease, transform 350ms ease' }}
+            >
+              {/* Stars */}
+              <div className="flex justify-center gap-1 mb-6">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`w-6 h-6 transition-transform hover:scale-110 ${
+                      s <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Quote text */}
+              <p className="text-lg md:text-xl lg:text-2xl text-[#4a3020] dark:text-[#d4c4b0] leading-relaxed mb-12 max-w-3xl mx-auto font-serif italic font-light">
+                &ldquo;{t.message}&rdquo;
               </p>
 
-              {/* Author Info */}
-              <div className="flex flex-col items-center gap-4">
-                {/* Avatar */}
+              {/* Author */}
+              <div className="flex flex-col items-center gap-3">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full animate-pulse opacity-20 scale-110" />
-                  <img
-                    src={currentTestimonial.image}
-                    alt={currentTestimonial.name}
-                    className="relative w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-white dark:border-[#3a2c23] shadow-xl"
-                  />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 scale-110 opacity-20 animate-pulse" />
+                  {t.profileImage ? (
+                    <img
+                      src={t.profileImage}
+                      alt={t.name}
+                      className="relative w-20 h-20 rounded-full object-cover border-4 border-white dark:border-[#3a2c23] shadow-xl"
+                    />
+                  ) : (
+                    <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-4 border-white shadow-xl">
+                      <span className="text-white font-bold text-3xl">{t.name?.[0]?.toUpperCase()}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Name and Role */}
                 <div className="text-center">
-                  <h3 className="text-xl md:text-2xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] uppercase tracking-wide">
-                    {currentTestimonial.name}
-                  </h3>
-                  <p className="text-amber-600 dark:text-amber-500 text-lg md:text-xl font-medium italic mt-1">
-                    {currentTestimonial.role}
+                  <p className="text-xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] tracking-wide">{t.name}</p>
+                  <p className="text-amber-600 dark:text-amber-500 text-sm font-medium italic mt-0.5">
+                    {t.position}{t.location ? ` · ${t.location}` : ''}
                   </p>
                 </div>
 
-                {/* Star Rating */}
-                <div className="flex gap-1 mt-2">
-                  {[...Array(currentTestimonial.rating)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className="w-6 h-6 text-yellow-400 fill-yellow-400"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                    </svg>
-                  ))}
-                </div>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-3 py-1 rounded-full">
+                  <BadgeCheck className="w-3.5 h-3.5" /> Verified Customer
+                </span>
               </div>
             </div>
 
-            {/* Navigation Arrows */}
+            {/* Nav arrows */}
             {testimonials.length > 1 && (
               <>
                 <button
-                  onClick={prevTestimonial}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white dark:bg-[#2a1f18] hover:bg-amber-500 dark:hover:bg-amber-700 text-[#2E1F14] dark:text-[#f5e9dc] hover:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-                  aria-label="Previous testimonial"
+                  onClick={prev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-[#2a1f18]/90 hover:bg-amber-500 dark:hover:bg-amber-700 text-[#2E1F14] dark:text-[#f5e9dc] hover:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                  aria-label="Previous"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
-
                 <button
-                  onClick={nextTestimonial}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white dark:bg-[#2a1f18] hover:bg-amber-500 dark:hover:bg-amber-700 text-[#2E1F14] dark:text-[#f5e9dc] hover:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-                  aria-label="Next testimonial"
+                  onClick={next}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 dark:bg-[#2a1f18]/90 hover:bg-amber-500 dark:hover:bg-amber-700 text-[#2E1F14] dark:text-[#f5e9dc] hover:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                  aria-label="Next"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </>
             )}
           </div>
 
-          {/* Dot Indicators */}
+          {/* Dot indicators */}
           {testimonials.length > 1 && (
-            <div className="flex justify-center gap-3 mt-8">
-              {testimonials.map((_, index) => (
+            <div className="flex justify-center gap-2 mt-6">
+              {testimonials.map((_, idx) => (
                 <button
-                  key={index}
-                  onClick={() => goToTestimonial(index)}
+                  key={idx}
+                  onClick={() => goTo(idx, idx > currentIndex ? 'right' : 'left')}
                   className={`transition-all duration-300 rounded-full ${
-                    index === currentIndex
-                      ? 'w-10 h-3 bg-amber-500 dark:bg-amber-600'
-                      : 'w-3 h-3 bg-[#2E1F14]/20 dark:bg-[#f5e9dc]/20 hover:bg-[#2E1F14]/40 dark:hover:bg-[#f5e9dc]/40'
+                    idx === currentIndex
+                      ? 'w-8 h-2.5 bg-amber-500 dark:bg-amber-600'
+                      : 'w-2.5 h-2.5 bg-[#2E1F14]/20 dark:bg-[#f5e9dc]/20 hover:bg-amber-400/60'
                   }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
+                  aria-label={`Testimonial ${idx + 1}`}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Bottom Decorative Line */}
-        <div className="mt-16 flex justify-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-px bg-gradient-to-r from-transparent to-cyan-500" />
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" />
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
-              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce delay-200" />
+        {/* Trust badges */}
+        <div className="mt-14 flex flex-wrap justify-center gap-6 text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
+          {[
+            { emoji: '🐾', text: 'Natural Ingredients' },
+            { emoji: '⭐', text: '5-Star Rated' },
+            { emoji: '🇬🇧', text: 'UK Customers' },
+            { emoji: '🦴', text: 'Vet Approved' },
+          ].map(({ emoji, text }) => (
+            <div key={text} className="flex items-center gap-2 bg-white/60 dark:bg-[#241b16]/60 border border-amber-100 dark:border-[#3a2c23] rounded-full px-4 py-2 shadow-sm backdrop-blur-sm">
+              <span className="text-base">{emoji}</span>
+              <span className="font-medium text-xs tracking-wide">{text}</span>
             </div>
-            <div className="w-12 h-px bg-gradient-to-l from-transparent to-cyan-500" />
+          ))}
+        </div>
+
+        {/* Bottom decorative */}
+        <div className="mt-14 flex justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-px bg-gradient-to-r from-transparent to-amber-400" />
+            <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+            <div className="w-14 h-px bg-gradient-to-l from-transparent to-amber-400" />
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes bounce {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
+        @keyframes shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
-
-        .animate-bounce {
-          animation: bounce 1.5s ease-in-out infinite;
-        }
-
-        .delay-100 {
-          animation-delay: 0.1s;
-        }
-
-        .delay-200 {
-          animation-delay: 0.2s;
+        .animate-shimmer {
+          background-size: 200% auto;
+          animation: shimmer 3s linear infinite;
         }
       `}</style>
     </section>

@@ -1,7 +1,7 @@
 "use client"
 
-import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex, FaLinkedin } from "react-icons/fa";
-import { FiMail, FiPhone, FiMapPin } from "react-icons/fi";
+import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { FiMail, FiPhone, FiMapPin, FiCheck, FiLoader } from "react-icons/fi";
 import Logo from "@/components/atoms/Logo";
 import { ContactInfo } from "@/types";
 import { useState, useEffect } from "react";
@@ -27,8 +27,24 @@ interface FooterProps {
   contactInfo?: ContactInfo;
 }
 
+function toWhatsAppUrl(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return `https://wa.me/${digits}`;
+}
+
+function toGmailComposeUrl(email: string): string {
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
+}
+
+function toGoogleMapsUrl(address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
 export default function Footer({ destinations = [], activities = [], contactInfo: contactInfoProp }: FooterProps) {
   const [contactInfo, setContactInfo] = useState<ContactInfo | undefined>(contactInfoProp);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterState, setNewsletterState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [newsletterMsg, setNewsletterMsg] = useState('');
 
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL;
@@ -37,6 +53,37 @@ export default function Footer({ destinations = [], activities = [], contactInfo
       .then(data => { if (data.success && data.data) setContactInfo(data.data); })
       .catch(() => {});
   }, []);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    setNewsletterState('loading');
+    setNewsletterMsg('');
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+      const res = await fetch(`${API}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNewsletterState('success');
+        setNewsletterMsg(data.message || 'Subscribed! Check your inbox.');
+        setNewsletterEmail('');
+      } else {
+        setNewsletterState('error');
+        setNewsletterMsg(data.message || 'Something went wrong. Please try again.');
+      }
+    } catch {
+      setNewsletterState('error');
+      setNewsletterMsg('Network error. Please try again.');
+    } finally {
+      if (newsletterState !== 'success') {
+        setTimeout(() => { setNewsletterState('idle'); setNewsletterMsg(''); }, 4000);
+      }
+    }
+  };
 
   const socialLinks = [
     {
@@ -82,16 +129,37 @@ export default function Footer({ destinations = [], activities = [], contactInfo
           {/* Newsletter */}
           <div className="w-full max-w-md">
             <p className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc] mb-2 tracking-wide">Join Our Newsletter</p>
-            <div className="flex bg-white dark:bg-[#241b16] rounded-full border border-[#2E1F14]/10 dark:border-[#3a2c23] overflow-hidden shadow-sm">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="w-full px-5 py-3 text-sm bg-transparent text-[#2E1F14] dark:text-[#f5e9dc] border-none focus:outline-none placeholder-[#7A5C4F]/40 dark:placeholder-[#c8b6a6]/40"
-              />
-              <button className="bg-[#2E1F14] dark:bg-amber-700 hover:bg-[#3D2B1C] dark:hover:bg-amber-600 text-white text-sm font-medium px-6 rounded-full m-1 transition-colors duration-300 whitespace-nowrap">
-                Subscribe
-              </button>
-            </div>
+            <form onSubmit={handleNewsletterSubmit}>
+              <div className="flex bg-white dark:bg-[#241b16] rounded-full border border-[#2E1F14]/10 dark:border-[#3a2c23] overflow-hidden shadow-sm">
+                <input
+                  type="email"
+                  required
+                  value={newsletterEmail}
+                  onChange={e => setNewsletterEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  disabled={newsletterState === 'loading' || newsletterState === 'success'}
+                  className="w-full px-5 py-3 text-sm bg-transparent text-[#2E1F14] dark:text-[#f5e9dc] border-none focus:outline-none placeholder-[#7A5C4F]/40 dark:placeholder-[#c8b6a6]/40 disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterState === 'loading' || newsletterState === 'success'}
+                  className="bg-[#2E1F14] dark:bg-amber-700 hover:bg-[#3D2B1C] dark:hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-medium px-6 rounded-full m-1 transition-colors duration-300 whitespace-nowrap flex items-center gap-1.5"
+                >
+                  {newsletterState === 'loading' ? (
+                    <><FiLoader className="w-3.5 h-3.5 animate-spin" /> Sending…</>
+                  ) : newsletterState === 'success' ? (
+                    <><FiCheck className="w-3.5 h-3.5" /> Done!</>
+                  ) : (
+                    'Subscribe'
+                  )}
+                </button>
+              </div>
+            </form>
+            {newsletterMsg && (
+              <p className={`mt-2 text-xs px-2 ${newsletterState === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                {newsletterMsg}
+              </p>
+            )}
           </div>
         </div>
 
@@ -131,7 +199,12 @@ export default function Footer({ destinations = [], activities = [], contactInfo
             <ul className="space-y-3.5 text-sm">
               {contactInfo?.email && (
                 <li>
-                  <a href={`mailto:${contactInfo.email}`} className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
+                  <a
+                    href={toGmailComposeUrl(contactInfo.email)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group"
+                  >
                     <FiMail className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
                     <span>{contactInfo.email}</span>
                   </a>
@@ -139,18 +212,28 @@ export default function Footer({ destinations = [], activities = [], contactInfo
               )}
               {(contactInfo?.phone || contactInfo?.phones?.[0]) && (
                 <li>
-                  <a href={`tel:${contactInfo.phone || contactInfo.phones?.[0]}`} className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group">
-                    <FiPhone className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
+                  <a
+                    href={toWhatsAppUrl(contactInfo.phone || contactInfo.phones?.[0] || '')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-green-600 dark:hover:text-green-400 transition-colors group"
+                  >
+                    <FaWhatsapp className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors" />
                     <span>{contactInfo.phone || contactInfo.phones?.[0]}</span>
                   </a>
                 </li>
               )}
               {contactInfo?.address && (
                 <li>
-                  <div className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6]">
-                    <FiMapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600" />
+                  <a
+                    href={toGoogleMapsUrl(contactInfo.address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2.5 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors group"
+                  >
+                    <FiMapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#C4A882] dark:text-amber-600 group-hover:text-[#2E1F14] dark:group-hover:text-amber-400 transition-colors" />
                     <span>{contactInfo.address}</span>
-                  </div>
+                  </a>
                 </li>
               )}
             </ul>

@@ -1,151 +1,240 @@
-'use client'
-import React, { useState } from 'react';
-import { Linkedin, Mail, Phone } from 'lucide-react';
+'use client';
+import React, { useState, useEffect } from 'react';
+import {
+  Linkedin, Mail, Phone, Facebook, Twitter, Github, Instagram, Award, Loader2, Users,
+} from 'lucide-react';
 import TextHeader from '@/components/atoms/headings';
 
-const TeamSection = () => {
-  const [hoveredMember, setHoveredMember] = useState(null);
+interface Certification {
+  title: string;
+  imageUrls?: string;
+}
 
-  const teamMembers = [
-    {
-      id: 1,
-      name: 'Navraj Koirala',
-      role: 'Founder & CEO',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80',
-      description: 'With years of experience, Shiva Koirala drives the creation of *Churpi*, a premium dog chew. His expertise and passion ensure every product meets the highest standards.',
-      position: 'left',
-      email: 'shiva@highland1.com',
-      linkedin: '#'
-    },
-    {
-      id: 2,
-      name: 'Arjun Koirala',
-      role: 'MD - Operations Director',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-      description: 'Shreejan Koirala oversees operations, ensuring *Churpi*, our Yak milk dog chew, meets the highest standards of quality and care.',
-      position: 'center',
-      email: 'shreejan@highland1.com',
-      linkedin: '#'
-    },
-    {
-      id: 3,
-      name: 'Nirajan Koirala',
-      role: 'Partner & Quality Manager',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&q=80',
-      description: 'As a supportive partner, Nirajan Koirala plays a key role in maintaining the quality and care that goes into producing *Churpi*, our Yak milk dog chew.',
-      position: 'right',
-      email: 'nirajan@highland1.com',
-      linkedin: '#'
-    }
-  ];
+interface SocialLinks {
+  facebook?: string;
+  linkedin?: string;
+  twitter?: string;
+  github?: string;
+  instagram?: string;
+}
+
+interface TeamMember {
+  _id: string;
+  name: string;
+  position?: string;
+  image?: string;
+  shortinfo?: string;
+  contactNumber?: string;
+  certifications?: Certification[];
+  socialLinks?: SocialLinks;
+}
+
+const SOCIAL_META: { key: keyof SocialLinks; Icon: React.ElementType; hoverColor: string }[] = [
+  { key: 'linkedin', Icon: Linkedin, hoverColor: 'hover:bg-blue-600' },
+  { key: 'facebook', Icon: Facebook, hoverColor: 'hover:bg-blue-500' },
+  { key: 'twitter', Icon: Twitter, hoverColor: 'hover:bg-sky-500' },
+  { key: 'github', Icon: Github, hoverColor: 'hover:bg-gray-800' },
+  { key: 'instagram', Icon: Instagram, hoverColor: 'hover:bg-pink-600' },
+];
+
+const TeamSection = () => {
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+    fetch(`${API_BASE}/teams`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) setMembers(data.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="w-full py-20 flex justify-center">
+        <Loader2 className="w-10 h-10 text-orange-400 animate-spin" />
+      </section>
+    );
+  }
+
+  if (!members.length) {
+    return (
+      <section className="w-full py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto text-center">
+          <TextHeader
+            text="Our Highland Team"
+            align="center"
+            size="custom"
+            textcolor="gray-900"
+            className="text-5xl md:text-6xl font-bold mb-4"
+          />
+          <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto rounded-full mb-8" />
+          <div className="flex flex-col items-center text-gray-400 py-12">
+            <Users className="w-16 h-16 mb-4 opacity-30" />
+            <p className="text-lg">No team members yet.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
         <div className="text-center mb-20">
-<TextHeader
-  text="Our Highland Team"
-
-  align="center"
-  size="custom"
-  textcolor="gray-900"
-  className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4"
-/>
-
+          <TextHeader
+            text="Our Highland Team"
+            align="center"
+            size="custom"
+            textcolor="gray-900"
+            className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4"
+          />
           <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto rounded-full" />
           <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet the passionate people behind HighLand Churpi, dedicated to bringing the finest quality dog chews to your beloved pets.
+            Meet the passionate people behind Highland Dog Chew, dedicated to bringing
+            the finest quality dog chews to your beloved pets.
           </p>
         </div>
 
         {/* Team Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
-          {teamMembers.map((member) => (
+        <div className={`grid grid-cols-1 gap-12 lg:gap-16 ${
+          members.length === 1 ? 'md:grid-cols-1 max-w-sm mx-auto' :
+          members.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' :
+          'md:grid-cols-3'
+        }`}>
+          {members.map((member) => (
             <div
-              key={member.id}
+              key={member._id}
               className="group relative"
-              onMouseEnter={() => setHoveredMember(member.id)}
-              onMouseLeave={() => setHoveredMember(null)}
+              onMouseEnter={() => setHoveredId(member._id)}
+              onMouseLeave={() => setHoveredId(null)}
             >
-              {/* Card Container */}
-              <div className="relative">
-                {/* Speech Bubble Tail */}
-                <div className={`absolute ${
-                  member.position === 'left' ? 'left-1/4' :
-                  member.position === 'center' ? 'left-1/2 -translate-x-1/2' :
-                  'right-1/4'
-                } -bottom-6 w-0 h-0 border-l-[20px] border-r-[20px] border-t-[24px] border-l-transparent border-r-transparent border-t-yellow-400/30 transition-all duration-300 group-hover:border-t-yellow-400/50 z-10`} />
+              {/* Decorative tail */}
+              <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 w-0 h-0
+                border-l-[20px] border-r-[20px] border-t-[24px]
+                border-l-transparent border-r-transparent
+                border-t-yellow-400/30 transition-all duration-300
+                group-hover:border-t-yellow-400/50 z-10" />
 
-                {/* Image Container with Border */}
-                <div className="relative mx-auto w-72 h-72 mb-8">
-                  {/* Animated Border Ring */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 opacity-30 group-hover:opacity-50 transition-all duration-500 animate-pulse" />
-                  
-                  {/* Inner Border */}
-                  <div className="absolute inset-2 rounded-full bg-white" />
-                  
-                  {/* Image */}
-                  <div className="absolute inset-4 rounded-full overflow-hidden ring-4 ring-white shadow-2xl">
+              {/* Photo */}
+              <div className="relative mx-auto w-64 h-64 mb-8">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400 via-orange-400 to-yellow-500 opacity-30 group-hover:opacity-60 transition-all duration-500 animate-pulse" />
+                <div className="absolute inset-2 rounded-full bg-white" />
+                <div className="absolute inset-4 rounded-full overflow-hidden ring-4 ring-white shadow-2xl">
+                  {member.image ? (
                     <img
                       src={member.image}
                       alt={member.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-
-                  {/* Social Icons (appear on hover) */}
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 z-20">
-                    <a
-                      href={member.linkedin}
-                      className="bg-white/90 hover:bg-blue-600 text-gray-800 hover:text-white p-2.5 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-                    >
-                      <Linkedin className="w-5 h-5" />
-                    </a>
-                    <a
-                      href={`mailto:${member.email}`}
-                      className="bg-white/90 hover:bg-orange-500 text-gray-800 hover:text-white p-2.5 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-                    >
-                      <Mail className="w-5 h-5" />
-                    </a>
-                  </div>
+                  ) : (
+                    <div className="w-full h-full bg-amber-100 flex items-center justify-center">
+                      <Users className="w-16 h-16 text-amber-400" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
 
-                {/* Content */}
-                <div className="text-center space-y-3">
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-orange-500 transition-colors duration-300">
-                    {member.name}
-                  </h3>
-                  
+                {/* Social icons on hover */}
+                {member.socialLinks && (
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2
+                    opacity-0 group-hover:opacity-100 transition-all duration-500
+                    translate-y-4 group-hover:translate-y-0 z-20">
+                    {SOCIAL_META.filter(({ key }) => member.socialLinks?.[key]).map(({ key, Icon, hoverColor }) => (
+                      <a
+                        key={key}
+                        href={member.socialLinks![key]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`bg-white/90 ${hoverColor} text-gray-800 hover:text-white
+                          p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </a>
+                    ))}
+                    {member.contactNumber && (
+                      <a
+                        href={`tel:${member.contactNumber}`}
+                        className="bg-white/90 hover:bg-orange-500 text-gray-800 hover:text-white
+                          p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="text-center space-y-3 px-4">
+                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-orange-500 transition-colors duration-300">
+                  {member.name}
+                </h3>
+
+                {member.position && (
                   <div className="inline-block px-4 py-1.5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full">
                     <p className="text-sm font-semibold text-white uppercase tracking-wide">
-                      {member.role}
+                      {member.position}
                     </p>
                   </div>
+                )}
 
-                  <p className="text-gray-600 leading-relaxed max-w-sm mx-auto mt-4 px-4">
-                    {member.description}
+                {member.shortinfo && (
+                  <p className="text-gray-600 leading-relaxed max-w-sm mx-auto text-sm mt-3">
+                    {member.shortinfo}
                   </p>
+                )}
 
-                  {/* Contact Email */}
-                  <div className="pt-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
-                    <a
-                      href={`mailto:${member.email}`}
-                      className="inline-flex items-center gap-2 text-sm text-orange-500 hover:text-orange-600 font-medium transition-colors duration-300"
-                    >
-                      <Mail className="w-4 h-4" />
-                      {member.email}
-                    </a>
+                {/* Certifications */}
+                {member.certifications && member.certifications.length > 0 && (
+                  <div className="pt-3 flex flex-wrap justify-center gap-2">
+                    {member.certifications.map((cert, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-medium"
+                      >
+                        <Award className="w-3 h-3" />
+                        {cert.title}
+                      </span>
+                    ))}
                   </div>
+                )}
+
+                {/* Contact row */}
+                <div className="pt-3 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0 flex flex-wrap justify-center gap-3">
+                  {member.socialLinks?.linkedin && (
+                    <a
+                      href={member.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      <Linkedin className="w-3.5 h-3.5" />
+                      LinkedIn
+                    </a>
+                  )}
+                  {member.contactNumber && (
+                    <a
+                      href={`tel:${member.contactNumber}`}
+                      className="inline-flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-600 font-medium transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      {member.contactNumber}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Bottom Decorative Element */}
+        {/* Bottom decorative */}
         <div className="mt-20 text-center">
           <div className="inline-flex items-center gap-4">
             <div className="w-16 h-px bg-gradient-to-r from-transparent to-orange-400" />
@@ -156,23 +245,6 @@ const TeamSection = () => {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.3;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 0.5;
-          }
-        }
-
-        .animate-pulse {
-          animation: pulse 3s ease-in-out infinite;
-        }
-      `}</style>
     </section>
   );
 };
