@@ -33,6 +33,7 @@ import promoCodeRoute from './src/routes/promoCodeRoute.js';
 import orderRoute from './src/routes/orderRoute.js';
 import productWebhookRoute from './src/routes/productWebhookRoute.js';
 import newsletterRoute from './src/routes/newsletterRoute.js';
+import instagramPostRoute from './src/routes/instagramPostRoute.js';
 
 
 
@@ -119,6 +120,7 @@ app.use(`/${api}/cart-payments`, cartPaymentRoute);
 app.use(`/${api}/promo`, promoCodeRoute);
 app.use(`/${api}/orders`, orderRoute);
 app.use(`/${api}/newsletter`, newsletterRoute);
+app.use(`/${api}/instagram-posts`, instagramPostRoute);
 
 
 //error middleware route pachi

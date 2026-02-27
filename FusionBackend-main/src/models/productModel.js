@@ -113,11 +113,29 @@ const productSchema = new mongoose.Schema({
     deliveryCharge: { type: Number, default: 0, min: 0 },
   },
 
-  // Subscription Settings
+  // Subscription / Subscribe & Save Settings
   subscriptionSettings: {
     isEnabled: { type: Boolean, default: false },
     discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
+    // Admin sets specific week numbers, e.g. [1, 2, 4] → "Every 1 week", "Every 2 weeks", "Every 4 weeks"
+    weeklyOptions: [{ type: Number, min: 1 }],
+    // Admin sets specific month numbers, e.g. [1, 2, 3] → "Every 1 month", "Every 2 months", "Every 3 months"
+    monthlyOptions: [{ type: Number, min: 1 }],
+    // Kept for backward compatibility with old products
     intervals: [{ type: String }],
+  },
+
+  // Nutrition / Guaranteed Analysis
+  nutritionFacts: {
+    servingSize: { type: String, default: '' },
+    calories: { type: String, default: '' },
+    items: [{
+      label: { type: String },
+      value: { type: String },
+      dailyValue: { type: String, default: '' },
+      bold: { type: Boolean, default: false },
+      indent: { type: Boolean, default: false },
+    }],
   },
 }, { timestamps: true });
 
