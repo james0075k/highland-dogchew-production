@@ -122,34 +122,54 @@ export default function SettingsPage() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  /* instagram settings state */
+  const [igSettings, setIgSettings] = useState({ isEnabled: true, postsCount: 8 });
+  const [igSaving, setIgSaving] = useState(false);
+
   /* alert */
   const [alert, setAlert] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const API = process.env.NEXT_PUBLIC_API_URL;
 
-  /* ── load contact on mount ── */
+  /* ── load contact + instagram settings on mount ── */
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/info`, { credentials: "include" });
-        const data = await res.json();
-        if (data.success && data.data) {
-          const i = data.data;
-          setContactData({
-            _id: i._id || "",
-            address: i.address || "",
-            phone: i.phones?.[0] || i.phone || "",
-            email: i.email || "",
-            phones: i.phones || [],
-            whatsappNumber: i.whatsappNumber || "",
-            socialLinks: {
-              facebook:  i.socialLinks?.facebook  || "",
-              instagram: i.socialLinks?.instagram || "",
-              linkedin:  i.socialLinks?.linkedin  || "",
-              twitter:   i.socialLinks?.twitter   || "",
-              tiktok:    i.socialLinks?.tiktok    || "",
-            },
-          });
+        const [contactRes, igRes] = await Promise.allSettled([
+          fetch(`${API}/info`, { credentials: "include" }).then(r => r.json()),
+          fetch(`${API}/instagram/settings`).then(r => r.json()),
+        ]);
+
+        if (contactRes.status === "fulfilled") {
+          const data = contactRes.value;
+          if (data.success && data.data) {
+            const i = data.data;
+            setContactData({
+              _id: i._id || "",
+              address: i.address || "",
+              phone: i.phones?.[0] || i.phone || "",
+              email: i.email || "",
+              phones: i.phones || [],
+              whatsappNumber: i.whatsappNumber || "",
+              socialLinks: {
+                facebook:  i.socialLinks?.facebook  || "",
+                instagram: i.socialLinks?.instagram || "",
+                linkedin:  i.socialLinks?.linkedin  || "",
+                twitter:   i.socialLinks?.twitter   || "",
+                tiktok:    i.socialLinks?.tiktok    || "",
+              },
+            });
+          }
+        }
+
+        if (igRes.status === "fulfilled") {
+          const igData = igRes.value;
+          if (igData.success && igData.data) {
+            setIgSettings({
+              isEnabled: igData.data.isEnabled ?? true,
+              postsCount: igData.data.postsCount ?? 8,
+            });
+          }
         }
       } catch {}
     })();
@@ -310,6 +330,33 @@ export default function SettingsPage() {
       setPasswordMsg({ type: "error", text: "Something went wrong. Please try again." });
     } finally {
       setPasswordSaving(false);
+    }
+  };
+
+  /* ── instagram settings ── */
+  const saveIgSettings = async () => {
+    const headers = authHeader();
+    if (!headers) return;
+    setIgSaving(true);
+    try {
+      const res = await fetch(`${API}/instagram/settings`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          isEnabled: igSettings.isEnabled,
+          postsCount: Number(igSettings.postsCount),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert("success", "Instagram settings saved");
+      } else {
+        showAlert("error", data.message || "Failed to save Instagram settings");
+      }
+    } catch {
+      showAlert("error", "Failed to save Instagram settings");
+    } finally {
+      setIgSaving(false);
     }
   };
 
@@ -534,6 +581,76 @@ export default function SettingsPage() {
                 <SaveBtn loading={heroSaving} label="Save Hero Section" onClick={saveHero} color="navy" />
               </div>
             </Card>
+
+            {/* ── Instagram Feed ── */}
+            <Card
+              icon={<FaInstagram size={16} />}
+              iconBg="bg-pink-50"
+              iconColor="text-pink-500"
+              title="Instagram Feed"
+            >
+              {/* Info banner */}
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5">
+                <FaInstagram className="text-blue-500 mt-0.5 shrink-0" size={14} />
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  Live posts are fetched from Instagram Graph API using your{" "}
+                  <strong>INSTAGRAM_ACCESS_TOKEN</strong> in the backend <code>.env</code>.{" "}
+                  Token lasts <strong>60 days</strong> — refresh it before expiry.
+                  If the token is missing, manually uploaded posts are shown instead.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                {/* Enable/Disable toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">Show Instagram Section</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Toggle the Instagram feed on the homepage
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIgSettings(prev => ({ ...prev, isEnabled: !prev.isEnabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                      igSettings.isEnabled ? "bg-pink-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                        igSettings.isEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Posts count */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Number of posts to display (1 – 12)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={igSettings.postsCount}
+                    onChange={e =>
+                      setIgSettings(prev => ({
+                        ...prev,
+                        postsCount: Math.max(1, Math.min(12, Number(e.target.value))),
+                      }))
+                    }
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-pink-400/25 focus:border-pink-400 hover:border-gray-300 transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Cached for 30 minutes. Changing this setting clears the cache immediately.
+                  </p>
+                </div>
+
+                <SaveBtn loading={igSaving} label="Save Instagram Settings" onClick={saveIgSettings} color="navy" />
+              </div>
+            </Card>
+
           </div>
         )}
 

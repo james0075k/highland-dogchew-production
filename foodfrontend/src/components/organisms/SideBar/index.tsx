@@ -15,6 +15,7 @@ import {
   FiSettings,
   FiLogOut,
   FiX,
+  FiInstagram,
 } from "react-icons/fi";
 import { GiDogBowl } from "react-icons/gi";
 
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: FiMail, text: "Contact Messages", link: "/dashboard/contact" },
   { icon: FiStar, text: "Reviews", link: "/dashboard/reviews" },
   { icon: FiMessageSquare, text: "Testimonials", link: "/dashboard/testimonials" },
+  { icon: FiInstagram, text: "Instagram", link: "/dashboard/instagram" },
   { icon: FiUsers, text: "Team", link: "/dashboard/customise-team" },
   { icon: FiSettings, text: "Settings", link: "/dashboard/settings" },
 ];
