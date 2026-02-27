@@ -365,7 +365,7 @@ export default function CheckoutPage() {
   const breakdown = serverBreakdown || { subtotal, discount, totalTax, totalDelivery, grandTotal };
 
   return (
-    <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] py-8 transition-colors duration-300">
+    <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] pt-32 pb-8 transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8">

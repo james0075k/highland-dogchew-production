@@ -1,4 +1,4 @@
-// layout.tsx - Fixed version without fetchAPI
+// layout.tsx
 export const dynamic = "force-dynamic";
 import { Metadata } from "next";
 import { DM_Sans, Playfair_Display, Cormorant_Garamond, DM_Serif_Display } from "next/font/google";
@@ -8,59 +8,232 @@ import Footer from "@/components/organisms/Footer";
 import Navbar from "@/components/organisms/NavBar";
 import GoToTop from "@/components/organisms/GoToTop/GoToTop";
 import WhatsappWidget from "@/components/organisms/WhatsappWidget/WhatsappWidget";
-import TopNavbar from "@/components/organisms/NavBar/TopNavbar/TopNavbar";
 import { CartProvider } from "@/context/CartContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
+const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
+const cormorant = Cormorant_Garamond({ variable: "--font-cormorant", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
+const dmSerifDisplay = DM_Serif_Display({ variable: "--font-antique-serif", subsets: ["latin"], weight: "400", display: "swap" });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const dmSerifDisplay = DM_Serif_Display({
-  variable: "--font-antique-serif",
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-});
+const BASE_URL = 'https://highlanddogchew.co.uk';
 
 export const metadata: Metadata = {
-  title: "Highland Dogchew ",
-  description: "We are here to fulfill your desire to experience different kinds of adventure activities.",
+  metadataBase: new URL(BASE_URL),
+
+  title: {
+    default: 'Highland Dogchew | Premium Yak Milk Dog Chews & Natural Dog Treats UK',
+    template: '%s | Highland Dogchew',
+  },
+
+  description:
+    'Shop premium Highland Dogchew products – 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews made from authentic mountain recipes. Free UK delivery. Grain-free, natural ingredients your dog will love.',
+
+  keywords: [
+    'yak milk dog chew',
+    'himalayan dog chew',
+    'natural dog treats UK',
+    'highland dogchew',
+    'long lasting dog chews',
+    'yak chew for dogs',
+    'natural dog chews uk',
+    'himalayan chew uk',
+    'puff treats for dogs',
+    'protein dog treats',
+    'dog chews uk',
+    'premium dog chews',
+    'all natural dog treats',
+    'grain free dog treats',
+    'yak cheese dog chew',
+    'cheese puffs for dogs',
+    'dog dental chews',
+    'highland mix dog chews',
+    'buy dog chews uk',
+    'best dog chews 2025',
+    'natural himalayan chew',
+  ],
+
+  authors: [{ name: 'Highland Dogchew', url: BASE_URL }],
+  creator: 'Highland Dogchew',
+  publisher: 'Highland Dogchew',
+
+  category: 'pet supplies',
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+
+  alternates: {
+    canonical: BASE_URL,
+    languages: { 'en-GB': BASE_URL },
+  },
+
+  openGraph: {
+    type: 'website',
+    locale: 'en_GB',
+    url: BASE_URL,
+    siteName: 'Highland Dogchew',
+    title: 'Highland Dogchew | Premium Yak Milk Dog Chews & Natural Dog Treats UK',
+    description:
+      'Shop premium Highland Dogchew products – 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews. Free UK delivery.',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Highland Dogchew – Premium Natural Dog Chews UK',
+        type: 'image/jpeg',
+      },
+    ],
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    site: '@HighlandDogchew',
+    creator: '@HighlandDogchew',
+    title: 'Highland Dogchew | Premium Yak Milk Dog Chews UK',
+    description:
+      '100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting dog chews made from authentic mountain recipes. Free UK delivery.',
+    images: ['/og-image.jpg'],
+  },
+
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon-32x32.png',
+  },
+
+  manifest: '/site.webmanifest',
+
+  verification: {
+    google: 'YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE',
+    // bing: 'YOUR_BING_VERIFICATION_CODE',
+  },
+
+  other: {
+    'geo.region': 'GB',
+    'geo.placename': 'United Kingdom',
+    'rating': 'general',
+  },
 };
 
+// ── JSON-LD Structured Data ────────────────────────────────────────────────
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Highland Dogchew',
+  url: BASE_URL,
+  logo: `${BASE_URL}/logo.png`,
+  description: 'Premium natural yak milk dog chews and Himalayan dog treats, handcrafted for healthy, happy dogs.',
+  sameAs: [
+    'https://www.instagram.com/highlanddogchew',
+    'https://www.tiktok.com/@highlanddogchew',
+    'https://www.facebook.com/highlanddogchew',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    email: 'hello@highlanddogchew.co.uk',
+    availableLanguage: 'English',
+  },
+  address: {
+    '@type': 'PostalAddress',
+    addressCountry: 'GB',
+  },
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Highland Dogchew',
+  url: BASE_URL,
+  description: 'Premium natural yak milk dog chews and Himalayan dog treats for dogs.',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: { '@type': 'EntryPoint', urlTemplate: `${BASE_URL}/products?q={search_term_string}` },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const storeSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'OnlineStore',
+  name: 'Highland Dogchew',
+  url: BASE_URL,
+  image: `${BASE_URL}/og-image.jpg`,
+  description: 'Premium natural yak milk dog chews, Himalayan puff treats and highland mix dog chews.',
+  priceRange: '££',
+  currenciesAccepted: 'GBP',
+  paymentAccepted: 'Credit Card, Debit Card, Apple Pay, Google Pay, PayPal',
+  areaServed: { '@type': 'Country', name: 'United Kingdom' },
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Dog Chews & Treats',
+    itemListElement: [
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Yak Milk Chews', description: '100% natural yak milk chews for dogs' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Himalayan Puff Treats', description: 'Light and crunchy puffed treats made from yak milk' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Highland Mix Chews', description: 'A variety mix of premium natural dog chews' } },
+    ],
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Products', item: `${BASE_URL}/products` },
+  ],
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${dmSans.variable} ${playfair.variable} ${cormorant.variable} ${dmSerifDisplay.variable}`}>
+    <html
+      lang="en-GB"
+      suppressHydrationWarning
+      className={`${dmSans.variable} ${playfair.variable} ${cormorant.variable} ${dmSerifDisplay.variable}`}
+    >
+      <head>
+        {/* Structured Data / JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(storeSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+        {/* Preconnect to API */}
+        <link rel="preconnect" href="https://highlanddogchew.co.uk" />
+        <link rel="dns-prefetch" href="https://highlanddogchew.co.uk" />
+      </head>
       <body className="antialiased">
         <ThemeProvider>
           <CartProvider>
-            {/* <TopNavbar/> */}
             <Navbar />
             {children}
             <Footer />
-            <GoToTop/>
-            {/* <ChatbotWidget/> */}
-            <WhatsappWidget/>
+            <GoToTop />
+            <WhatsappWidget />
           </CartProvider>
         </ThemeProvider>
       </body>

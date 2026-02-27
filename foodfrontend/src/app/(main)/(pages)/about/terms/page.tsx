@@ -110,7 +110,7 @@ export default function TermsAndConditions() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f9f5ef] dark:bg-[#150e09] pt-20">
+    <main className="min-h-screen bg-[#f9f5ef] dark:bg-[#150e09] pt-32">
 
       {/* ── Hero banner ─────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#2f1e14] via-[#3d2512] to-[#1e1108] py-16 md:py-20">

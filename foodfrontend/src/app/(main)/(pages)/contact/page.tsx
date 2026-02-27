@@ -126,7 +126,7 @@ export default function ContactPage() {
     <main className="min-h-screen bg-[#f9f5ef] dark:bg-[#150e09]">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#2f1e14] via-[#3d2512] to-[#1e1108] pt-24 pb-16 md:pb-20">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#2f1e14] via-[#3d2512] to-[#1e1108] pt-32 pb-16 md:pb-20">
         <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 w-80 h-80 rounded-full bg-orange-400/8 blur-3xl" />
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">

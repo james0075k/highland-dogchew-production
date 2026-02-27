@@ -20,8 +20,6 @@ interface ProductDashboardProps {
 }
 
 const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
-  const SUBSCRIPTION_INTERVAL_OPTIONS = ['1 Week', '2 Weeks', '1 Month', '2 Months'];
-
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -41,8 +39,13 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     deliveryCharge: '0',
     subscriptionEnabled: false,
     subscriptionDiscount: '0',
-    subscriptionIntervals: [] as string[],
+    // Subscribe & Save: admin enters specific week/month numbers
+    weeklyOptions: [] as number[],
+    monthlyOptions: [] as number[],
   });
+
+  const [weekInput, setWeekInput] = useState('');
+  const [monthInput, setMonthInput] = useState('');
 
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -203,7 +206,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       deliveryCharge: (product.pricingSettings?.deliveryCharge ?? 0).toString(),
       subscriptionEnabled: product.subscriptionSettings?.isEnabled ?? false,
       subscriptionDiscount: (product.subscriptionSettings?.discountPercentage ?? 0).toString(),
-      subscriptionIntervals: product.subscriptionSettings?.intervals ?? [],
+      weeklyOptions: product.subscriptionSettings?.weeklyOptions ?? [],
+      monthlyOptions: product.subscriptionSettings?.monthlyOptions ?? [],
     });
     setImage(null);
     setImagePreview(product.image || null);
@@ -232,7 +236,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       deliveryCharge: '0',
       subscriptionEnabled: false,
       subscriptionDiscount: '0',
-      subscriptionIntervals: [],
+      weeklyOptions: [],
+      monthlyOptions: [],
     });
     setImage(null);
     setImagePreview(null);
@@ -332,7 +337,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       formDataToSend.append('subscriptionSettings', JSON.stringify({
         isEnabled: formData.subscriptionEnabled,
         discountPercentage: parseFloat(formData.subscriptionDiscount) || 0,
-        intervals: formData.subscriptionIntervals,
+        weeklyOptions: formData.weeklyOptions,
+        monthlyOptions: formData.monthlyOptions,
       }));
 
       if (image) formDataToSend.append('image', image);
@@ -884,8 +890,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                 <div className="border-t border-purple-200 pt-5">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-base font-semibold text-gray-700">Enable Subscription</h3>
-                      <p className="text-sm text-gray-500">Allow customers to subscribe for repeat deliveries</p>
+                      <h3 className="text-base font-semibold text-gray-700">Enable Subscribe &amp; Save</h3>
+                      <p className="text-sm text-gray-500">Allow customers to subscribe for recurring deliveries at a discount</p>
                     </div>
                     <button
                       type="button"
@@ -904,8 +910,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
 
                   {formData.subscriptionEnabled && (
                     <div className="space-y-4 bg-white rounded-lg p-4 border border-purple-100">
+                      {/* Discount */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Subscription Discount (%)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Subscribe &amp; Save Discount (%)</label>
                         <input
                           type="number"
                           name="subscriptionDiscount"
@@ -915,37 +922,99 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                           max="100"
                           step="1"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          placeholder="e.g. 15"
+                          placeholder="e.g. 25"
                         />
                       </div>
+
+                      {/* Weekly Options */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Subscription Intervals</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {SUBSCRIPTION_INTERVAL_OPTIONS.map((interval) => (
-                            <label
-                              key={interval}
-                              className={`flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                                formData.subscriptionIntervals.includes(interval)
-                                  ? 'border-purple-500 bg-purple-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={formData.subscriptionIntervals.includes(interval)}
-                                onChange={(e) => {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    subscriptionIntervals: e.target.checked
-                                      ? [...prev.subscriptionIntervals, interval]
-                                      : prev.subscriptionIntervals.filter(i => i !== interval),
-                                  }));
-                                }}
-                                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                              />
-                              <span className="text-sm font-medium text-gray-700">{interval}</span>
-                            </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Weekly Delivery Options</label>
+                        <p className="text-xs text-gray-400 mb-2">Enter week numbers customers can choose (e.g. 1, 2, 4, 6)</p>
+                        <div className="flex gap-2 mb-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={weekInput}
+                            onChange={(e) => setWeekInput(e.target.value)}
+                            placeholder="e.g. 2"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const n = parseInt(weekInput);
+                              if (n > 0 && !formData.weeklyOptions.includes(n)) {
+                                setFormData(prev => ({ ...prev, weeklyOptions: [...prev.weeklyOptions, n].sort((a, b) => a - b) }));
+                              }
+                              setWeekInput('');
+                            }}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.weeklyOptions.map((n) => (
+                            <span key={n} className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 text-purple-700 text-sm font-medium px-3 py-1 rounded-full">
+                              Every {n} {n === 1 ? 'week' : 'weeks'}
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, weeklyOptions: prev.weeklyOptions.filter(w => w !== n) }))}
+                                className="text-purple-400 hover:text-purple-700 font-bold leading-none"
+                              >
+                                ×
+                              </button>
+                            </span>
                           ))}
+                          {formData.weeklyOptions.length === 0 && (
+                            <span className="text-xs text-gray-400 italic">No weekly options added</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Monthly Options */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Delivery Options</label>
+                        <p className="text-xs text-gray-400 mb-2">Enter month numbers customers can choose (e.g. 1, 2, 3, 6)</p>
+                        <div className="flex gap-2 mb-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={monthInput}
+                            onChange={(e) => setMonthInput(e.target.value)}
+                            placeholder="e.g. 1"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const n = parseInt(monthInput);
+                              if (n > 0 && !formData.monthlyOptions.includes(n)) {
+                                setFormData(prev => ({ ...prev, monthlyOptions: [...prev.monthlyOptions, n].sort((a, b) => a - b) }));
+                              }
+                              setMonthInput('');
+                            }}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.monthlyOptions.map((n) => (
+                            <span key={n} className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium px-3 py-1 rounded-full">
+                              Every {n} {n === 1 ? 'month' : 'months'}
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, monthlyOptions: prev.monthlyOptions.filter(m => m !== n) }))}
+                                className="text-blue-400 hover:text-blue-700 font-bold leading-none"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          {formData.monthlyOptions.length === 0 && (
+                            <span className="text-xs text-gray-400 italic">No monthly options added</span>
+                          )}
                         </div>
                       </div>
                     </div>

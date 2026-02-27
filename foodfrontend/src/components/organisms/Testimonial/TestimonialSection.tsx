@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Quote, Star, BadgeCheck } from 'lucide-react';
-import TextHeader from '@/components/atoms/headings';
 
 interface Testimonial {
   _id: string;
@@ -13,7 +12,6 @@ interface Testimonial {
   profileImage?: string;
 }
 
-// Fallback data shown while API loads or if API returns empty
 const FALLBACK: Testimonial[] = [
   {
     _id: 'f1',
@@ -21,16 +19,16 @@ const FALLBACK: Testimonial[] = [
     position: 'Dog Owner',
     location: 'UK',
     rating: 5,
-    message: "My golden retriever absolutely loves these Highland chews! They last so much longer than other treats and I love that they're all-natural. The quality is outstanding.",
+    message: "My golden retriever absolutely loves these Highland chews! They last so much longer than other treats and the all-natural ingredients give me complete peace of mind. Best dog chew we've ever tried.",
     profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
   },
   {
     _id: 'f2',
-    name: 'Michael Chen',
+    name: 'Dr. Michael Chen',
     position: 'Veterinarian',
     location: 'UK',
     rating: 5,
-    message: "As a veterinarian, I'm always careful about what I recommend. HimShree's Churpi chews are one of the few products I confidently suggest — safe, healthy, and dogs genuinely love them.",
+    message: "As a vet, I'm very selective about what I recommend. Highland Dogchew's yak milk formula is one of the few products I confidently suggest — safe, healthy, and dogs genuinely love them.",
     profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
   },
   {
@@ -39,7 +37,7 @@ const FALLBACK: Testimonial[] = [
     position: 'Pet Parent',
     location: 'Scotland',
     rating: 5,
-    message: "Incredible product! My rescue dog used to be anxious but these long-lasting chews keep him calm and happy for hours. The natural ingredients give me total peace of mind.",
+    message: "Incredible! My rescue dog used to be anxious but these long-lasting chews keep him calm and focused for hours. The grain-free natural recipe is exactly what he needs. Highly recommended.",
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
   },
 ];
@@ -80,7 +78,6 @@ const TestimonialSection = () => {
     goTo((currentIndex - 1 + testimonials.length) % testimonials.length, 'left');
   }, [currentIndex, testimonials.length, goTo]);
 
-  // Auto-play every 5 s
   useEffect(() => {
     timerRef.current = setInterval(next, 5000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
@@ -101,16 +98,12 @@ const TestimonialSection = () => {
 
         {/* Header */}
         <div className="text-center mb-14">
-          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 uppercase mb-3">
-            Trusted by Dog Owners
+          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-3">
+            Trusted by Dog Owners Across the UK
           </span>
-          <TextHeader
-            text="What Our Customers Say"
-            align="center"
-            size="custom"
-            textcolor="gray-900"
-            className="text-4xl md:text-5xl font-bold mb-4"
-          />
+          <h2 className="text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4">
+            What Our Customers Say
+          </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-amber-400 to-orange-500 mx-auto rounded-full" />
         </div>
 
@@ -118,23 +111,20 @@ const TestimonialSection = () => {
         <div className="relative">
           {/* Giant quote icon */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-            <Quote className="w-16 h-16 text-amber-400/70 fill-amber-200/50 drop-shadow-md" />
+            <Quote className="w-16 h-16 text-amber-400/70 fill-amber-200/50 dark:fill-amber-900/30 drop-shadow-md" />
           </div>
 
-          {/* Main card */}
-          <div
-            className="relative rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] mt-10"
-            style={{ background: 'linear-gradient(135deg,#fffdf8 0%,#fff8ee 100%)' }}
-          >
-            {/* Decorative gradient bg */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/80 via-white/60 to-orange-50/60 dark:from-[#2a1f18]/80 dark:to-[#1a130d]/60" />
+          {/* Main card — Tailwind bg classes only, NO inline style */}
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_30px_60px_rgba(0,0,0,0.6)] mt-10 bg-[#fffdf8] dark:bg-[#1e1610] border border-amber-100/60 dark:border-amber-900/30">
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300" />
 
-            {/* Animated border top */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 animate-shimmer" />
+            {/* Subtle inner glow overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-transparent dark:from-amber-900/10 dark:to-transparent pointer-events-none" />
 
             {/* Content */}
             <div
-              className={`relative z-10 px-8 md:px-16 lg:px-20 py-14 md:py-16 text-center transition-all duration-350 ${
+              className={`relative z-10 px-8 md:px-16 lg:px-20 py-14 md:py-16 text-center ${
                 isAnimating
                   ? direction === 'right'
                     ? 'opacity-0 translate-x-8'
@@ -149,7 +139,9 @@ const TestimonialSection = () => {
                   <Star
                     key={s}
                     className={`w-6 h-6 transition-transform hover:scale-110 ${
-                      s <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'
+                      s <= t.rating
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-gray-200 fill-gray-200 dark:text-gray-600 dark:fill-gray-600'
                     }`}
                   />
                 ))}
@@ -171,7 +163,7 @@ const TestimonialSection = () => {
                       className="relative w-20 h-20 rounded-full object-cover border-4 border-white dark:border-[#3a2c23] shadow-xl"
                     />
                   ) : (
-                    <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-4 border-white shadow-xl">
+                    <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-4 border-white dark:border-[#3a2c23] shadow-xl">
                       <span className="text-white font-bold text-3xl">{t.name?.[0]?.toUpperCase()}</span>
                     </div>
                   )}
@@ -179,7 +171,7 @@ const TestimonialSection = () => {
 
                 <div className="text-center">
                   <p className="text-xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] tracking-wide">{t.name}</p>
-                  <p className="text-amber-600 dark:text-amber-500 text-sm font-medium italic mt-0.5">
+                  <p className="text-amber-600 dark:text-amber-400 text-sm font-medium italic mt-0.5">
                     {t.position}{t.location ? ` · ${t.location}` : ''}
                   </p>
                 </div>
@@ -220,7 +212,7 @@ const TestimonialSection = () => {
                   onClick={() => goTo(idx, idx > currentIndex ? 'right' : 'left')}
                   className={`transition-all duration-300 rounded-full ${
                     idx === currentIndex
-                      ? 'w-8 h-2.5 bg-amber-500 dark:bg-amber-600'
+                      ? 'w-8 h-2.5 bg-amber-500'
                       : 'w-2.5 h-2.5 bg-[#2E1F14]/20 dark:bg-[#f5e9dc]/20 hover:bg-amber-400/60'
                   }`}
                   aria-label={`Testimonial ${idx + 1}`}
@@ -231,14 +223,18 @@ const TestimonialSection = () => {
         </div>
 
         {/* Trust badges */}
-        <div className="mt-14 flex flex-wrap justify-center gap-6 text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
+        <div className="mt-14 flex flex-wrap justify-center gap-4 text-sm">
           {[
             { emoji: '🐾', text: 'Natural Ingredients' },
             { emoji: '⭐', text: '5-Star Rated' },
-            { emoji: '🇬🇧', text: 'UK Customers' },
+            { emoji: '🇬🇧', text: 'UK Dog Owners' },
             { emoji: '🦴', text: 'Vet Approved' },
+            { emoji: '🐕', text: 'Long-Lasting Chews' },
           ].map(({ emoji, text }) => (
-            <div key={text} className="flex items-center gap-2 bg-white/60 dark:bg-[#241b16]/60 border border-amber-100 dark:border-[#3a2c23] rounded-full px-4 py-2 shadow-sm backdrop-blur-sm">
+            <div
+              key={text}
+              className="flex items-center gap-2 bg-white/70 dark:bg-[#241b16]/70 border border-amber-100 dark:border-[#3a2c23] rounded-full px-4 py-2 shadow-sm backdrop-blur-sm text-[#7A5C4F] dark:text-[#c8b6a6]"
+            >
               <span className="text-base">{emoji}</span>
               <span className="font-medium text-xs tracking-wide">{text}</span>
             </div>
@@ -246,7 +242,7 @@ const TestimonialSection = () => {
         </div>
 
         {/* Bottom decorative */}
-        <div className="mt-14 flex justify-center">
+        <div className="mt-12 flex justify-center">
           <div className="flex items-center gap-3">
             <div className="w-14 h-px bg-gradient-to-r from-transparent to-amber-400" />
             <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
@@ -254,17 +250,6 @@ const TestimonialSection = () => {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .animate-shimmer {
-          background-size: 200% auto;
-          animation: shimmer 3s linear infinite;
-        }
-      `}</style>
     </section>
   );
 };
