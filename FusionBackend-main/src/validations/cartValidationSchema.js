@@ -4,7 +4,7 @@ const cartItemSchema = Joi.object({
   productId: Joi.string().required(),
   size: Joi.string().required(),
   quantity: Joi.number().integer().min(1).required(),
-  unitPrice: Joi.number().positive().required(),
+  unitPrice: Joi.number().positive().optional(), // informational only — server always recalculates
 });
 
 export const cartValidationSchema = Joi.object({

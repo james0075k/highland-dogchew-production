@@ -9,6 +9,51 @@ import { __dirname, deleteFile } from '../utils/fileHelpers.js';
 import mongoose from 'mongoose';
 import { productValidationSchema } from '../validations/productValidationSchemas.js';
 
+// ─── Image URL helpers ───────────────────────────────────────────────────────
+
+// Build a URL from an uploaded file.
+// • Cloudinary: multer sets file.path = full https://res.cloudinary.com/... URL
+// • Local disk:  file.path is an absolute local path, use filename instead
+const getUploadedFileUrl = (file, req) => {
+  if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+    return file.path; // Cloudinary URL — works everywhere
+  }
+  return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
+};
+
+// Normalise a stored image URL so it always resolves correctly:
+//   • Cloudinary URLs       → leave as-is  (CDN, accessible everywhere)
+//   • Other absolute URLs   → leave as-is  (e.g. production server URLs still work)
+//   • localhost/127 URLs    → rewrite to current host (localhost-only URLs break on prod)
+//   • Relative /uploads/... → make absolute with current host
+const rewriteImageUrl = (url, req) => {
+  if (!url || typeof url !== 'string') return url;
+  // Cloudinary — always universally accessible
+  if (url.includes('res.cloudinary.com')) return url;
+  // Relative path — make absolute
+  if (url.startsWith('/uploads/')) {
+    return `${req.protocol}://${req.get('host')}${url}`;
+  }
+  // Only rewrite localhost URLs — they only work on the machine that uploaded the file
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    const idx = url.indexOf('/uploads/');
+    if (idx === -1) return url;
+    return `${req.protocol}://${req.get('host')}${url.substring(idx)}`;
+  }
+  // Any other absolute URL (e.g. https://api.highlanddogchew.co.uk/uploads/...) — leave as-is
+  return url;
+};
+
+const rewriteProductImages = (product, req) => {
+  const p = product.toObject ? product.toObject() : { ...product };
+  p.image = rewriteImageUrl(p.image, req);
+  if (Array.isArray(p.gallery)) {
+    p.gallery = p.gallery.map(u => rewriteImageUrl(u, req));
+  }
+  return p;
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Create Product
 export const createProduct = async (req, res, next) => {
   try {
@@ -48,20 +93,15 @@ export const createProduct = async (req, res, next) => {
     // Handle main image
     let fullImageUrl = '';
     if (req.files.image && req.files.image[0]) {
-      const relativeUrl = getFileUrl(req.files.image[0].filename);
-      fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+      fullImageUrl = getUploadedFileUrl(req.files.image[0], req);
     } else if (req.files.gallery && req.files.gallery.length > 0) {
-      const relativeUrl = getFileUrl(req.files.gallery[0].filename);
-      fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+      fullImageUrl = getUploadedFileUrl(req.files.gallery[0], req);
     }
 
     // Handle gallery images
     let galleryUrls = [];
     if (req.files.gallery && req.files.gallery.length > 0) {
-      galleryUrls = req.files.gallery.map(file => {
-        const relativeUrl = getFileUrl(file.filename);
-        return `${req.protocol}://${req.get('host')}${relativeUrl}`;
-      });
+      galleryUrls = req.files.gallery.map(file => getUploadedFileUrl(file, req));
     }
 
     // Parse JSON strings
@@ -95,7 +135,7 @@ export const createProduct = async (req, res, next) => {
       originalPrice: parseFloat(originalPrice),
       category,
       productType,
-      variety, // Store variety reference
+      variety,
       badge: badge || null,
       description,
       features: parsedFeatures,
@@ -112,6 +152,12 @@ export const createProduct = async (req, res, next) => {
       subscriptionSettings: {
         isEnabled: !!parsedSubscriptionSettings.isEnabled,
         discountPercentage: subDiscount,
+        weeklyOptions: Array.isArray(parsedSubscriptionSettings.weeklyOptions)
+          ? parsedSubscriptionSettings.weeklyOptions
+          : [],
+        monthlyOptions: Array.isArray(parsedSubscriptionSettings.monthlyOptions)
+          ? parsedSubscriptionSettings.monthlyOptions
+          : [],
         intervals: Array.isArray(parsedSubscriptionSettings.intervals)
           ? parsedSubscriptionSettings.intervals
           : [],
@@ -125,7 +171,7 @@ export const createProduct = async (req, res, next) => {
     // Populate variety details in response
     await savedProduct.populate('variety');
 
-    return handleSuccess(res, 201, 'Product created successfully', savedProduct);
+    return handleSuccess(res, 201, 'Product created successfully', rewriteProductImages(savedProduct, req));
   } catch (error) {
     next(error);
   }
@@ -151,7 +197,8 @@ export const getAllProducts = async (req, res, next) => {
       .populate('variety', 'name category')
       .sort({ createdAt: -1 });
 
-    return handleSuccess(res, 200, 'All products fetched successfully', products);
+    const rewritten = products.map(p => rewriteProductImages(p, req));
+    return handleSuccess(res, 200, 'All products fetched successfully', rewritten);
   } catch (error) {
     next(error);
   }
@@ -165,7 +212,7 @@ export const getProductBySlug = async (req, res, next) => {
 
     if (!product) return next(handleError(404, 'Product not found'));
 
-    return handleSuccess(res, 200, 'Product fetched successfully', product);
+    return handleSuccess(res, 200, 'Product fetched successfully', rewriteProductImages(product, req));
   } catch (error) {
     next(error);
   }
@@ -175,7 +222,7 @@ export const getProductBySlug = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(handleError(400, 'Invalid product ID'));
     }
@@ -184,7 +231,7 @@ export const getProductById = async (req, res, next) => {
 
     if (!product) return next(handleError(404, 'Product not found'));
 
-    return handleSuccess(res, 200, 'Product fetched successfully', product);
+    return handleSuccess(res, 200, 'Product fetched successfully', rewriteProductImages(product, req));
   } catch (error) {
     next(error);
   }
@@ -207,7 +254,7 @@ export const getProductsByVariety = async (req, res, next) => {
       return next(handleError(404, 'No products found for this variety'));
     }
 
-    return handleSuccess(res, 200, 'Products fetched by variety successfully', products);
+    return handleSuccess(res, 200, 'Products fetched by variety successfully', products.map(p => rewriteProductImages(p, req)));
   } catch (error) {
     next(error);
   }
@@ -269,6 +316,8 @@ export const updateProduct = async (req, res, next) => {
       if (delCharge < 0) return next(handleError(400, 'Delivery charge cannot be negative'));
       updatedData.pricingSettings = { taxPercentage: taxPct, deliveryCharge: delCharge };
     }
+
+    // Fix subscriptionSettings — preserve weeklyOptions and monthlyOptions
     if (updatedData.subscriptionSettings) {
       const subDiscount = parseFloat(updatedData.subscriptionSettings.discountPercentage) || 0;
       if (subDiscount < 0 || subDiscount > 100) {
@@ -277,6 +326,12 @@ export const updateProduct = async (req, res, next) => {
       updatedData.subscriptionSettings = {
         isEnabled: !!updatedData.subscriptionSettings.isEnabled,
         discountPercentage: subDiscount,
+        weeklyOptions: Array.isArray(updatedData.subscriptionSettings.weeklyOptions)
+          ? updatedData.subscriptionSettings.weeklyOptions
+          : [],
+        monthlyOptions: Array.isArray(updatedData.subscriptionSettings.monthlyOptions)
+          ? updatedData.subscriptionSettings.monthlyOptions
+          : [],
         intervals: Array.isArray(updatedData.subscriptionSettings.intervals)
           ? updatedData.subscriptionSettings.intervals
           : [],
@@ -289,11 +344,28 @@ export const updateProduct = async (req, res, next) => {
     if (updatedData.rating) updatedData.rating = parseFloat(updatedData.rating);
     if (updatedData.reviews) updatedData.reviews = parseInt(updatedData.reviews);
 
-    // Handle image update if present
-    if (req.file) {
-      const relativeUrl = getFileUrl(req.file.filename);
-      const fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
-      updatedData.image = fullImageUrl;
+    // Handle main image update
+    if (req.files?.image && req.files.image[0]) {
+      updatedData.image = getUploadedFileUrl(req.files.image[0], req);
+    } else if (req.file) {
+      updatedData.image = getUploadedFileUrl(req.file, req);
+    }
+
+    // Handle gallery update
+    // Frontend sends existingGallery (JSON array of URLs to keep) + any new gallery files
+    if (req.files?.gallery && req.files.gallery.length > 0) {
+      const newGalleryUrls = req.files.gallery.map(file => getUploadedFileUrl(file, req));
+
+      let existingGallery = [];
+      if (updatedData.existingGallery) {
+        try { existingGallery = JSON.parse(updatedData.existingGallery); } catch {}
+        delete updatedData.existingGallery;
+      }
+      updatedData.gallery = [...existingGallery, ...newGalleryUrls];
+    } else if (updatedData.existingGallery) {
+      // No new files uploaded — use the existing gallery list (may have had items removed)
+      try { updatedData.gallery = JSON.parse(updatedData.existingGallery); } catch {}
+      delete updatedData.existingGallery;
     }
 
     // Update the product document
@@ -306,7 +378,7 @@ export const updateProduct = async (req, res, next) => {
       return next(handleError(404, 'Product not found'));
     }
 
-    return handleSuccess(res, 200, 'Product updated successfully', updated);
+    return handleSuccess(res, 200, 'Product updated successfully', rewriteProductImages(updated, req));
   } catch (error) {
     next(error);
   }
@@ -366,7 +438,7 @@ export const getProductsByCategory = async (req, res, next) => {
       return next(handleError(404, 'No products found for this category'));
     }
 
-    return handleSuccess(res, 200, 'Products fetched by category successfully', products);
+    return handleSuccess(res, 200, 'Products fetched by category successfully', products.map(p => rewriteProductImages(p, req)));
   } catch (error) {
     next(error);
   }
@@ -390,7 +462,8 @@ export const getProductsByType = async (req, res, next) => {
       .lean()
       .sort({ createdAt: -1 });
 
-    return handleSuccess(res, 200, 'Products fetched by type successfully', products);
+    const rewritten = products.map(p => rewriteProductImages(p, req));
+    return handleSuccess(res, 200, 'Products fetched by type successfully', rewritten);
   } catch (error) {
     next(error);
   }
@@ -399,13 +472,13 @@ export const getProductsByType = async (req, res, next) => {
 // Get Featured Products (with badge)
 export const getFeaturedProducts = async (req, res, next) => {
   try {
-    const products = await ProductModel.find({ 
-      badge: { $ne: null, $exists: true } 
+    const products = await ProductModel.find({
+      badge: { $ne: null, $exists: true }
     })
     .populate('variety')
     .sort({ createdAt: -1 });
 
-    return handleSuccess(res, 200, 'Featured products fetched successfully', products);
+    return handleSuccess(res, 200, 'Featured products fetched successfully', products.map(p => rewriteProductImages(p, req)));
   } catch (error) {
     next(error);
   }
