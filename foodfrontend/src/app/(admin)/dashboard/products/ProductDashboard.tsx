@@ -347,6 +347,14 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
         formDataToSend.append('gallery', file);
       });
 
+      // On edit: tell backend which existing gallery URLs to keep (covers removals too)
+      if (editingProduct) {
+        const existingUrls = galleryPreviews.filter(
+          (p: any) => typeof p === 'string' && p.startsWith('http')
+        );
+        formDataToSend.append('existingGallery', JSON.stringify(existingUrls));
+      }
+
       const token = Cookies.get('token');
 
       const url = editingProduct

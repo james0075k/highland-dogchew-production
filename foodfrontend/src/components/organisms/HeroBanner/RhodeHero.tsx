@@ -45,16 +45,28 @@ export default function RhodeHero() {
     }, 350);
   }, []);
 
-  // Keep video element in sync with current index
+  // Keep video element in sync with current index.
+  // isMounted is in the deps so the effect re-runs once the <video> element
+  // actually exists (on first render videoRef.current is null).
   useEffect(() => {
     const vid = videoRef.current;
-    if (!vid) return;
+    if (!vid || !isMounted) return;
     vid.src = videos[current];
     vid.load();
     if (isPlaying) {
       vid.play().catch(() => {});
     }
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [current, isMounted]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fallback timer: auto-advance after 12 s in case the video fails to fire
+  // onEnded (e.g. file missing, codec issue). Resets on every slide change.
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = setTimeout(() => {
+      switchVideo((current + 1) % videos.length);
+    }, 12000);
+    return () => clearTimeout(timer);
+  }, [current, isPlaying, switchVideo]);
 
   const handlePrev = () => {
     switchVideo((current - 1 + videos.length) % videos.length);

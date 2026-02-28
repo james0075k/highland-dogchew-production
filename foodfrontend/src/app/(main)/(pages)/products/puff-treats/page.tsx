@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
+import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
@@ -45,7 +46,7 @@ export default function PuffTreatsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0] dark:from-[#1a1410] dark:to-[#241b16] transition-colors duration-300">
-      <section className="pt-32 pb-16 px-4">
+      <section className="pt-40 pb-16 px-4">
         <div className="max-w-7xl mx-auto">
           <Link
             href="/products"
@@ -103,6 +104,8 @@ export default function PuffTreatsPage() {
           )}
         </div>
       </section>
+
+      <SizeGuideSection />
     </div>
   );
 }

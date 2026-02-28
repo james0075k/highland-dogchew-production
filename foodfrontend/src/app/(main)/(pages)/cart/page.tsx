@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { Trash2, Plus, Minus, ShoppingBag, ChevronLeft } from 'lucide-react';
+import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
 
 export default function CartPage() {
   const router = useRouter();
@@ -205,6 +206,9 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* Size Guide — below cart review, before checkout */}
+      <SizeGuideSection />
     </div>
   );
 }

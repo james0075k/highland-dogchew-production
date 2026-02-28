@@ -287,30 +287,8 @@ export default function CheckoutPage() {
       setError(null);
 
       try {
-        const validateRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/cart-payments/validate`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              items: items.map((i) => ({
-                productId: i.productId,
-                size: i.size,
-                quantity: i.quantity,
-                unitPrice: i.unitPrice,
-              })),
-              promoCode: promoInfo?.code || '',
-            }),
-          }
-        );
-
-        const validateData = await validateRes.json();
-        if (!validateData.success) {
-          setError(validateData.message || 'Price validation failed');
-          setLoading(false);
-          return;
-        }
-
+        // create-payment-intent validates prices server-side internally —
+        // no separate /validate round-trip needed.
         const paymentRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/cart-payments/create-payment-intent`,
           {

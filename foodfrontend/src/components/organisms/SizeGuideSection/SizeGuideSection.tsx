@@ -16,32 +16,32 @@ export default function SizeGuideSection() {
         </div>
 
         {/* Dog Size Chart Image */}
-        <div className="mb-12 rounded-2xl overflow-hidden shadow-xl dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] bg-stone-200 dark:bg-[#241b16] p-8">
+        <div className="mb-12 rounded-2xl overflow-hidden shadow-xl dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] bg-stone-100 dark:bg-[#241b16] p-6 md:p-8">
           <img
-            src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1200&q=80"
-            alt="Dog size comparison chart"
-            className="w-full rounded-lg"
+            src="/images/dogsize.jpg"
+            alt="Dog size comparison chart showing breeds from King to Small"
+            className="w-full rounded-lg object-contain"
           />
           <div className="mt-6 grid grid-cols-5 gap-2 text-center">
             <div>
               <p className="font-bold text-sm md:text-base text-[#2E1F14] dark:text-[#f5e9dc]">King</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Giant Breeds</p>
+              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Great Dane</p>
             </div>
             <div>
               <p className="font-bold text-sm md:text-base text-[#2E1F14] dark:text-[#f5e9dc]">Extra Large</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Large Breeds</p>
+              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Newfoundland</p>
             </div>
             <div>
               <p className="font-bold text-sm md:text-base text-[#2E1F14] dark:text-[#f5e9dc]">Large</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Medium-Large</p>
+              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">German Shepherd</p>
             </div>
             <div>
               <p className="font-bold text-sm md:text-base text-[#2E1F14] dark:text-[#f5e9dc]">Medium</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Medium Dogs</p>
+              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Shiba Inu</p>
             </div>
             <div>
               <p className="font-bold text-sm md:text-base text-[#2E1F14] dark:text-[#f5e9dc]">Small</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Small Breeds</p>
+              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">Dachshund / Yorkie</p>
             </div>
           </div>
         </div>
