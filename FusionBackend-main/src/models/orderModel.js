@@ -4,7 +4,6 @@ const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true,
   },
   name: {
     type: String,
@@ -48,14 +47,17 @@ const orderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const shippingAddressSchema = new mongoose.Schema({
-  fullName: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String },
-  addressLine1: { type: String, required: true },
+  fullName:     { type: String, default: '' },
+  firstName:    { type: String },
+  lastName:     { type: String },
+  email:        { type: String, default: '' },
+  phone:        { type: String },
+  addressLine1: { type: String, default: '' },
   addressLine2: { type: String },
-  city: { type: String, required: true },
-  postcode: { type: String, required: true },
-  country: { type: String, default: 'United Kingdom' },
+  city:         { type: String, default: '' },
+  county:       { type: String },
+  postcode:     { type: String, default: '' },
+  country:      { type: String, default: 'United Kingdom' },
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
@@ -90,6 +92,8 @@ const orderSchema = new mongoose.Schema({
   },
   paymentIntentId: {
     type: String,
+    unique: true,
+    sparse: true, // allows multiple orders with no paymentIntentId (manual/legacy)
   },
   paymentStatus: {
     type: String,

@@ -1,88 +1,257 @@
-import React from 'react';
+'use client';
+
+import React, { useRef, useEffect } from 'react';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+} from 'framer-motion';
+
+// ─── Word-by-word stagger reveal ─────────────────────────────────────────────
+//
+// Each word fades in + slides up + unblurs with a small stagger.
+// Using opacity+y+blur (NOT overflow-hidden + y:108%) so words are
+// never fully invisible — headings always visible even before JS hydrates.
+//
+function SplitHeading({
+  text,
+  delay = 0,
+}: {
+  text: string;
+  delay?: number;
+}) {
+  const prefersReduced = useReducedMotion();
+  const words = text.split(' ');
+
+  return (
+    <span aria-label={text}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          className="inline-block"
+          style={{ marginRight: i < words.length - 1 ? '0.28em' : 0 }}
+          initial={prefersReduced ? {} : { opacity: 0, y: 22, filter: 'blur(6px)' }}
+          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{
+            duration: 0.65,
+            delay: delay + i * 0.09,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
+// ─── Scroll-parallax zoom — static image ─────────────────────────────────────
+//
+// useScroll tracks how far the element has crossed the viewport (0 → 1):
+//   0    = image bottom at viewport bottom  (just entering)
+//   0.45 = image centred in viewport
+//   1    = image top at viewport top        (just leaving)
+//
+// Scale 1.10 → 1.00 → 1.05:
+//   • zoom-out as it enters  (feels alive, luxury e-commerce style)
+//   • gentle zoom-in as it exits  (adds parallax depth)
+//
+function ZoomImage({
+  src,
+  alt,
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+}) {
+  const prefersReduced = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+
+  const scale = useTransform(
+    scrollYProgress,
+    [0, 0.45, 1],
+    prefersReduced ? [1, 1, 1] : [1.10, 1.0, 1.05]
+  );
+
+  return (
+    <div
+      ref={ref}
+      className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]"
+    >
+      <motion.img
+        src={src}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        style={{ scale, willChange: 'transform', display: 'block' }}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
+
+// ─── Scroll-parallax zoom — autoplay video ────────────────────────────────────
+function ZoomVideo({ src }: { src: string }) {
+  const prefersReduced = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+
+  const scale = useTransform(
+    scrollYProgress,
+    [0, 0.45, 1],
+    prefersReduced ? [1, 1, 1] : [1.10, 1.0, 1.05]
+  );
+
+  // Pause off-screen → saves CPU / battery on mobile
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) video.play().catch(() => {});
+        else video.pause();
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]"
+    >
+      <motion.video
+        ref={videoRef}
+        src={src}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        style={{ scale, willChange: 'transform', display: 'block' }}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function HimalayanStorySection() {
   return (
     <div className="py-4 md:py-24 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
 
-        {/* Section 1: Handmade By The Himalayan Farmers */}
+        {/* ── Section 1: Handmade By The Himalayan Farmers ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center mb-20 md:mb-32">
-          {/* Image */}
           <div className="order-2 lg:order-1">
-            <div className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]">
-              <img
-                src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80"
-                alt="Himalayan mountains with yaks"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ZoomImage
+              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80"
+              alt="Himalayan mountains with yaks"
+              priority
+            />
           </div>
 
-          {/* Content */}
           <div className="order-1 lg:order-2">
+            {/* Heading — word-by-word stagger */}
             <h2 className="font-antique text-3xl md:text-4xl lg:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-6 tracking-[-0.01em]">
-              Handmade By The Himalayan Farmers
+              <SplitHeading text="Handmade By The Himalayan Farmers" delay={0.05} />
             </h2>
-            <p className="text-base md:text-lg lg:text-xl text-[#5b4636] dark:text-[#c8b6a6] leading-relaxed">
-              Yak milk chews, in tiny bits were first created and consumed as snacks by the Himalayan people decades ago as a good source of protein and still do now. We took the same idea and turned it into an all natural long lasting hard cheese dog chews – treats for your dog. Made from Yak milk, our yak chews for dogs contain the highest protein & calcium content with minimal fat and no chemically binding agents.
-            </p>
+
+            {/* Body copy — fade up after heading */}
+            <motion.p
+              className="text-base md:text-lg lg:text-xl text-[#5b4636] dark:text-[#c8b6a6] leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Yak milk chews, in tiny bits were first created and consumed as snacks by the Himalayan people decades ago
+              as a good source of protein and still do now. We took the same idea and turned it into an all natural long
+              lasting hard cheese dog chews – treats for your dog. Made from Yak milk, our yak chews for dogs contain the
+              highest protein &amp; calcium content with minimal fat and no chemically binding agents.
+            </motion.p>
           </div>
         </div>
 
-        {/* Section 2: What To Do With End Pieces? */}
+        {/* ── Section 2: What To Do With End Pieces? ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Content */}
           <div>
+            {/* Heading — word-by-word stagger */}
             <h2 className="font-antique text-3xl md:text-4xl lg:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-6 tracking-[-0.01em]">
-              What To Do With End Pieces?
+              <SplitHeading text="What To Do With End Pieces?" delay={0.05} />
             </h2>
-            <p className="text-base md:text-lg lg:text-xl text-[#5b4636] dark:text-[#c8b6a6] leading-relaxed">
-              Simply microwave the nugget for about 45 seconds until it puffs up (vary the time depending on your microwave power) - Let it <span className="font-bold text-orange-600 dark:text-amber-500">COOL</span> - and then watch as your dog enjoys the crunchy texture and delicious smoky taste.
-            </p>
 
-            {/* Instructions Steps */}
+            {/* Body copy */}
+            <motion.p
+              className="text-base md:text-lg lg:text-xl text-[#5b4636] dark:text-[#c8b6a6] leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.7, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
+            >
+              Simply microwave the nugget for about 45 seconds until it puffs up — Let it{' '}
+              <span className="font-bold text-orange-600 dark:text-amber-500">COOL</span>{' '}
+              — and then watch as your dog enjoys the crunchy texture and delicious smoky taste.
+            </motion.p>
+
+            {/* Numbered steps */}
             <div className="mt-8 space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-orange-500 dark:bg-amber-700 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  1
-                </div>
-                <div className="pt-1">
-                  <p className="text-[#2E1F14] dark:text-[#f5e9dc] font-semibold">Microwave for 45 seconds</p>
-                  <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm">Until it puffs up nicely</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-orange-500 dark:bg-amber-700 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  2
-                </div>
-                <div className="pt-1">
-                  <p className="text-[#2E1F14] dark:text-[#f5e9dc] font-semibold">Let it cool completely</p>
-                  <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm">Safety first for your pup</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-orange-500 dark:bg-amber-700 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  3
-                </div>
-                <div className="pt-1">
-                  <p className="text-[#2E1F14] dark:text-[#f5e9dc] font-semibold">Watch them enjoy!</p>
-                  <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm">Crunchy texture & smoky taste</p>
-                </div>
-              </div>
+              {[
+                { label: 'Microwave for 45 seconds', sub: 'Until it puffs up nicely' },
+                { label: 'Let it cool completely',    sub: 'Safety first for your pup' },
+                { label: 'Watch them enjoy!',         sub: 'Crunchy texture & smoky taste' },
+              ].map((step, i) => (
+                <motion.div
+                  key={i}
+                  className="flex items-start gap-4"
+                  initial={{ opacity: 0, x: -18 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: 0.55 + i * 0.11,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                >
+                  <motion.div
+                    className="flex-shrink-0 w-10 h-10 bg-orange-500 dark:bg-amber-700 text-white rounded-full flex items-center justify-center font-bold text-lg"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.45,
+                      delay: 0.6 + i * 0.11,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }}
+                  >
+                    {i + 1}
+                  </motion.div>
+                  <div className="pt-1">
+                    <p className="text-[#2E1F14] dark:text-[#f5e9dc] font-semibold">{step.label}</p>
+                    <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm">{step.sub}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          {/* Image */}
           <div>
-            <div className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]">
-              <img
-                src="https://images.unsplash.com/photo-1615751072497-5f5169febe17?w=1200&q=80"
-                alt="Puffed yak milk treats in basket"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ZoomVideo src="/videos/video4.mp4" />
           </div>
         </div>
 

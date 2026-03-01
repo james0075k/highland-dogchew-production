@@ -1,13 +1,22 @@
+/**
+ * productWebhookController.js — PRIMARY order creation path
+ *
+ * Stripe calls this endpoint after every payment event.
+ * The sync endpoint (fallback) uses the same createOrderFromPI utility,
+ * so the two paths can never produce duplicate orders.
+ */
+
 import Stripe from 'stripe';
 import OrderModel from '../models/orderModel.js';
-import PromoCodeModel from '../models/promoCodeModel.js';
+import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ─── POST /api/webhook/stripe ─────────────────────────────────────────────────
 export const handleProductWebhook = async (req, res) => {
+  // ── 1. Verify Stripe signature (reject tampered requests) ────────────────────
   const sig = req.headers['stripe-signature'];
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -15,72 +24,62 @@ export const handleProductWebhook = async (req, res) => {
       process.env.PRODUCT_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('Product webhook signature verification failed:', err.message);
+    console.error('[webhook] Signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // ── 2. Always respond 200 quickly so Stripe does not retry ───────────────────
+  //    (DB write happens synchronously above; emails are fire-and-forget)
   switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object;
 
-      // Only handle product purchases
-      if (paymentIntent.metadata?.type !== 'product-purchase') break;
+    // ── payment_intent.succeeded ─────────────────────────────────────────────
+    case 'payment_intent.succeeded': {
+      const pi = event.data.object;
+      if (pi.metadata?.type !== 'product-purchase') break;
 
       try {
-        // Update order to paid + confirmed
-        const order = await OrderModel.findOneAndUpdate(
-          { paymentIntentId: paymentIntent.id },
-          {
-            paymentStatus: 'paid',
-            orderStatus: 'confirmed',
-          },
-          { new: true }
-        );
-
-        if (order) {
-          console.log(`Payment succeeded for order ${order.orderNumber}`);
+        const { order, created } = await createOrderFromPI(pi);
+        if (created) {
+          console.log(`[webhook] ✅ Order ${order.orderNumber} created (PI: ${pi.id})`);
         } else {
-          console.log(`No order found for paymentIntent ${paymentIntent.id} — will be created by frontend`);
-        }
-
-        // Increment promo code usage if one was used
-        const promoCode = paymentIntent.metadata?.promoCode;
-        if (promoCode) {
-          await PromoCodeModel.findOneAndUpdate(
-            { code: promoCode },
-            { $inc: { usageCount: 1 } }
-          );
-          console.log(`Promo code ${promoCode} usage incremented`);
+          // Sync endpoint already created it — perfectly normal in dual-system
+          console.log(`[webhook] ⏭️  Order ${order.orderNumber} already exists (sync was faster) — skipped`);
         }
       } catch (err) {
-        console.error('Error processing payment_intent.succeeded:', err.message);
+        // Log but still return 200 — Stripe will not retry on 200
+        console.error('[webhook] ❌ Error processing payment_intent.succeeded:', err.message);
       }
       break;
     }
 
+    // ── payment_intent.payment_failed ────────────────────────────────────────
     case 'payment_intent.payment_failed': {
-      const failedIntent = event.data.object;
+      const pi = event.data.object;
+      if (pi.metadata?.type !== 'product-purchase') break;
+      const reason = pi.last_payment_error?.message || 'unknown reason';
+      console.log(`[webhook] ⚠️  Payment failed for PI ${pi.id}: ${reason}`);
+      break;
+    }
 
-      if (failedIntent.metadata?.type !== 'product-purchase') break;
-
-      try {
+    // ── charge.refunded ──────────────────────────────────────────────────────
+    case 'charge.refunded': {
+      const charge = event.data.object;
+      if (charge.payment_intent) {
         await OrderModel.findOneAndUpdate(
-          { paymentIntentId: failedIntent.id },
-          {
-            paymentStatus: 'failed',
-            orderStatus: 'cancelled',
-          }
+          { paymentIntentId: charge.payment_intent },
+          { paymentStatus: 'refunded', orderStatus: 'cancelled' }
+        ).catch((err) =>
+          console.error('[webhook] Refund update failed:', err.message)
         );
-        console.log(`Payment failed for paymentIntent ${failedIntent.id}`);
-      } catch (err) {
-        console.error('Error processing payment_intent.payment_failed:', err.message);
+        console.log(`[webhook] 💸 Order refunded for PI ${charge.payment_intent}`);
       }
       break;
     }
 
     default:
-      console.log(`Unhandled product webhook event: ${event.type}`);
+      // Silently ignore events we don't handle
+      break;
   }
 
-  res.status(200).json({ received: true });
+  return res.status(200).json({ received: true });
 };

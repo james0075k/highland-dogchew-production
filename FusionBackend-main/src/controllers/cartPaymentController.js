@@ -147,15 +147,30 @@ export const createPaymentIntent = async (req, res, next) => {
     // Stripe requires the smallest currency unit (pence for GBP)
     const amountInPence = Math.round(grandTotal * 100);
 
+    // Serialise line items for webhook — Stripe metadata values max 500 chars.
+    // We store the full array; if it exceeds the limit we fall back to a
+    // compact summary (name + qty) so the webhook can still create the order.
+    const fullItemsJson    = JSON.stringify(lineItems);
+    const compactItemsJson = JSON.stringify(
+      lineItems.map((l) => ({ name: l.name, size: l.size, quantity: l.quantity, unitPrice: l.unitPrice, lineTotal: l.lineTotal }))
+    );
+    const itemsMeta = fullItemsJson.length <= 490 ? fullItemsJson : compactItemsJson;
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount:   amountInPence,
       currency: 'gbp',
+      automatic_payment_methods: { enabled: true },
       metadata: {
-        type:      'product-purchase',
-        itemCount: items.length.toString(),
-        items:     JSON.stringify(lineItems.map((l) => `${l.name} x${l.quantity}`)),
-        promoCode: promoData ? promoData.code : '',
-        discount:  discount.toString(),
+        type:          'product-purchase',
+        itemCount:     items.length.toString(),
+        items:         itemsMeta,
+        promoCode:     promoData ? promoData.code : '',
+        discount:      discount.toString(),
+        subtotal:      subtotal.toString(),
+        totalTax:      totalTax.toString(),
+        totalDelivery: totalDelivery.toString(),
+        grandTotal:    grandTotal.toString(),
+        currency:      'gbp',
       },
     });
 
@@ -173,6 +188,66 @@ export const createPaymentIntent = async (req, res, next) => {
     });
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
+    next(err);
+  }
+};
+
+// ─── POST /api/cart-payments/update-meta ─────────────────────────────────────
+// Called by the frontend just before stripe.confirmPayment() to attach
+// customer and shipping details to the PaymentIntent metadata so the
+// webhook can create a complete order without any frontend involvement.
+//
+// Security notes:
+//   • Only customer/shipping fields are written — pricing is never touched
+//     here because it was locked in PI.amount at creation time.
+//   • We verify the PI exists and is still in a processable state before
+//     updating, so stale or invalid IDs are rejected.
+export const updatePaymentIntentMeta = async (req, res, next) => {
+  try {
+    const { paymentIntentId, customer, shipping } = req.body;
+
+    if (!paymentIntentId || typeof paymentIntentId !== 'string') {
+      return next(handleError(400, 'paymentIntentId is required'));
+    }
+    if (!customer?.email || !customer?.firstName || !customer?.lastName) {
+      return next(handleError(400, 'customer.firstName, customer.lastName and customer.email are required'));
+    }
+    if (!shipping?.address || !shipping?.city || !shipping?.postcode) {
+      return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
+    }
+
+    // Verify the PaymentIntent exists and can still be updated
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (!pi || pi.metadata?.type !== 'product-purchase') {
+      return next(handleError(400, 'Invalid payment reference'));
+    }
+    if (['succeeded', 'canceled'].includes(pi.status)) {
+      return next(handleError(400, 'Payment has already been completed or cancelled'));
+    }
+
+    // Update only customer/shipping keys — never touch pricing keys
+    await stripe.paymentIntents.update(paymentIntentId, {
+      receipt_email: customer.email,
+      metadata: {
+        c_firstName: String(customer.firstName).slice(0, 100),
+        c_lastName:  String(customer.lastName).slice(0, 100),
+        c_email:     String(customer.email).slice(0, 200),
+        c_phone:     String(customer.phone || '').slice(0, 30),
+        s_line1:     String(shipping.address).slice(0, 200),
+        s_line2:     String(shipping.apartment || '').slice(0, 200),
+        s_city:      String(shipping.city).slice(0, 100),
+        s_county:    String(shipping.county || '').slice(0, 100),
+        s_postcode:  String(shipping.postcode).slice(0, 20),
+        s_country:   String(shipping.country || 'United Kingdom').slice(0, 100),
+      },
+    });
+
+    return handleSuccess(res, 200, 'Order details saved', {});
+  } catch (err) {
+    if (err instanceof CartError) return next(handleError(err.status, err.message));
+    if (err.type?.startsWith('Stripe')) {
+      return next(handleError(400, err.message));
+    }
     next(err);
   }
 };
