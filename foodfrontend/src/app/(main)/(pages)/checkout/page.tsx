@@ -579,6 +579,11 @@ export default function CheckoutPage() {
     if (items.length === 0) router.push('/cart');
   }, [items, router]);
 
+  // Use a stable key derived from cart contents + promo so the effect only
+  // re-runs when something meaningful actually changes (not on every render).
+  const cartKey = items.map((i) => `${i.productId}:${i.size}:${i.quantity}`).join('|');
+  const promoKey = promoInfo?.code ?? '';
+
   useEffect(() => {
     if (items.length === 0) return;
     const createIntent = async () => {
@@ -595,7 +600,7 @@ export default function CheckoutPage() {
               quantity: i.quantity,
               unitPrice: i.unitPrice,
             })),
-            promoCode: promoInfo?.code || '',
+            promoCode: promoKey,
           }),
         });
         const data = await res.json();
@@ -613,7 +618,8 @@ export default function CheckoutPage() {
       }
     };
     createIntent();
-  }, [items, promoInfo]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey, promoKey]);
 
   const handleShippingChange = (field: keyof ShippingForm, value: string | boolean) => {
     setShipping((prev) => ({ ...prev, [field]: value }));
@@ -665,7 +671,7 @@ export default function CheckoutPage() {
               <span className="text-sm text-[#aaa] dark:text-[#666]">Setting up secure checkout…</span>
             </div>
           ) : clientSecret && paymentIntentId ? (
-            <StripeProvider clientSecret={clientSecret} theme={isDark ? 'night' : 'stripe'}>
+            <StripeProvider key={paymentIntentId} clientSecret={clientSecret} theme={isDark ? 'night' : 'stripe'}>
               <CheckoutForm
                 shipping={shipping}
                 onShippingChange={handleShippingChange}
