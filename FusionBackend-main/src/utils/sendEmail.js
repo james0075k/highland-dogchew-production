@@ -1,29 +1,33 @@
 import nodemailer from 'nodemailer';
 
 /**
- * Send an email via Gmail SMTP with STARTTLS (port 587).
+ * Send an email via Hostinger SMTP.
  *
  * Required env vars:
- *   SMTP_HOST  = smtp.gmail.com
- *   SMTP_PORT  = 587
- *   SMTP_USER  = your-gmail@gmail.com
- *   SMTP_PASS  = xxxx xxxx xxxx xxxx  (16-char Google App Password)
- *   SMTP_FROM  = "Admin Support <your-gmail@gmail.com>"
+ *   SMTP_HOST  = smtp.hostinger.com
+ *   SMTP_PORT  = 465  (SSL) or 587 (STARTTLS)
+ *   SMTP_USER  = admin@highlanddogchew.co.uk
+ *   SMTP_PASS  = your_mailbox_password
+ *   SMTP_FROM  = "Highland Yak Chew <admin@highlanddogchew.co.uk>"
  *
- * Falls back to legacy SMTP_EMAIL / SMTP_PASSWORD if new vars are absent.
+ * Port 465 → secure: true (implicit SSL)
+ * Port 587 → secure: false + requireTLS: true (STARTTLS)
  */
 const sendEmail = async ({ to, subject, html }) => {
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER || process.env.SMTP_EMAIL;
   const pass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
-  const from = process.env.SMTP_FROM || `"Highland Dog Chew" <${user}>`;
+  const from = process.env.SMTP_FROM || `"Highland Yak Chew" <${user}>`;
+
+  // Port 465 = implicit SSL (secure: true); port 587 = STARTTLS (secure: false)
+  const useSSL = port === 465;
 
   const transporter = nodemailer.createTransport({
     host,
     port,
-    secure: false,       // false = plain connection that upgrades via STARTTLS
-    requireTLS: true,    // refuse connection if server does not support TLS upgrade
+    secure: useSSL,
+    ...(!useSSL && { requireTLS: true }),
     auth: { user, pass },
     tls: {
       rejectUnauthorized: true,

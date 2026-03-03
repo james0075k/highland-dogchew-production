@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -236,7 +236,7 @@ export default function CheckoutSuccessPage() {
                 className="text-[2rem] font-extralight tracking-[0.18em] text-[#2f1e14] dark:text-[#f5e9dc] lowercase leading-none select-none"
                 style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif', fontWeight: 200 }}
               >
-                highland dogchew
+                Highland Yakchew
               </span>
             </Link>
           </div>
@@ -435,7 +435,7 @@ export default function CheckoutSuccessPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px', paddingBottom: '20px', borderBottom: '1px solid #ccc' }}>
           <p style={{ margin: '0 0 2px', fontFamily: 'system-ui, sans-serif', fontWeight: 200, letterSpacing: '0.18em', fontSize: '20px', textTransform: 'lowercase' }}>
-            highland dogchew
+            Highland Yakchew
           </p>
           <p style={{ margin: 0, fontSize: '11px', color: '#888', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             Order Receipt

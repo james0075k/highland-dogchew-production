@@ -12,38 +12,9 @@ interface Testimonial {
   profileImage?: string;
 }
 
-const FALLBACK: Testimonial[] = [
-  {
-    _id: 'f1',
-    name: 'Sarah Johnson',
-    position: 'Dog Owner',
-    location: 'UK',
-    rating: 5,
-    message: "My golden retriever absolutely loves these Highland chews! They last so much longer than other treats and the all-natural ingredients give me complete peace of mind. Best dog chew we've ever tried.",
-    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
-  },
-  {
-    _id: 'f2',
-    name: 'Dr. Michael Chen',
-    position: 'Veterinarian',
-    location: 'UK',
-    rating: 5,
-    message: "As a vet, I'm very selective about what I recommend. Highland Dogchew's yak milk formula is one of the few products I confidently suggest — safe, healthy, and dogs genuinely love them.",
-    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
-  },
-  {
-    _id: 'f3',
-    name: 'Emma Williams',
-    position: 'Pet Parent',
-    location: 'Scotland',
-    rating: 5,
-    message: "Incredible! My rescue dog used to be anxious but these long-lasting chews keep him calm and focused for hours. The grain-free natural recipe is exactly what he needs. Highly recommended.",
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
-  },
-];
-
 const TestimonialSection = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
@@ -55,9 +26,10 @@ const TestimonialSection = () => {
       .then((r) => r.json())
       .then((data) => {
         const arr = Array.isArray(data) ? data : (data.data || []);
-        if (arr.length > 0) setTestimonials(arr);
+        setTestimonials(arr);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const goTo = useCallback((idx: number, dir: 'left' | 'right') => {
@@ -85,6 +57,37 @@ const TestimonialSection = () => {
 
   const pauseAutoPlay = () => { if (timerRef.current) clearInterval(timerRef.current); };
   const resumeAutoPlay = () => { timerRef.current = setInterval(next, 5000); };
+
+  if (loading) {
+    return (
+      <section className="w-full py-16 px-6 bg-gradient-to-b from-[#f9f5ef] to-[#f0ebe0] dark:from-[#1a130d] dark:to-[#150e09]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="h-3 w-48 bg-amber-200/60 dark:bg-amber-800/40 rounded-full mx-auto mb-3 animate-pulse" />
+            <div className="h-10 w-72 bg-amber-100 dark:bg-amber-900/30 rounded-xl mx-auto mb-4 animate-pulse" />
+            <div className="w-20 h-1 bg-amber-200 dark:bg-amber-800 mx-auto rounded-full" />
+          </div>
+          <div className="rounded-3xl bg-[#fffdf8] dark:bg-[#1e1610] border border-amber-100/60 dark:border-amber-900/30 p-14 mt-10 animate-pulse">
+            <div className="flex justify-center gap-1 mb-6">
+              {[1,2,3,4,5].map((s) => <div key={s} className="w-6 h-6 rounded bg-amber-100 dark:bg-amber-900/40" />)}
+            </div>
+            <div className="space-y-3 max-w-2xl mx-auto mb-10">
+              {[100, 90, 80].map((w, i) => (
+                <div key={i} className="h-4 bg-gray-100 dark:bg-gray-700 rounded mx-auto" style={{ width: `${w}%` }} />
+              ))}
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/40" />
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-3 w-24 bg-gray-100 dark:bg-gray-800 rounded" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (testimonials.length === 0) return null;
 
   const t = testimonials[currentIndex];
 

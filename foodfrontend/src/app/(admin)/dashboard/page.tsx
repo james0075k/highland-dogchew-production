@@ -328,7 +328,7 @@ export default function AdminDashboard() {
               <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight leading-none">Admin</h1>
               <p className="text-blue-200/50 text-sm max-w-sm leading-relaxed">
                 Here&apos;s what&apos;s happening with your{' '}
-                <span className="text-amber-400/80 font-semibold">Highland Dog Chew</span> store today.
+                <span className="text-amber-400/80 font-semibold">Highland Yak Chew</span> store today.
               </p>
             </div>
             <div className="flex flex-row lg:flex-col items-start lg:items-end gap-3 flex-wrap">

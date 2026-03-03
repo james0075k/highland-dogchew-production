@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -147,7 +147,7 @@ export default function Navbar() {
           <Link href="/" className="flex flex-col items-center justify-center gap-1 cursor-pointer">
             <Logo index={isTransparentState ? 1 : 0} />
             <span className="font-antique text-2xl lg:text-[28px] text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.04em] leading-tight font-bold">
-              Highland Dogchew
+              Highland Yakchew
             </span>
           </Link>
 
@@ -207,7 +207,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
             <Logo index={isTransparentState ? 1 : 0} />
             <span className="font-antique text-xl text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.03em] font-bold">
-              Highland Dogchew
+              Highland Yakchew
             </span>
           </Link>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useState } from 'react';
 import { Play, Instagram, Image as ImageIcon, Film, Grid3X3 } from 'lucide-react';
 
@@ -27,9 +27,9 @@ const FALLBACK: Post[] = [
   { id: 'f1', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80', caption: 'Happy dog enjoying a Highland Yak Chew! 🐾', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
   { id: 'f2', image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80', caption: 'Long-lasting yak milk chews — your dog will love them!', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
   { id: 'f3', image: 'https://images.unsplash.com/photo-1615751072497-5f5169febe17?w=800&q=80', caption: 'Natural & grain-free. Made from authentic mountain recipes.', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
-  { id: 'f4', image: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80', caption: 'Your dog deserves the best — try Highland Dogchew! 🦴', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
+  { id: 'f4', image: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&q=80', caption: 'Your dog deserves the best — try Highland Yakchew! 🦴', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
   { id: 'f5', image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=800&q=80', caption: 'Unboxing day! Himalayan Puff Treats have arrived 🎁', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
-  { id: 'f6', image: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=800&q=80', caption: 'Dental health + happy dog = Highland Dogchew ✅', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
+  { id: 'f6', image: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=800&q=80', caption: 'Dental health + happy dog = Highland Yakchew ✅', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
   { id: 'f7', image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&q=80', caption: 'Puppy approved 🐕 Yak Milk Chews for every breed!', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
   { id: 'f8', image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=800&q=80', caption: '100% natural. No grain. No gluten. Just goodness.', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
 ];

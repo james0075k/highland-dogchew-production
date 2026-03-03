@@ -97,7 +97,7 @@ const TeamSection = () => {
           />
           <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto rounded-full" />
           <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet the passionate people behind Highland Dog Chew, dedicated to bringing
+            Meet the passionate people behind Highland Yak Chew, dedicated to bringing
             the finest quality dog chews to your beloved pets.
           </p>
         </div>

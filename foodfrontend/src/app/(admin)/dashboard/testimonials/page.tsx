@@ -361,7 +361,7 @@ export default function TestimonialsAdminPage() {
                 required
                 rows={4}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm resize-none"
-                placeholder="Write the customer's testimonial about the Highland Dog Chew product..."
+                placeholder="Write the customer's testimonial about the Highland Yak Chew product..."
               />
               <p className="text-xs text-gray-400 mt-1">{formData.message.length} characters</p>
             </div>

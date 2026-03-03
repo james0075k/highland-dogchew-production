@@ -4,10 +4,10 @@
  */
 
 const brand = {
-  name: 'Highland Dog Chew',
+  name: 'Highland Yak Chew',
   color: '#2f1e14',
   accent: '#d97706',
-  supportEmail: process.env.SMTP_USER || 'support@highlanddogchew.co.uk',
+  supportEmail: process.env.SMTP_USER || 'admin@highlanddogchew.co.uk',
   siteUrl: process.env.APP_URL || 'https://highlanddogchew.co.uk',
 };
 
@@ -31,7 +31,7 @@ function layout(title, bodyHtml) {
           <tr>
             <td style="background:${brand.color};padding:28px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:300;letter-spacing:0.15em;text-transform:lowercase;">
-                highland dog chew
+                highland yak chew
               </h1>
             </td>
           </tr>

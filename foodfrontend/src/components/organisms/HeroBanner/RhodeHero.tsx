@@ -18,7 +18,7 @@ const videos = [
 ];
 
 const heroContent = [
-  { heading: "Highland Dog Chew",    subtext: "Premium Himalayan treats, crafted with care" },
+  { heading: "Highland Yak Chew",    subtext: "Premium Himalayan treats, crafted with care" },
   { heading: "Pure & Natural",        subtext: "100% yak milk — no preservatives, no additives" },
   { heading: "Born in the Himalayas", subtext: "Ancient recipe, modern love for your dog" },
 ];

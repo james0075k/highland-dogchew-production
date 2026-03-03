@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 
@@ -53,7 +53,7 @@ const LogoComponent = ({ width = 75, height = 30, index = 0 }: LogoProps) => {
       <div className="flex justify-start">
         <Image
           src="/images/logo11.png"
-          alt="Highland Dogchew"
+          alt="Highland Yakchew"
           width={width}
           height={height}
           className="h-[48px] w-[48px] md:h-[56px] md:w-[56px] object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]"

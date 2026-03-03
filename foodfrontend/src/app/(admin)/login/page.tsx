@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/25 transform hover:scale-105 transition-transform duration-300">
             <GiDogBowl className="text-white text-3xl" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1">Highland Dog Chew</h1>
+          <h1 className="text-3xl font-bold text-white mb-1">Highland Yak Chew</h1>
           <p className="text-blue-200/50 text-sm">Admin Dashboard</p>
         </div>
 
@@ -180,7 +180,7 @@ export default function AdminLoginPage() {
 
         {/* Footer */}
         <p className="text-center text-white/20 text-xs mt-8">
-          &copy; {new Date().getFullYear()} Highland Dog Chew. All rights reserved.
+          &copy; {new Date().getFullYear()} Highland Yak Chew. All rights reserved.
         </p>
       </div>
     </div>

@@ -30,20 +30,6 @@ function PaymentIcon({ method }: { method: string }) {
       </span>
     );
   }
-  if (method === 'PayPal') {
-    return (
-      <span className="inline-flex items-center justify-center bg-[#003087] text-white text-[11px] font-bold px-3 py-1.5 rounded-md">
-        Pay<span className="text-[#009cde]">Pal</span>
-      </span>
-    );
-  }
-  if (method === 'ShoPay') {
-    return (
-      <span className="inline-flex items-center justify-center bg-[#5a31f4] text-white text-[11px] font-bold px-3 py-1.5 rounded-md">
-        Shop Pay
-      </span>
-    );
-  }
   if (method === 'Visa') {
     return (
       <span className="inline-flex items-center justify-center bg-[#1a1f71] text-white text-[11px] font-bold italic px-3 py-1.5 rounded-md tracking-widest">
@@ -62,10 +48,35 @@ function PaymentIcon({ method }: { method: string }) {
       </span>
     );
   }
+  if (method === 'Amex') {
+    return (
+      <span className="inline-flex items-center justify-center bg-[#007bc1] text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md tracking-tight leading-tight text-center">
+        AMERICAN<br />EXPRESS
+      </span>
+    );
+  }
+  if (method === 'Discover') {
+    return (
+      <span className="inline-flex items-center justify-center bg-white border border-gray-200 px-2 py-1.5 rounded-md">
+        <svg viewBox="0 0 60 24" width="52" height="18">
+          <rect width="60" height="24" rx="3" fill="#fff" />
+          <text x="4" y="16" fontSize="10" fontWeight="700" fill="#231f20" fontFamily="Arial">DISCOVER</text>
+          <circle cx="52" cy="12" r="8" fill="#f76f20" />
+        </svg>
+      </span>
+    );
+  }
+  if (method === 'Link') {
+    return (
+      <span className="inline-flex items-center justify-center bg-[#00d66b] text-white text-[11px] font-bold px-3 py-1.5 rounded-md tracking-tight">
+        Link
+      </span>
+    );
+  }
   return null;
 }
 
-const PAYMENT_METHODS = ['Apple Pay', 'Google Pay', 'PayPal', 'ShoPay', 'Visa', 'Mastercard'];
+const PAYMENT_METHODS = ['Apple Pay', 'Google Pay', 'Visa', 'Mastercard', 'Amex', 'Discover', 'Link'];
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -406,37 +417,37 @@ export default function ProductDetailPage() {
               <div>
                 <p className="font-bold text-gray-900 dark:text-[#f5e9dc]">Mix & Match products & SAVE!</p>
                 <p className="text-sm text-gray-500 dark:text-[#c8b6a6] mt-0.5 mb-3">Choose quantity:</p>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   {adjustedBulkPricing.map((tier: any, idx: number) => {
                     const tierTotal = tier.price * (tier.quantity || 1);
                     const tierOrigTotal = tier.originalPrice * (tier.quantity || 1);
                     const isSelected = selectedQtyIdx === idx;
                     return (
-                      <label key={idx} className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="quantity"
-                          checked={isSelected}
-                          onChange={() => setSelectedQtyIdx(idx)}
-                          className="w-4 h-4 accent-amber-600 flex-shrink-0"
-                        />
-                        <span className="text-sm text-gray-700 dark:text-[#c8b6a6] flex items-center gap-1.5 flex-wrap">
-                          <span>Buy {tier.quantity}:</span>
-                          <span className="font-bold text-amber-600 dark:text-amber-400">
-                            £{tierTotal.toFixed(2)}
-                          </span>
-                          {tierOrigTotal > tierTotal && (
-                            <span className="text-gray-400 dark:text-[#7A5C4F] line-through text-xs">
-                              £{tierOrigTotal.toFixed(2)}
-                            </span>
-                          )}
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedQtyIdx(idx)}
+                        className={`relative flex flex-col items-start p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${
+                          isSelected
+                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                            : 'border-gray-200 dark:border-[#3a2c23] hover:border-amber-300 dark:hover:border-amber-700'
+                        }`}
+                      >
+                        <span className="text-xs text-gray-500 dark:text-[#c8b6a6]">Buy {tier.quantity}</span>
+                        <span className="font-bold text-amber-600 dark:text-amber-400 text-base">
+                          £{tierTotal.toFixed(2)}
                         </span>
+                        {tierOrigTotal > tierTotal && (
+                          <span className="text-gray-400 dark:text-[#7A5C4F] line-through text-xs">
+                            £{tierOrigTotal.toFixed(2)}
+                          </span>
+                        )}
                         {tier.discount > 0 && (
-                          <span className="bg-gray-900 dark:bg-[#f5e9dc] text-white dark:text-[#1a1410] text-[11px] font-bold px-2 py-0.5 rounded flex-shrink-0">
+                          <span className="mt-1 bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                             SAVE {tier.discount}%
                           </span>
                         )}
-                      </label>
+                      </button>
                     );
                   })}
                 </div>
@@ -446,39 +457,40 @@ export default function ProductDetailPage() {
             {/* ── Purchase Options ── */}
             <div>
               <p className="font-bold text-gray-900 dark:text-[#f5e9dc] mb-3">Purchase options</p>
-              <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {/* One-time */}
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="purchase"
-                    value="one-time"
-                    checked={purchaseOption === 'one-time'}
-                    onChange={() => setPurchaseOption('one-time')}
-                    className="w-4 h-4 accent-amber-600 flex-shrink-0"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-[#c8b6a6]">One-time purchase</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => setPurchaseOption('one-time')}
+                  className={`flex flex-col items-start p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${
+                    purchaseOption === 'one-time'
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                      : 'border-gray-200 dark:border-[#3a2c23] hover:border-amber-300 dark:hover:border-amber-700'
+                  }`}
+                >
+                  <span className="text-sm font-semibold text-gray-900 dark:text-[#f5e9dc]">One-time</span>
+                  <span className="text-xs text-gray-500 dark:text-[#c8b6a6]">purchase</span>
+                </button>
 
                 {/* Subscribe & Save */}
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="purchase"
-                    value="repeat"
-                    checked={purchaseOption === 'repeat'}
-                    onChange={() => setPurchaseOption('repeat')}
-                    className="w-4 h-4 accent-amber-600 flex-shrink-0"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-[#c8b6a6]">
-                    Subscribe &amp; Save
-                    {subscriptionAvailable && product.subscriptionSettings.discountPercentage > 0 && (
-                      <span className="text-green-600 dark:text-green-400 font-semibold ml-1">
-                        (SAVE {product.subscriptionSettings.discountPercentage}%)
-                      </span>
-                    )}
-                  </span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => setPurchaseOption('repeat')}
+                  className={`flex flex-col items-start p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${
+                    purchaseOption === 'repeat'
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                      : 'border-gray-200 dark:border-[#3a2c23] hover:border-amber-300 dark:hover:border-amber-700'
+                  }`}
+                >
+                  <span className="text-sm font-semibold text-gray-900 dark:text-[#f5e9dc]">Subscribe &amp; Save</span>
+                  {subscriptionAvailable && product.subscriptionSettings.discountPercentage > 0 ? (
+                    <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                      SAVE {product.subscriptionSettings.discountPercentage}%
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-500 dark:text-[#c8b6a6]">recurring order</span>
+                  )}
+                </button>
               </div>
 
               {/* Deliver every */}
@@ -546,7 +558,7 @@ export default function ProductDetailPage() {
               ref={addToCartBtnRef}
               onClick={handleAddToCart}
               disabled={hasSizes && !selectedSize}
-              className="hidden lg:flex w-full bg-[#b5621e] hover:bg-[#9a4f15] active:bg-[#7d3f10] disabled:bg-amber-200 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-xl items-center justify-center gap-3 text-base shadow-md hover:shadow-lg transition-all duration-200"
+              className="hidden lg:flex w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:bg-amber-200 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-xl items-center justify-center gap-3 text-base shadow-md hover:shadow-lg transition-all duration-200"
             >
               <ShoppingCart className="w-5 h-5" />
               {hasSizes && !selectedSize ? 'Select a size' : 'ADD TO CART'}
@@ -681,9 +693,6 @@ export default function ProductDetailPage() {
         <ProductReviews productId={product._id} />
       </div>
 
-      {/* Size Guide — below reviews */}
-      <SizeGuideSection />
-
       {/* ─── Universal Sticky Bar ───
           • Mobile: always visible (desktop button is display:none → IntersectionObserver fires immediately)
           • Desktop: slides up from bottom when main CTA button scrolls out of view
@@ -738,7 +747,7 @@ export default function ProductDetailPage() {
             <button
               onClick={handleAddToCart}
               disabled={hasSizes && !selectedSize}
-              className="flex-1 lg:flex-none lg:min-w-[180px] bg-[#b5621e] hover:bg-[#9a4f15] active:bg-[#7d3f10] disabled:bg-amber-200 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md transition-all duration-200"
+              className="flex-1 lg:flex-none lg:min-w-[180px] bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:bg-amber-200 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md transition-all duration-200"
             >
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden lg:inline">ADD TO CART</span>

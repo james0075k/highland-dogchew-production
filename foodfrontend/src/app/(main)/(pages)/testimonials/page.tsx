@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import { Star, Quote, BadgeCheck, ShieldCheck, Bone, Heart } from "lucide-react";
@@ -264,7 +264,7 @@ const Testimonials = () => {
         </h1>
         <div className="mx-auto h-1 w-20 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 mb-6" />
         <p className="text-[#7A5C4F] dark:text-[#c8b6a6] max-w-xl mx-auto text-base leading-relaxed">
-          Join thousands of happy dog owners across the UK who trust Highland Dogchew for natural,
+          Join thousands of happy dog owners across the UK who trust Highland Yakchew for natural,
           long-lasting yak milk chews their pups absolutely love.
         </p>
       </section>
@@ -387,7 +387,7 @@ const Testimonials = () => {
               Your Dog Deserves the Best
             </h2>
             <p className="text-white/80 mb-8 max-w-md mx-auto text-base leading-relaxed">
-              Join thousands of UK pup parents and try Highland Dogchew. Natural, long-lasting, and
+              Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and
               tail-waggingly good.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

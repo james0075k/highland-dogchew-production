@@ -146,7 +146,7 @@ export async function createOrderFromPI(pi, customerOverride = null) {
   if (email) {
     sendEmail({
       to: email,
-      subject: `Your Order Confirmation – Highland Dog Chew (${order.orderNumber})`,
+      subject: `Your Order Confirmation – Highland Yak Chew (${order.orderNumber})`,
       html: customerOrderEmailHtml(order, firstName),
     }).catch((err) => console.error('[order] Customer email failed:', err.message));
   }

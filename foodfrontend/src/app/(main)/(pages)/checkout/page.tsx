@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -650,7 +650,7 @@ export default function CheckoutPage() {
             <span className="text-[2.6rem] sm:text-[3.2rem] font-extralight tracking-[0.18em] text-[#2f1e14] dark:text-[#f5e9dc] lowercase leading-none select-none"
               style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif', fontWeight: 200 }}
             >
-              highland dogchew
+              Highland Yakchew
             </span>
           </Link>
 

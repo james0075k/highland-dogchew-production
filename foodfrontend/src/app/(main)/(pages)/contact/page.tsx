@@ -393,7 +393,7 @@ export default function ContactPage() {
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            title="Highland Dog Chew Location"
+            title="Highland Yak Chew Location"
           />
         </div>
         {/* Bottom fade overlay */}

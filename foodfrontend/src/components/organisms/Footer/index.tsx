@@ -277,7 +277,7 @@ export default function Footer({ destinations = [], activities = [], contactInfo
       <div className="border-t border-[#2E1F14]/10 dark:border-[#3a2c23]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-6 py-5 gap-3">
           <div className="flex flex-wrap justify-center gap-4 text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
-            <p>&copy; 2026 Highland Dog Chew. All rights reserved.</p>
+            <p>&copy; 2026 Highland Yak Chew. All rights reserved.</p>
             <a href="/about/terms" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Terms & Conditions</a>
             <a href="/site-map" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Site Map</a>
           </div>

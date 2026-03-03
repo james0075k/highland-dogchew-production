@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 const LAST_UPDATED = "24 February 2026";
-const COMPANY_NAME = "Highland Dog Chew";
+const COMPANY_NAME = "Highland Yak Chew";
 const COMPANY_EMAIL = "info@highlanddogchew.co.uk";
 const COMPANY_WEBSITE = "highlanddogchew.co.uk";
 
@@ -273,7 +273,7 @@ export default function TermsAndConditions() {
                 "Do not give to dogs with known dairy or milk allergies.",
                 "Remove and discard pieces small enough to swallow whole.",
                 "Ensure your dog has access to fresh water at all times.",
-                "Highland Dog Chew is not liable for any injury or adverse reaction resulting from unsupervised use or failure to follow these guidelines.",
+                "Highland Yak Chew is not liable for any injury or adverse reaction resulting from unsupervised use or failure to follow these guidelines.",
                 "If your dog shows signs of distress after chewing, discontinue use and consult a veterinarian immediately.",
               ]} />
             </SectionBlock>
