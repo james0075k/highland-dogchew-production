@@ -3,8 +3,6 @@
 import React, { useRef, useEffect } from 'react';
 import {
   motion,
-  useScroll,
-  useTransform,
   useReducedMotion,
 } from 'framer-motion';
 
@@ -31,12 +29,12 @@ function SplitHeading({
           key={i}
           className="inline-block"
           style={{ marginRight: i < words.length - 1 ? '0.28em' : 0 }}
-          initial={prefersReduced ? {} : { opacity: 0, y: 22, filter: 'blur(6px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={prefersReduced ? {} : { opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.1 }}
           transition={{
-            duration: 0.65,
-            delay: delay + i * 0.09,
+            duration: 0.55,
+            delay: delay + i * 0.07,
             ease: [0.22, 1, 0.36, 1],
           }}
         >
@@ -47,17 +45,7 @@ function SplitHeading({
   );
 }
 
-// ─── Scroll-parallax zoom — static image ─────────────────────────────────────
-//
-// useScroll tracks how far the element has crossed the viewport (0 → 1):
-//   0    = image bottom at viewport bottom  (just entering)
-//   0.45 = image centred in viewport
-//   1    = image top at viewport top        (just leaving)
-//
-// Scale 1.10 → 1.00 → 1.05:
-//   • zoom-out as it enters  (feels alive, luxury e-commerce style)
-//   • gentle zoom-in as it exits  (adds parallax depth)
-//
+// ─── Viewport-enter scale reveal — static image ──────────────────────────────
 function ZoomImage({
   src,
   alt,
@@ -68,51 +56,30 @@ function ZoomImage({
   priority?: boolean;
 }) {
   const prefersReduced = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 0.45, 1],
-    prefersReduced ? [1, 1, 1] : [1.10, 1.0, 1.05]
-  );
 
   return (
-    <div
-      ref={ref}
+    <motion.div
       className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]"
+      initial={prefersReduced ? {} : { opacity: 0, scale: 0.97 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.img
+      <img
         src={src}
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}
-        style={{ scale, willChange: 'transform', display: 'block' }}
+        style={{ display: 'block' }}
         className="w-full h-full object-cover"
       />
-    </div>
+    </motion.div>
   );
 }
 
-// ─── Scroll-parallax zoom — autoplay video ────────────────────────────────────
+// ─── Viewport-enter scale reveal — autoplay video ────────────────────────────
 function ZoomVideo({ src }: { src: string }) {
   const prefersReduced = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 0.45, 1],
-    prefersReduced ? [1, 1, 1] : [1.10, 1.0, 1.05]
-  );
 
   // Pause off-screen → saves CPU / battery on mobile
   useEffect(() => {
@@ -130,11 +97,14 @@ function ZoomVideo({ src }: { src: string }) {
   }, []);
 
   return (
-    <div
-      ref={ref}
+    <motion.div
       className="rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]"
+      initial={prefersReduced ? {} : { opacity: 0, scale: 0.97 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.video
+      <video
         ref={videoRef}
         src={src}
         autoPlay
@@ -142,10 +112,10 @@ function ZoomVideo({ src }: { src: string }) {
         muted
         playsInline
         preload="metadata"
-        style={{ scale, willChange: 'transform', display: 'block' }}
+        style={{ display: 'block' }}
         className="w-full h-full object-cover"
       />
-    </div>
+    </motion.div>
   );
 }
 

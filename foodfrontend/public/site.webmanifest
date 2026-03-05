@@ -1,0 +1,23 @@
+{
+  "name": "Highland Yakchew",
+  "short_name": "Highland Yakchew",
+  "description": "Premium highland yak chew dog treats – natural, long-lasting chews made from yak milk. Free UK delivery.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#fff8f0",
+  "theme_color": "#92400e",
+  "icons": [
+    {
+      "src": "/images/logo11.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo11.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

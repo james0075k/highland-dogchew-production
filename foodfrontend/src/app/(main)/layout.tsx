@@ -22,20 +22,27 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: 'Highland Yakchew | Premium Yak Milk Dog Chews & Natural Dog Treats UK',
+    default: 'Highland Yakchew | Highland Yak Chew – Natural Dog Chews & Treats UK',
     template: '%s | Highland Yakchew',
   },
 
   description:
-    'Shop premium Highland Yakchew products – 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews made from authentic mountain recipes. Free UK delivery. Grain-free, natural ingredients your dog will love.',
+    'Shop Highland Yakchew – premium highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews made from authentic mountain recipes. Free UK delivery. Grain-free, natural ingredients your dog will love.',
 
   keywords: [
+    'highland yak chew',
+    'highland yak chews',
+    'highland yakchew',
+    'highland dog chew',
+    'highland dog chews uk',
     'yak milk dog chew',
+    'yak chew for dogs',
     'himalayan dog chew',
+    'himalayan yak chew',
+    'yak cheese dog chew',
     'natural dog treats UK',
     'Highland Yakchew',
     'long lasting dog chews',
-    'yak chew for dogs',
     'natural dog chews uk',
     'himalayan chew uk',
     'puff treats for dogs',
@@ -44,13 +51,14 @@ export const metadata: Metadata = {
     'premium dog chews',
     'all natural dog treats',
     'grain free dog treats',
-    'yak cheese dog chew',
     'cheese puffs for dogs',
     'dog dental chews',
     'highland mix dog chews',
     'buy dog chews uk',
     'best dog chews 2025',
     'natural himalayan chew',
+    'yak chew uk',
+    'yak milk chew uk',
   ],
 
   authors: [{ name: 'Highland Yakchew', url: BASE_URL }],
@@ -81,9 +89,9 @@ export const metadata: Metadata = {
     locale: 'en_GB',
     url: BASE_URL,
     siteName: 'Highland Yakchew',
-    title: 'Highland Yakchew | Premium Yak Milk Dog Chews & Natural Dog Treats UK',
+    title: 'Highland Yakchew | Highland Yak Chew – Natural Dog Chews & Treats UK',
     description:
-      'Shop premium Highland Yakchew products – 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews. Free UK delivery.',
+      'Shop Highland Yakchew – highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews. Free UK delivery.',
     images: [
       {
         url: '/og-image.jpg',
@@ -107,18 +115,18 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.png', type: 'image/png' },
     ],
     apple: '/apple-touch-icon.png',
-    shortcut: '/favicon-32x32.png',
+    shortcut: '/favicon.png',
   },
 
   manifest: '/site.webmanifest',
 
   verification: {
-    google: 'YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE',
-    // bing: 'YOUR_BING_VERIFICATION_CODE',
+    google: 'MEnr-Q9qVuzELch8yumHVjnnl4uOcdjbgbS_M5-nVyE',
   },
 
   other: {
@@ -134,7 +142,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'Highland Yakchew',
   url: BASE_URL,
-  logo: `${BASE_URL}/logo.png`,
+  logo: `${BASE_URL}/images/logo11.png`,
   description: 'Premium natural yak milk dog chews and Himalayan dog treats, handcrafted for healthy, happy dogs.',
   sameAs: [
     'https://www.instagram.com/highlanddogchew',

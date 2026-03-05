@@ -58,7 +58,7 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+      className="flex items-center justify-center w-8 h-8 transition-all duration-200 rounded-full shadow-sm bg-amber-100 hover:bg-amber-500 text-amber-600 hover:text-white hover:shadow-md"
       title={platform}
     >
       {icons[platform]}
@@ -71,18 +71,18 @@ const TeamCard = ({ member }: { member: TeamMember }) => {
     Object.values(member.socialLinks).some(Boolean);
 
   return (
-    <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-amber-100/60 hover:border-amber-200">
+    <div className="overflow-hidden transition-all duration-300 bg-white border shadow-md group rounded-2xl hover:shadow-xl border-amber-100/60 hover:border-amber-200">
       {/* Photo */}
       <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 aspect-[4/3]">
         {member.image ? (
           <img
             src={member.image}
             alt={member.name}
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+            className="object-cover object-top w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-amber-200 flex items-center justify-center">
+          <div className="flex items-center justify-center w-full h-full">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-amber-200">
               <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -101,7 +101,7 @@ const TeamCard = ({ member }: { member: TeamMember }) => {
           <p className="text-sm font-semibold text-amber-600 mt-0.5">{member.position}</p>
         )}
         {member.shortinfo && (
-          <p className="text-sm text-gray-500 mt-2 leading-relaxed line-clamp-3">{member.shortinfo}</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-500 line-clamp-3">{member.shortinfo}</p>
         )}
 
         {/* Certifications */}
@@ -125,7 +125,7 @@ const TeamCard = ({ member }: { member: TeamMember }) => {
 
         {/* Social links */}
         {hasSocials && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 pt-4 mt-4 border-t border-gray-100">
             {Object.entries(member.socialLinks!)
               .filter(([, url]) => url)
               .map(([platform, url]) => (
@@ -160,27 +160,27 @@ const AboutPage = () => {
   return (
     <main className="min-h-screen bg-[#f6f2ea]">
       {/* ─── Founder's Note ─── */}
-      <section className="mx-auto max-w-7xl px-4 py-10 md:py-14 mt-20">
+      <section className="px-4 py-10 mx-auto mt-20 max-w-7xl md:py-14">
         <div className="overflow-hidden rounded-[28px] bg-[#fbf8f2] shadow-[0_18px_55px_rgba(0,0,0,0.10)] ring-1 ring-black/5">
           {/* Top Image */}
           <div className="relative aspect-[16/11] w-full bg-neutral-200">
             <img
               src="images/about1.webp"
               alt="Founder"
-              className="h-full w-full object-cover grayscale"
+              className="object-cover w-full h-full grayscale"
             />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#fbf8f2] to-transparent" />
           </div>
 
           {/* Note content */}
-          <div className="px-6 pb-12 pt-8 md:px-12 md:pb-16 md:pt-10">
+          <div className="px-6 pt-8 pb-12 md:px-12 md:pb-16 md:pt-10">
             <h2
               className="text-center text-[15px] md:text-[16px] tracking-wide text-neutral-700"
               style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
             >
-              A Note From Our Founder
+              <span className="font-semibold">A Note From Our Founder</span>{" "}
             </h2>
-            <div className="mx-auto mt-5 h-px w-24 bg-neutral-300/80" />
+            <div className="w-24 h-px mx-auto mt-5 bg-neutral-300/80" />
             <div
               className="mx-auto mt-8 max-w-3xl text-[15px] leading-[1.95] text-neutral-700 md:text-[16px]"
               style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
@@ -200,21 +200,21 @@ const AboutPage = () => {
                 grow stronger and more independent over time.
               </p>
               <p className="mt-9 text-neutral-800">
-                <span className="font-semibold">Choosing Highland Yak Chew</span>{" "}
+                Choosing Highland Yak Chew
                 means supporting sustainable practices that honor both the land and the people who call
                 it home.
               </p>
             </div>
-            <div className="mx-auto mt-10 max-w-3xl text-right text-sm text-neutral-600">
-              — Highland Yak Chew
+            <div className="max-w-3xl mx-auto mt-10 text-sm text-right text-neutral-600">
+              <span className="font-semibold"> — Highland Yak Chew</span>{" "}
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── Why Choose Us ─── */}
-      <section className="mx-auto max-w-7xl px-4 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="px-4 pb-16 mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {[
             {
               icon: '🏔️',
@@ -232,10 +232,10 @@ const AboutPage = () => {
               desc: 'We work directly with Himalayan communities, ensuring fair trade and environmentally responsible production.',
             },
           ].map((item) => (
-            <div key={item.title} className="bg-white rounded-2xl p-6 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
-              <div className="text-4xl mb-4">{item.icon}</div>
+            <div key={item.title} className="p-6 transition-shadow bg-white border shadow-md rounded-2xl border-amber-100 hover:shadow-lg">
+              <div className="mb-4 text-4xl">{item.icon}</div>
               <h3 className="font-bold text-[#2f1e14] text-lg mb-2">{item.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+              <p className="text-sm leading-relaxed text-gray-500">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -243,17 +243,17 @@ const AboutPage = () => {
 
       {/* ─── Meet Our Team ─── */}
       {(loadingTeam || team.length > 0) && (
-        <section className="mx-auto max-w-7xl px-4 pb-20">
+        <section className="px-4 pb-20 mx-auto max-w-7xl">
           {/* Section header */}
-          <div className="text-center mb-12">
-            <span className="inline-block text-xs font-bold tracking-widest text-amber-600 uppercase mb-3">
+          <div className="mb-12 text-center">
+            <span className="inline-block mb-3 text-xs font-bold tracking-widest uppercase text-amber-600">
               The People Behind the Chew
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-[#2f1e14]">
               Meet Our Team
             </h2>
-            <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-amber-500" />
-            <p className="mt-4 max-w-xl mx-auto text-gray-500 text-sm leading-relaxed">
+            <div className="w-16 h-1 mx-auto mt-4 rounded-full bg-amber-500" />
+            <p className="max-w-xl mx-auto mt-4 text-sm leading-relaxed text-gray-500">
               Passionate dog lovers, quality experts, and sustainability advocates — our team is
               dedicated to bringing your pup the very best from the Himalayas.
             </p>
@@ -261,21 +261,21 @@ const AboutPage = () => {
 
           {/* Loading skeleton */}
           {loadingTeam ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse">
+                <div key={i} className="overflow-hidden bg-white shadow-md rounded-2xl animate-pulse">
                   <div className="aspect-[4/3] bg-amber-100" />
                   <div className="p-5 space-y-3">
-                    <div className="h-5 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-amber-100 rounded w-1/2" />
+                    <div className="w-3/4 h-5 bg-gray-200 rounded" />
+                    <div className="w-1/2 h-3 rounded bg-amber-100" />
                     <div className="h-3 bg-gray-100 rounded" />
-                    <div className="h-3 bg-gray-100 rounded w-5/6" />
+                    <div className="w-5/6 h-3 bg-gray-100 rounded" />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {team.map((member) => (
                 <TeamCard key={member._id} member={member} />
               ))}
@@ -286,8 +286,8 @@ const AboutPage = () => {
 
       {/* ─── Values Strip ─── */}
       <section className="bg-[#2f1e14] py-14">
-        <div className="mx-auto max-w-5xl px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div className="max-w-5xl px-4 mx-auto">
+          <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
             {[
               { value: '100%', label: 'Natural Ingredients' },
               { value: '5★', label: 'Customer Rating' },
@@ -296,7 +296,7 @@ const AboutPage = () => {
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-3xl font-bold text-amber-400">{stat.value}</p>
-                <p className="text-sm text-amber-100/80 mt-1">{stat.label}</p>
+                <p className="mt-1 text-sm text-amber-100/80">{stat.label}</p>
               </div>
             ))}
           </div>
