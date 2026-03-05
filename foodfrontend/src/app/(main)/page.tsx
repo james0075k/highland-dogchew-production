@@ -1,6 +1,33 @@
 // page.tsx - Fixed version without fetchAPI
 export const dynamic = "force-dynamic";
+
+import { Metadata } from "next";
 import Image from "next/image";
+
+const BASE_URL = "https://highlanddogchew.co.uk";
+
+export const metadata: Metadata = {
+  title: "Highland Yakchew | Premium Highland Yak Chew Dog Treats UK",
+  description:
+    "Highland Yakchew – the UK's premium highland yak chew brand. 100% natural yak milk dog chews, Himalayan puff treats & highland mix. Long-lasting, high-protein, grain-free. Made by Himalayan farmers. Free UK delivery.",
+  alternates: {
+    canonical: BASE_URL,
+  },
+  openGraph: {
+    title: "Highland Yakchew | Premium Highland Yak Chew Dog Treats UK",
+    description:
+      "100% natural highland yak chew dog treats – long-lasting, high-protein, grain-free. Handcrafted by Himalayan farmers. Free UK delivery.",
+    url: BASE_URL,
+    images: [
+      {
+        url: "/images/logos.jpeg",
+        width: 512,
+        height: 512,
+        alt: "Highland Yakchew Logo",
+      },
+    ],
+  },
+};
 import { FaInstagram, FaFacebookF, FaYoutube } from "react-icons/fa";
 import ImageDisplay from "@/components/atoms/ImageCard";
 import Button from "@/components/atoms/button";

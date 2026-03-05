@@ -18,9 +18,10 @@ export const createVariety = async (req, res, next) => {
       return next(handleError(400, 'Variety image is required'));
     }
 
-    // Handle image upload
-    const relativeUrl = getFileUrl(req.file.filename);
-    const fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+    // Handle image upload — use Cloudinary URL if available, else local
+    const fullImageUrl = req.file.path?.startsWith('http')
+      ? req.file.path
+      : `${req.protocol}://${req.get('host')}${getFileUrl(req.file.filename)}`;
 
     // Build variety data
     const varietyData = {
@@ -121,11 +122,11 @@ export const updateVariety = async (req, res, next) => {
     // Convert numeric strings to numbers
     if (updatedData.displayOrder) updatedData.displayOrder = parseInt(updatedData.displayOrder);
 
-    // Handle image update if present
+    // Handle image update if present — use Cloudinary URL if available, else local
     if (req.file) {
-      const relativeUrl = getFileUrl(req.file.filename);
-      const fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
-      updatedData.image = fullImageUrl;
+      updatedData.image = req.file.path?.startsWith('http')
+        ? req.file.path
+        : `${req.protocol}://${req.get('host')}${getFileUrl(req.file.filename)}`;
     }
 
     // Update the variety document
