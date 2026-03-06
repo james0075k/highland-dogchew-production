@@ -59,7 +59,10 @@ function FeaturedCard({ t }: { t: Testimonial }) {
           <Quote className="w-14 h-14 text-amber-300 dark:text-amber-500 fill-amber-100 dark:fill-amber-900/30 drop-shadow" />
         </div>
         <div className="flex justify-center mb-6"><Stars rating={t.rating} size="lg" /></div>
-        <blockquote className="relative z-10 text-xl md:text-2xl lg:text-[1.65rem] text-[#3d2512] dark:text-[#d4c4b0] leading-relaxed max-w-4xl mx-auto mb-10 font-serif italic">
+        <blockquote
+          className="relative z-10 text-[15px] md:text-[16px] text-[#3d2512] dark:text-[#d4c4b0] leading-[1.95] max-w-4xl mx-auto mb-10"
+          style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+        >
           &ldquo;{t.message}&rdquo;
         </blockquote>
         <div className="flex items-center gap-3 justify-center mb-8">
@@ -73,8 +76,14 @@ function FeaturedCard({ t }: { t: Testimonial }) {
             <Avatar src={t.profileImage} name={t.name} size="lg" />
           </div>
           <div>
-            <p className="font-bold text-[#2f1e14] dark:text-[#f5e9dc] text-xl mt-1">{t.name}</p>
-            <p className="text-amber-600 dark:text-amber-400 text-sm mt-0.5">
+            <p
+              className="font-bold text-[#2f1e14] dark:text-[#f5e9dc] text-[15px] md:text-[16px] mt-1"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            >{t.name}</p>
+            <p
+              className="text-amber-600 dark:text-amber-400 text-[15px] md:text-[16px] mt-0.5"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >
               {t.position ? `${t.position} · ` : ""}{t.location}
             </p>
           </div>
@@ -100,13 +109,22 @@ function TestimonialCard({ t, delay = 0 }: { t: Testimonial; delay?: number }) {
           <span className="text-5xl leading-none text-amber-300 dark:text-amber-600 font-serif group-hover:text-amber-400 dark:group-hover:text-amber-500 transition-colors">&ldquo;</span>
           <Stars rating={t.rating} />
         </div>
-        <p className="text-neutral-700 dark:text-neutral-300 text-[15px] leading-relaxed flex-1 font-serif italic">{t.message}</p>
+        <p
+          className="text-neutral-700 dark:text-neutral-300 text-[15px] md:text-[16px] leading-[1.95] flex-1"
+          style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+        >{t.message}</p>
         <div className="h-px bg-gradient-to-r from-amber-200 dark:from-amber-700 via-amber-400/60 to-transparent" />
         <div className="flex items-center gap-3">
           <Avatar src={t.profileImage} name={t.name} size="sm" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc] text-sm truncate">{t.name}</p>
-            <p className="text-xs text-amber-600/80 dark:text-amber-400/80 truncate">
+            <p
+              className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc] text-[15px] md:text-[16px] truncate"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            >{t.name}</p>
+            <p
+              className="text-[15px] md:text-[16px] text-amber-600/80 dark:text-amber-400/80 truncate"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >
               {t.position ? `${t.position} · ` : ""}{t.location}
             </p>
           </div>
@@ -154,7 +172,10 @@ function InfoPosterCard({ title, items, imageSrc }: { title: string; items: stri
           {title}
         </h3>
         <div className="mx-auto mt-5 h-px w-20 bg-neutral-300/80 dark:bg-neutral-600/80" />
-        <ul className="mx-auto mt-8 max-w-xl space-y-3 text-[18px] leading-relaxed text-neutral-800 dark:text-neutral-200 md:text-[19px] font-serif italic">
+        <ul
+          className="mx-auto mt-8 max-w-xl space-y-3 text-[15px] md:text-[16px] leading-[1.95] text-neutral-800 dark:text-neutral-200"
+          style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+        >
           {items.map((item, idx) => (
             <li key={idx} className="flex gap-4">
               <span className="mt-[10px] h-[6px] w-[6px] shrink-0 rounded-full bg-amber-500 dark:bg-amber-400" />
@@ -219,7 +240,7 @@ const Testimonials = () => {
           </h1>
           <div className="mx-auto mt-5 h-px w-24 bg-neutral-300/80 dark:bg-neutral-600/60" />
           <p
-            className="mt-8 text-[18px] md:text-[20px] leading-relaxed text-neutral-800 dark:text-neutral-300"
+            className="mt-8 text-[15px] md:text-[16px] leading-[1.95] text-neutral-800 dark:text-neutral-300"
             style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
           >
             Join thousands of happy dog owners across the UK who trust Highland Yakchew for natural,
@@ -247,8 +268,14 @@ const Testimonials = () => {
           ].map(({ icon, stat, label }) => (
             <div key={label} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <div className="flex justify-center mb-2">{icon}</div>
-              <p className="text-2xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">{stat}</p>
-              <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6] font-medium mt-0.5">{label}</p>
+              <p
+                className="text-2xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+              >{stat}</p>
+              <p
+                className="text-[15px] md:text-[16px] text-[#7A5C4F] dark:text-[#c8b6a6] font-medium mt-0.5"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+              >{label}</p>
             </div>
           ))}
         </div>
@@ -257,10 +284,16 @@ const Testimonials = () => {
       {/* ── Testimonials ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 pb-10">
         <div className="text-center mb-10">
-          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2">
+          <span
+            className="inline-block text-[15px] md:text-[16px] font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >
             Customer Reviews
           </span>
-          <h2 className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">
+          <h2
+            className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+          >
             Hear From Our Happy Pups
           </h2>
         </div>
@@ -281,8 +314,14 @@ const Testimonials = () => {
         ) : (
           <div className="text-center py-16 text-[#7A5C4F] dark:text-[#c8b6a6]">
             <Quote className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-semibold mb-1">No reviews yet</p>
-            <p className="text-sm">Be the first to share your experience!</p>
+            <p
+              className="text-[15px] md:text-[16px] font-semibold mb-1"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            >No reviews yet</p>
+            <p
+              className="text-[15px] md:text-[16px]"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >Be the first to share your experience!</p>
           </div>
         )}
       </section>
@@ -291,10 +330,16 @@ const Testimonials = () => {
       {/* ── Why dog owners love us ───────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center mb-10">
-          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2">
+          <span
+            className="inline-block text-[15px] md:text-[16px] font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >
             The Highland Difference
           </span>
-          <h2 className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">
+          <h2
+            className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+          >
             Why Dogs (and Owners) Choose Us
           </h2>
         </div>
@@ -306,8 +351,14 @@ const Testimonials = () => {
           ].map(({ emoji, title, desc }) => (
             <div key={title} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-7 text-center shadow-sm hover:shadow-lg dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-300">
               <div className="text-4xl mb-4">{emoji}</div>
-              <h3 className="text-lg font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">{title}</h3>
-              <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed">{desc}</p>
+              <h3
+                className="text-[15px] md:text-[16px] font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+              >{title}</h3>
+              <p
+                className="text-[15px] md:text-[16px] text-[#7A5C4F] dark:text-[#c8b6a6] leading-[1.95]"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+              >{desc}</p>
             </div>
           ))}
         </div>
@@ -319,15 +370,29 @@ const Testimonials = () => {
           <div className="pointer-events-none absolute inset-0 opacity-10 bg-[url('/images/paws-pattern.svg')] bg-repeat bg-[length:80px]" />
           <div className="relative z-10">
             <Bone className="w-10 h-10 text-white/80 mx-auto mb-4" />
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight">Your Dog Deserves the Best</h2>
-            <p className="text-white/80 mb-8 max-w-md mx-auto text-base leading-relaxed">
+            <h2
+              className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            >Your Dog Deserves the Best</h2>
+            <p
+              className="text-white/80 mb-8 max-w-md mx-auto text-[15px] md:text-[16px] leading-[1.95]"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >
               Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and tail-waggingly good.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/products" className="inline-block bg-white text-amber-700 font-bold px-8 py-3.5 rounded-full hover:bg-amber-50 transition-colors shadow-lg text-sm tracking-wide">
+              <Link
+                href="/products"
+                className="inline-block bg-white text-amber-700 font-bold px-8 py-3.5 rounded-full hover:bg-amber-50 transition-colors shadow-lg text-[15px] md:text-[16px] tracking-wide"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+              >
                 Shop All Products
               </Link>
-              <Link href="/products/yak-chews" className="inline-block bg-white/10 text-white border border-white/30 font-semibold px-8 py-3.5 rounded-full hover:bg-white/20 transition-colors text-sm tracking-wide">
+              <Link
+                href="/products/yak-chews"
+                className="inline-block bg-white/10 text-white border border-white/30 font-semibold px-8 py-3.5 rounded-full hover:bg-white/20 transition-colors text-[15px] md:text-[16px] tracking-wide"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+              >
                 Try Yak Milk Chews
               </Link>
             </div>

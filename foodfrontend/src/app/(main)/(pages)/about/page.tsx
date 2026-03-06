@@ -96,12 +96,21 @@ const TeamCard = ({ member }: { member: TeamMember }) => {
 
       {/* Info */}
       <div className="p-5">
-        <h3 className="text-lg font-bold text-[#2f1e14]">{member.name}</h3>
+        <h3
+          className="text-[15px] md:text-[16px] font-bold text-[#2f1e14]"
+          style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+        >{member.name}</h3>
         {member.position && (
-          <p className="text-sm font-semibold text-amber-600 mt-0.5">{member.position}</p>
+          <p
+            className="text-[15px] md:text-[16px] font-semibold text-amber-600 mt-0.5"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >{member.position}</p>
         )}
         {member.shortinfo && (
-          <p className="mt-2 text-sm leading-relaxed text-gray-500 line-clamp-3">{member.shortinfo}</p>
+          <p
+            className="mt-2 text-[15px] md:text-[16px] leading-[1.95] text-gray-500 line-clamp-3"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >{member.shortinfo}</p>
         )}
 
         {/* Certifications */}
@@ -234,8 +243,14 @@ const AboutPage = () => {
           ].map((item) => (
             <div key={item.title} className="p-6 transition-shadow bg-white border shadow-md rounded-2xl border-amber-100 hover:shadow-lg">
               <div className="mb-4 text-4xl">{item.icon}</div>
-              <h3 className="font-bold text-[#2f1e14] text-lg mb-2">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-gray-500">{item.desc}</p>
+              <h3
+                className="font-bold text-[#2f1e14] text-[15px] md:text-[16px] mb-2"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+              >{item.title}</h3>
+              <p
+                className="text-[15px] md:text-[16px] leading-[1.95] text-gray-500"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+              >{item.desc}</p>
             </div>
           ))}
         </div>
@@ -246,14 +261,23 @@ const AboutPage = () => {
         <section className="px-4 pb-20 mx-auto max-w-7xl">
           {/* Section header */}
           <div className="mb-12 text-center">
-            <span className="inline-block mb-3 text-xs font-bold tracking-widest uppercase text-amber-600">
+            <span
+              className="inline-block mb-3 text-[15px] md:text-[16px] font-bold tracking-widest uppercase text-amber-600"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >
               The People Behind the Chew
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#2f1e14]">
+            <h2
+              className="text-3xl md:text-4xl font-bold text-[#2f1e14]"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            >
               Meet Our Team
             </h2>
             <div className="w-16 h-1 mx-auto mt-4 rounded-full bg-amber-500" />
-            <p className="max-w-xl mx-auto mt-4 text-sm leading-relaxed text-gray-500">
+            <p
+              className="max-w-xl mx-auto mt-4 text-[15px] md:text-[16px] leading-[1.95] text-gray-500"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >
               Passionate dog lovers, quality experts, and sustainability advocates — our team is
               dedicated to bringing your pup the very best from the Himalayas.
             </p>
@@ -295,8 +319,14 @@ const AboutPage = () => {
               { value: '3', label: 'Himalayan Regions' },
             ].map((stat) => (
               <div key={stat.label}>
-                <p className="text-3xl font-bold text-amber-400">{stat.value}</p>
-                <p className="mt-1 text-sm text-amber-100/80">{stat.label}</p>
+                <p
+                  className="text-3xl font-bold text-amber-400"
+                  style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+                >{stat.value}</p>
+                <p
+                  className="mt-1 text-[15px] md:text-[16px] text-amber-100/80"
+                  style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+                >{stat.label}</p>
               </div>
             ))}
           </div>
