@@ -23,28 +23,28 @@ interface OrderItem {
 interface Order {
   _id: string;
   orderNumber: string;
-  shippingAddress: {
-    fullName: string;
+  shippingAddress?: {
+    fullName?: string;
     firstName?: string;
     lastName?: string;
-    email: string;
+    email?: string;
     phone?: string;
-    addressLine1: string;
+    addressLine1?: string;
     addressLine2?: string;
-    city: string;
+    city?: string;
     county?: string;
-    postcode: string;
-    country: string;
+    postcode?: string;
+    country?: string;
   };
   items: OrderItem[];
-  subtotal: number;
-  totalTax: number;
-  totalDelivery: number;
-  totalDiscount: number;
-  grandTotal: number;
+  subtotal?: number;
+  totalTax?: number;
+  totalDelivery?: number;
+  totalDiscount?: number;
+  grandTotal?: number;
   paymentIntentId?: string;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
+  orderStatus?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
@@ -81,7 +81,7 @@ const sectionBar: Record<string, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const cap = (s?: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', {
@@ -245,8 +245,11 @@ export default function OrderDetailPage() {
     );
   }
 
-  const addr = order.shippingAddress;
-  const itemTotal = order.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const addr = order.shippingAddress ?? {};
+  const addrName = addr.fullName ||
+    [addr.firstName, addr.lastName].filter(Boolean).join(' ') ||
+    'Customer';
+  const itemTotal = (order.items ?? []).reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0);
 
   return (
     <div className="min-h-screen pb-16 bg-gray-50/50">
@@ -306,11 +309,11 @@ export default function OrderDetailPage() {
               <div className="flex items-center gap-4 mb-5 pb-5 border-b border-gray-50">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
                   <span className="text-white font-bold text-lg uppercase">
-                    {addr.fullName.charAt(0)}
+                    {addrName.charAt(0)}
                   </span>
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 text-base">{addr.fullName}</p>
+                  <p className="font-bold text-gray-900 text-base">{addrName}</p>
                   <p className="text-xs text-gray-400">Customer</p>
                 </div>
               </div>
@@ -334,15 +337,17 @@ export default function OrderDetailPage() {
             {/* ── Shipping Address ───────────────────────────────────── */}
             <SectionCard title="Shipping Address" icon={FiMapPin} barColor={sectionBar.address}>
               <div className="space-y-1 text-sm text-gray-800 leading-relaxed font-medium">
-                <p className="font-bold text-gray-900">{addr.fullName}</p>
-                <p>{addr.addressLine1}</p>
+                <p className="font-bold text-gray-900">{addrName}</p>
+                {addr.addressLine1 && <p>{addr.addressLine1}</p>}
                 {addr.addressLine2 && <p>{addr.addressLine2}</p>}
-                <p>
-                  {addr.city}
-                  {addr.county ? `, ${addr.county}` : ''}
-                </p>
-                <p>{addr.postcode}</p>
-                <p className="text-gray-400">{addr.country}</p>
+                {(addr.city || addr.county) && (
+                  <p>
+                    {addr.city}
+                    {addr.county ? `, ${addr.county}` : ''}
+                  </p>
+                )}
+                {addr.postcode && <p>{addr.postcode}</p>}
+                {addr.country && <p className="text-gray-400">{addr.country}</p>}
               </div>
               {addr.phone && (
                 <p className="flex items-center gap-1.5 text-xs text-gray-400 mt-4 pt-4 border-t border-gray-50">
@@ -416,11 +421,11 @@ export default function OrderDetailPage() {
                           <span className="text-sm font-bold text-gray-700">{item.quantity}</span>
                         </td>
                         <td className="px-3 py-3.5 text-right text-sm text-gray-500">
-                          £{item.unitPrice.toFixed(2)}
+                          £{(item.unitPrice ?? 0).toFixed(2)}
                         </td>
                         <td className="px-3 py-3.5 text-right">
                           <span className="text-sm font-bold text-gray-900">
-                            £{(item.unitPrice * item.quantity).toFixed(2)}
+                            £{((item.unitPrice ?? 0) * item.quantity).toFixed(2)}
                           </span>
                         </td>
                       </tr>
@@ -444,12 +449,12 @@ export default function OrderDetailPage() {
             <SectionCard title="Pricing Breakdown" icon={FiDollarSign} barColor={sectionBar.pricing}>
               <div className="space-y-0">
                 {[
-                  { label: 'Subtotal',   value: order.subtotal },
-                  order.totalDiscount > 0
-                    ? { label: 'Discount',  value: -order.totalDiscount, negative: true }
+                  { label: 'Subtotal',   value: order.subtotal ?? 0 },
+                  (order.totalDiscount ?? 0) > 0
+                    ? { label: 'Discount',  value: -(order.totalDiscount ?? 0), negative: true }
                     : null,
-                  { label: 'VAT (20%)',  value: order.totalTax },
-                  { label: 'Shipping',   value: order.totalDelivery },
+                  { label: 'VAT (20%)',  value: order.totalTax ?? 0 },
+                  { label: 'Shipping',   value: order.totalDelivery ?? 0 },
                 ]
                   .filter(Boolean)
                   .map((row) => (
@@ -468,7 +473,7 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-gray-200">
                   <span className="text-base font-bold text-gray-900">Grand Total</span>
                   <span className="text-xl font-bold text-amber-600">
-                    £{order.grandTotal.toFixed(2)}
+                    £{(order.grandTotal ?? 0).toFixed(2)}
                   </span>
                 </div>
               </div>

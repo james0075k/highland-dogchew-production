@@ -14,9 +14,11 @@ import {
 interface Order {
   _id: string;
   orderNumber: string;
-  shippingAddress: {
-    fullName: string;
-    email: string;
+  shippingAddress?: {
+    fullName?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
     phone?: string;
   };
   items: { name: string; quantity: number }[];
@@ -109,7 +111,7 @@ const statCards = (s: Stats) => [
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const cap = (s?: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -312,9 +314,11 @@ export default function AdminOrdersPage() {
                       {/* Customer */}
                       <td className="px-5 py-4">
                         <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                          {order.shippingAddress.fullName}
+                          {order.shippingAddress?.fullName ||
+                            [order.shippingAddress?.firstName, order.shippingAddress?.lastName].filter(Boolean).join(' ') ||
+                            '—'}
                         </p>
-                        {order.shippingAddress.phone && (
+                        {order.shippingAddress?.phone && (
                           <p className="text-xs text-gray-400 mt-0.5">{order.shippingAddress.phone}</p>
                         )}
                       </td>
@@ -322,41 +326,41 @@ export default function AdminOrdersPage() {
                       {/* Email */}
                       <td className="px-5 py-4">
                         <p className="text-sm text-gray-600 max-w-[180px] truncate">
-                          {order.shippingAddress.email}
+                          {order.shippingAddress?.email ?? '—'}
                         </p>
                       </td>
 
                       {/* Items count */}
                       <td className="px-5 py-4">
                         <span className="text-sm text-gray-500">
-                          {order.items.reduce((s, i) => s + i.quantity, 0)} item{order.items.reduce((s, i) => s + i.quantity, 0) !== 1 ? 's' : ''}
+                          {(order.items ?? []).reduce((s, i) => s + i.quantity, 0)} item{(order.items ?? []).reduce((s, i) => s + i.quantity, 0) !== 1 ? 's' : ''}
                         </span>
                       </td>
 
                       {/* Total */}
                       <td className="px-5 py-4">
                         <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                          £{order.grandTotal.toFixed(2)}
+                          £{(order.grandTotal ?? 0).toFixed(2)}
                         </span>
                       </td>
 
                       {/* Payment status */}
                       <td className="px-5 py-4">
-                        <span className={`inline-flex text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${paymentBadge[order.paymentStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${paymentBadge[order.paymentStatus ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
                           {cap(order.paymentStatus)}
                         </span>
                       </td>
 
                       {/* Order / delivery status */}
                       <td className="px-5 py-4">
-                        <span className={`inline-flex text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${orderBadge[order.orderStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${orderBadge[order.orderStatus ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
                           {cap(order.orderStatus)}
                         </span>
                       </td>
 
                       {/* Date */}
                       <td className="px-5 py-4 text-sm text-gray-400 whitespace-nowrap">
-                        {fmtDate(order.createdAt)}
+                        {order.createdAt ? fmtDate(order.createdAt) : '—'}
                       </td>
 
                       {/* View */}

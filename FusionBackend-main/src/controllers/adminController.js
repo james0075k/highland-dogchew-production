@@ -71,6 +71,15 @@ export const loginAdmin = async (req, res) => {
 // 📝 Admin Register
 export const registerAdmin = async (req, res) => {
   try {
+    // First-run guard: only allow registration when no admin exists yet
+    const adminCount = await AdminModel.countDocuments();
+    if (adminCount > 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Registration is disabled",
+      });
+    }
+
     const { fullName, email, phoneNumber, password, role } = req.body;
 
     // Simple field validation

@@ -24,31 +24,31 @@ varietyRoute.get('/:id', getVarietyById);
 // Protected routes (admin only)
 varietyRoute.post(
   '/',
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   singleUpload('image'),
   createVariety
 );
 
 varietyRoute.put(
   '/:id',
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   singleUpload('image'),
   updateVariety
 );
 
 varietyRoute.patch(
   '/:id/toggle-status',
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   toggleVarietyStatus
 );
 
 varietyRoute.delete(
   '/:id',
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   deleteVariety
 );
 

@@ -17,6 +17,7 @@ import {
   FiX,
   FiInstagram,
   FiShoppingBag,
+  FiImage,
 } from "react-icons/fi";
 import { GiDogBowl } from "react-icons/gi";
 
@@ -31,6 +32,7 @@ const menuItems = [
   { icon: FiStar, text: "Reviews", link: "/dashboard/reviews" },
   { icon: FiMessageSquare, text: "Testimonials", link: "/dashboard/testimonials" },
   { icon: FiInstagram, text: "Instagram", link: "/dashboard/instagram" },
+  { icon: FiImage,     text: "Gallery",   link: "/dashboard/gallery"   },
   { icon: FiUsers, text: "Team", link: "/dashboard/customise-team" },
   { icon: FiSettings, text: "Settings", link: "/dashboard/settings" },
 ];

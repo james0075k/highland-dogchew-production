@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { Star, Quote, BadgeCheck, ShieldCheck, Bone, Heart } from "lucide-react";
+import {
+  Star, Quote, BadgeCheck, ShieldCheck, Bone, Heart,
+} from "lucide-react";
 import Link from "next/link";
 
 interface Testimonial {
@@ -14,6 +16,7 @@ interface Testimonial {
   profileImage?: string;
 }
 
+/* ── Stars ──────────────────────────────────────────────────────────── */
 function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
   const cls = size === "lg" ? "w-5 h-5" : "w-4 h-4";
   return (
@@ -32,19 +35,14 @@ function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) 
   );
 }
 
+/* ── Avatar ──────────────────────────────────────────────────────────── */
 function Avatar({ src, name, size = "md" }: { src?: string; name: string; size?: "sm" | "md" | "lg" }) {
   const dim = size === "lg" ? "w-20 h-20" : size === "sm" ? "w-10 h-10" : "w-12 h-12";
   const text = size === "lg" ? "text-3xl" : "text-base";
   return src ? (
-    <img
-      src={src}
-      alt={name}
-      className={`${dim} rounded-full object-cover border-2 border-amber-200 dark:border-amber-700 shadow-md flex-shrink-0`}
-    />
+    <img src={src} alt={name} className={`${dim} rounded-full object-cover border-2 border-amber-200 dark:border-amber-700 shadow-md flex-shrink-0`} />
   ) : (
-    <div
-      className={`${dim} rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md flex-shrink-0`}
-    >
+    <div className={`${dim} rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md flex-shrink-0`}>
       <span className={`text-white font-bold ${text}`}>{name?.[0]?.toUpperCase()}</span>
     </div>
   );
@@ -54,35 +52,21 @@ function Avatar({ src, name, size = "md" }: { src?: string; name: string; size?:
 function FeaturedCard({ t }: { t: Testimonial }) {
   return (
     <div className="featured-card relative rounded-3xl p-px mb-10 overflow-hidden">
-      {/* Animated gradient border */}
       <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-400 animate-borderSpin" />
       <div className="relative rounded-3xl bg-[#fffdf8] dark:bg-[#1e160f] p-8 md:p-14 text-center overflow-hidden">
-        {/* Soft glow */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(251,191,36,0.12),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(251,191,36,0.06),transparent)]" />
-
-        {/* Large quote */}
         <div className="flex justify-center mb-6">
           <Quote className="w-14 h-14 text-amber-300 dark:text-amber-500 fill-amber-100 dark:fill-amber-900/30 drop-shadow" />
         </div>
-
-        {/* Stars */}
-        <div className="flex justify-center mb-6">
-          <Stars rating={t.rating} size="lg" />
-        </div>
-
-        {/* Message */}
+        <div className="flex justify-center mb-6"><Stars rating={t.rating} size="lg" /></div>
         <blockquote className="relative z-10 text-xl md:text-2xl lg:text-[1.65rem] text-[#3d2512] dark:text-[#d4c4b0] leading-relaxed max-w-4xl mx-auto mb-10 font-serif italic">
           &ldquo;{t.message}&rdquo;
         </blockquote>
-
-        {/* Divider */}
         <div className="flex items-center gap-3 justify-center mb-8">
           <div className="w-16 h-px bg-gradient-to-r from-transparent to-amber-300 dark:to-amber-600" />
           <div className="w-2 h-2 rounded-full bg-amber-400" />
           <div className="w-16 h-px bg-gradient-to-l from-transparent to-amber-300 dark:to-amber-600" />
         </div>
-
-        {/* Author */}
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 scale-125 opacity-15 animate-pulse" />
@@ -110,27 +94,14 @@ function TestimonialCard({ t, delay = 0 }: { t: Testimonial; delay?: number }) {
       className="group relative bg-white dark:bg-[#1e160f] rounded-2xl p-6 shadow-sm border border-amber-100/70 dark:border-amber-900/30 hover:shadow-xl dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 flex flex-col gap-4 card-animate"
       style={{ animationDelay: `${delay}ms` }}
     >
-      {/* Hover glow */}
       <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
       <div className="relative z-10 flex flex-col gap-4 h-full">
-        {/* Header row */}
         <div className="flex items-start justify-between">
-          <span className="text-5xl leading-none text-amber-300 dark:text-amber-600 font-serif group-hover:text-amber-400 dark:group-hover:text-amber-500 transition-colors">
-            &ldquo;
-          </span>
+          <span className="text-5xl leading-none text-amber-300 dark:text-amber-600 font-serif group-hover:text-amber-400 dark:group-hover:text-amber-500 transition-colors">&ldquo;</span>
           <Stars rating={t.rating} />
         </div>
-
-        {/* Message */}
-        <p className="text-neutral-700 dark:text-neutral-300 text-[15px] leading-relaxed flex-1 font-serif italic">
-          {t.message}
-        </p>
-
-        {/* Gradient bottom line */}
+        <p className="text-neutral-700 dark:text-neutral-300 text-[15px] leading-relaxed flex-1 font-serif italic">{t.message}</p>
         <div className="h-px bg-gradient-to-r from-amber-200 dark:from-amber-700 via-amber-400/60 to-transparent" />
-
-        {/* Author row */}
         <div className="flex items-center gap-3">
           <Avatar src={t.profileImage} name={t.name} size="sm" />
           <div className="flex-1 min-w-0">
@@ -153,25 +124,10 @@ function Skeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="bg-white dark:bg-[#1e160f] rounded-2xl p-6 shadow-sm border border-amber-100/60 dark:border-amber-900/30 animate-pulse"
-        >
+        <div key={i} className="bg-white dark:bg-[#1e160f] rounded-2xl p-6 shadow-sm border border-amber-100/60 dark:border-amber-900/30 animate-pulse">
           <div className="h-7 w-7 bg-amber-100 dark:bg-amber-900/40 rounded mb-4" />
-          <div className="flex gap-1 mb-4">
-            {[...Array(5)].map((_, j) => (
-              <div key={j} className="w-4 h-4 bg-amber-100 dark:bg-amber-900/40 rounded" />
-            ))}
-          </div>
-          <div className="space-y-2 mb-6">
-            {[100, 90, 80].map((w, j) => (
-              <div
-                key={j}
-                className="h-3 bg-gray-100 dark:bg-gray-700 rounded"
-                style={{ width: `${w}%` }}
-              />
-            ))}
-          </div>
+          <div className="flex gap-1 mb-4">{[...Array(5)].map((_, j) => <div key={j} className="w-4 h-4 bg-amber-100 dark:bg-amber-900/40 rounded" />)}</div>
+          <div className="space-y-2 mb-6">{[100, 90, 80].map((w, j) => <div key={j} className="h-3 bg-gray-100 dark:bg-gray-700 rounded" style={{ width: `${w}%` }} />)}</div>
           <div className="flex items-center gap-3 pt-3 border-t border-amber-50 dark:border-amber-900/30">
             <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex-shrink-0" />
             <div className="space-y-1 flex-1">
@@ -185,7 +141,7 @@ function Skeleton() {
   );
 }
 
-/* ── Info poster card ───────────────────────────────────────────────── */
+/* ── Info poster card (original design with image) ──────────────────── */
 function InfoPosterCard({ title, items, imageSrc }: { title: string; items: string[]; imageSrc: string }) {
   return (
     <div className="overflow-hidden rounded-[28px] bg-[#fbf8f2] dark:bg-[#1e160f] shadow-[0_18px_55px_rgba(0,0,0,0.10)] dark:shadow-[0_18px_55px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:ring-white/5">
@@ -211,7 +167,8 @@ function InfoPosterCard({ title, items, imageSrc }: { title: string; items: stri
   );
 }
 
-const shipping = [
+/* ── Data ───────────────────────────────────────────────────────────── */
+const shippingItems = [
   "Orders ship within 1–2 business days excluding bank holidays",
   "Delivery time varies by location across the UK",
   "Shipping fees shown clearly at checkout",
@@ -219,7 +176,7 @@ const shipping = [
   "Import taxes or duties apply for international orders",
 ];
 
-const products = [
+const productItems = [
   "Suitable for most dog breeds and sizes",
   "Not recommended for puppies under 4 months",
   "Made from natural yak and cow milk — no additives",
@@ -247,30 +204,40 @@ const Testimonials = () => {
 
   const featured = testimonials[0];
   const rest = testimonials.slice(1);
-  const avg = testimonials.length
-    ? (testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length).toFixed(1)
-    : null;
 
   return (
-    <main className="min-h-screen bg-[#f6f2ea] dark:bg-[#0f0a07] pt-32 transition-colors duration-300">
+    <main className="min-h-screen bg-[#fbf8f2] dark:bg-[#1a120d] transition-colors duration-300">
 
-      {/* ── Hero header ──────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-4xl px-4 pt-10 pb-8 text-center">
-        <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-3">
-          What Dog Owners Say
-        </span>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-4 leading-tight">
-          Real Dogs. Real Results.
-        </h1>
-        <div className="mx-auto h-1 w-20 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 mb-6" />
-        <p className="text-[#7A5C4F] dark:text-[#c8b6a6] max-w-xl mx-auto text-base leading-relaxed">
-          Join thousands of happy dog owners across the UK who trust Highland Yakchew for natural,
-          long-lasting yak milk chews their pups absolutely love.
-        </p>
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
+      <div className="bg-[#fbf8f2] dark:bg-[#1a120d] pt-32 pb-12 md:pb-16">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h1
+            className="text-[26px] md:text-[32px] tracking-[0.14em] text-neutral-900 dark:text-neutral-100"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >
+            TESTIMONIALS
+          </h1>
+          <div className="mx-auto mt-5 h-px w-24 bg-neutral-300/80 dark:bg-neutral-600/60" />
+          <p
+            className="mt-8 text-[18px] md:text-[20px] leading-relaxed text-neutral-800 dark:text-neutral-300"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+          >
+            Join thousands of happy dog owners across the UK who trust Highland Yakchew for natural,
+            long-lasting yak milk chews their pups absolutely love.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Shipping & Product Info ────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 py-14 md:py-20">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <InfoPosterCard title="SHIPPING" items={shippingItems} imageSrc="/images/ship.jpg" />
+          <InfoPosterCard title="PRODUCTS" items={productItems}  imageSrc="/images/about.webp" />
+        </div>
       </section>
 
-      {/* ── Trust stats bar ──────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 pb-10">
+      {/* ── Trust stats cards ─────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-4 py-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { icon: <Star className="w-5 h-5 text-amber-400 fill-amber-400" />, stat: "4.9★", label: "Average Rating" },
@@ -278,10 +245,7 @@ const Testimonials = () => {
             { icon: <ShieldCheck className="w-5 h-5 text-blue-500" />, stat: "Vet", label: "Approved Formula" },
             { icon: <Heart className="w-5 h-5 text-rose-400 fill-rose-400" />, stat: "100%", label: "Natural Ingredients" },
           ].map(({ icon, stat, label }) => (
-            <div
-              key={label}
-              className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-5 text-center shadow-sm hover:shadow-md transition-shadow"
-            >
+            <div key={label} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <div className="flex justify-center mb-2">{icon}</div>
               <p className="text-2xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">{stat}</p>
               <p className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6] font-medium mt-0.5">{label}</p>
@@ -291,84 +255,56 @@ const Testimonials = () => {
       </section>
 
       {/* ── Testimonials ─────────────────────────────────────────────── */}
-      {(loading || testimonials.length > 0) && (
-        <section className="mx-auto max-w-7xl px-4 pb-10">
-          {loading ? (
-            <Skeleton />
-          ) : (
-            <>
-              {featured && <FeaturedCard t={featured} />}
-              {rest.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {rest.map((t, i) => (
-                    <TestimonialCard key={t._id} t={t} delay={i * 80} />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      )}
+      <section className="mx-auto max-w-7xl px-4 pb-10">
+        <div className="text-center mb-10">
+          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2">
+            Customer Reviews
+          </span>
+          <h2 className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">
+            Hear From Our Happy Pups
+          </h2>
+        </div>
 
-      {/* ── Overall rating strip ──────────────────────────────────────── */}
-      {avg && !loading && (
-        <section className="bg-[#2f1e14] dark:bg-[#1a100a] py-14 mt-6">
-          <div className="mx-auto max-w-3xl px-4 text-center">
-            <p className="text-amber-400/80 text-xs font-bold uppercase tracking-widest mb-4">
-              Overall Customer Rating
-            </p>
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <span className="text-7xl font-black text-white leading-none">{avg}</span>
-              <div>
-                <div className="flex gap-1 mb-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className="w-7 h-7 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-amber-100/60 text-xs">
-                  Based on {testimonials.length} verified review{testimonials.length !== 1 ? "s" : ""}
-                </p>
+        {loading ? (
+          <Skeleton />
+        ) : testimonials.length > 0 ? (
+          <>
+            {featured && <FeaturedCard t={featured} />}
+            {rest.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rest.map((t, i) => (
+                  <TestimonialCard key={t._id} t={t} delay={i * 80} />
+                ))}
               </div>
-            </div>
-            <p className="text-amber-200/60 text-sm max-w-sm mx-auto leading-relaxed">
-              Every review comes from a real dog owner who has tried our products.
-            </p>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-16 text-[#7A5C4F] dark:text-[#c8b6a6]">
+            <Quote className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-semibold mb-1">No reviews yet</p>
+            <p className="text-sm">Be the first to share your experience!</p>
           </div>
-        </section>
-      )}
+        )}
+      </section>
+
 
       {/* ── Why dog owners love us ───────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 py-14">
+      <section className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center mb-10">
           <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2">
             The Highland Difference
           </span>
-          <h2 className="text-3xl font-bold text-[#2f1e14] dark:text-[#f5e9dc]">
+          <h2 className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]">
             Why Dogs (and Owners) Choose Us
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            {
-              emoji: "🦴",
-              title: "Long-Lasting Chews",
-              desc: "Our yak milk chews last hours — not minutes. Keep your dog engaged and calm naturally.",
-            },
-            {
-              emoji: "🌿",
-              title: "100% Natural Recipe",
-              desc: "No grain, no gluten, no artificial additives. Just wholesome yak and cow milk from Himalayan pastures.",
-            },
-            {
-              emoji: "🐾",
-              title: "Vet-Approved Formula",
-              desc: "Recommended by veterinarians for dental health, protein content, and gentle digestion.",
-            },
+            { emoji: "🦴", title: "Long-Lasting Chews", desc: "Our yak milk chews last hours — not minutes. Keep your dog engaged and calm naturally." },
+            { emoji: "🌿", title: "100% Natural Recipe", desc: "No grain, no gluten, no artificial additives. Just wholesome yak and cow milk from Himalayan pastures." },
+            { emoji: "🐾", title: "Vet-Approved Formula", desc: "Recommended by veterinarians for dental health, protein content, and gentle digestion." },
           ].map(({ emoji, title, desc }) => (
-            <div
-              key={title}
-              className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-7 text-center shadow-sm hover:shadow-lg dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-300"
-            >
+            <div key={title} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-7 text-center shadow-sm hover:shadow-lg dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-300">
               <div className="text-4xl mb-4">{emoji}</div>
               <h3 className="text-lg font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">{title}</h3>
               <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed">{desc}</p>
@@ -378,49 +314,24 @@ const Testimonials = () => {
       </section>
 
       {/* ── CTA banner ───────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-4xl px-4 pb-14">
+      <section className="mx-auto max-w-4xl px-4 pb-16">
         <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 p-10 text-center shadow-xl">
           <div className="pointer-events-none absolute inset-0 opacity-10 bg-[url('/images/paws-pattern.svg')] bg-repeat bg-[length:80px]" />
           <div className="relative z-10">
             <Bone className="w-10 h-10 text-white/80 mx-auto mb-4" />
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight">
-              Your Dog Deserves the Best
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight">Your Dog Deserves the Best</h2>
             <p className="text-white/80 mb-8 max-w-md mx-auto text-base leading-relaxed">
-              Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and
-              tail-waggingly good.
+              Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and tail-waggingly good.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/products"
-                className="inline-block bg-white text-amber-700 font-bold px-8 py-3.5 rounded-full hover:bg-amber-50 transition-colors shadow-lg text-sm tracking-wide"
-              >
+              <Link href="/products" className="inline-block bg-white text-amber-700 font-bold px-8 py-3.5 rounded-full hover:bg-amber-50 transition-colors shadow-lg text-sm tracking-wide">
                 Shop All Products
               </Link>
-              <Link
-                href="/products/yak-chews"
-                className="inline-block bg-white/10 text-white border border-white/30 font-semibold px-8 py-3.5 rounded-full hover:bg-white/20 transition-colors text-sm tracking-wide"
-              >
+              <Link href="/products/yak-chews" className="inline-block bg-white/10 text-white border border-white/30 font-semibold px-8 py-3.5 rounded-full hover:bg-white/20 transition-colors text-sm tracking-wide">
                 Try Yak Milk Chews
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── Shipping & Products info ─────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-6 pb-14 md:pb-20">
-        <div className="text-center mb-10">
-          <span className="inline-block text-xs font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2">
-            Good to Know
-          </span>
-          <h2 className="text-3xl font-bold text-[#2f1e14] dark:text-[#f5e9dc]">
-            Shipping & Product Info
-          </h2>
-        </div>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <InfoPosterCard title="SHIPPING" items={shipping} imageSrc="/images/ship.jpg" />
-          <InfoPosterCard title="PRODUCTS" items={products} imageSrc="/images/about.webp" />
         </div>
       </section>
 
@@ -430,10 +341,7 @@ const Testimonials = () => {
           50%  { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
-        .animate-borderSpin {
-          background-size: 300% 300%;
-          animation: borderSpin 4s ease infinite;
-        }
+        .animate-borderSpin { background-size: 300% 300%; animation: borderSpin 4s ease infinite; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }

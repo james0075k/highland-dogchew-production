@@ -1,270 +1,362 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Search, X, ChevronLeft, ChevronRight, ImageOff,
+  ZoomIn, Camera,
+} from 'lucide-react';
 
 interface GalleryItem {
-  id: number;
+  _id?: string;
+  id?: number;
   image: string;
   title: string;
   category: string;
   description: string;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+
+const ALL_CATEGORIES = [
+  'ALL', 'GALLERY', 'HONEY', 'PUMPKIN', 'STRAWBERRY',
+  'BLUEBERRY', 'COCONUT', 'PEANUT', 'MINT', 'TURMERIC', 'FLAXSEED',
+];
+
+// ─── Fallback shown when an image fails to load ───────────────────────────────
+function ImageFallback({ title }: { title: string }) {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+      <ImageOff className="w-9 h-9 text-amber-300 dark:text-amber-700 mb-2" />
+      <p className="text-xs text-amber-400 dark:text-amber-600 text-center px-4 leading-snug">{title}</p>
+    </div>
+  );
+}
+
+// ─── Skeleton card ────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl border border-amber-100 dark:border-[#3a2c23] bg-white dark:bg-[#1e1510] overflow-hidden animate-pulse">
+      <div className="aspect-[4/3] bg-amber-100 dark:bg-[#2a1e16]" />
+      <div className="p-4 space-y-2">
+        <div className="h-3.5 w-3/4 bg-amber-100 dark:bg-[#2a1e16] rounded-full" />
+        <div className="h-2.5 w-1/2 bg-amber-50 dark:bg-[#241a12] rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 const GalleryPage: React.FC = () => {
-  const [activeFilter, setActiveFilter] = useState<string>('ALL');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [lightboxImage, setLightboxImage] = useState<GalleryItem | null>(null);
+  const [activeFilter, setActiveFilter]     = useState<string>('ALL');
+  const [searchTerm, setSearchTerm]         = useState<string>('');
+  const [lightboxIndex, setLightboxIndex]   = useState<number | null>(null);
+  const [imgErrors, setImgErrors]           = useState<Set<string>>(new Set());
+  const [loaded, setLoaded]                 = useState(false);
+  const [items, setItems]                   = useState<GalleryItem[]>([]);
+  const [fetching, setFetching]             = useState(true);
 
-  const categories: string[] = [
-    'ALL',
-    'GALLERY',
-    'FLAXSEED',
-    'COCONUT',
-    'PEANUT',
-    'HONEY',
-    'PUMPKIN',
-    'STRAWBERRY',
-    'BLUEBERRY',
-    'MINT',
-    'TURMERIC'
-  ];
+  // Fetch gallery from API
+  useEffect(() => {
+    fetch(`${API_BASE}/gallery`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data.data)) setItems(data.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setFetching(false);
+        setTimeout(() => setLoaded(true), 50);
+      });
+  }, []);
 
-  const galleryItems: GalleryItem[] = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80',
-      title: 'Himshree Dog Chew',
-      category: 'GALLERY',
-      description: 'All Natural'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1587049352846-4a222e784794?w=800&q=80',
-      title: 'Honey Flavored Chew',
-      category: 'HONEY',
-      description: 'Sweet & Natural'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1615751072497-5f5169febe17?w=800&q=80',
-      title: 'Natural Dog Chews',
-      category: 'GALLERY',
-      description: 'Premium Quality'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=800&q=80',
-      title: 'Pumpkin Chew Sticks',
-      category: 'PUMPKIN',
-      description: 'Healthy & Tasty'
-    },
-    {
-      id: 5,
-      image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=800&q=80',
-      title: 'Strawberry Treats',
-      category: 'STRAWBERRY',
-      description: 'Fruity Delight'
-    },
-    {
-      id: 6,
-      image: 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=800&q=80',
-      title: 'Blueberry Chews',
-      category: 'BLUEBERRY',
-      description: 'Antioxidant Rich'
-    },
-    {
-      id: 7,
-      image: 'https://images.unsplash.com/photo-1599909533730-f9d7c80f97f7?w=800&q=80',
-      title: 'Coconut Treats',
-      category: 'COCONUT',
-      description: 'Tropical Flavor'
-    },
-    {
-      id: 8,
-      image: 'https://images.unsplash.com/photo-1582900329477-0c471cd93669?w=800&q=80',
-      title: 'Peanut Butter Chews',
-      category: 'PEANUT',
-      description: 'Classic Favorite'
-    },
-    {
-      id: 9,
-      image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=800&q=80',
-      title: 'Mint Fresh Treats',
-      category: 'MINT',
-      description: 'Breath Freshener'
-    },
-    {
-      id: 10,
-      image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=800&q=80',
-      title: 'Turmeric Wellness',
-      category: 'TURMERIC',
-      description: 'Anti-inflammatory'
-    },
-    {
-      id: 11,
-      image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=800&q=80',
-      title: 'Flaxseed Crunch',
-      category: 'FLAXSEED',
-      description: 'Omega-3 Rich'
-    },
-    {
-      id: 12,
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80',
-      title: 'Mixed Variety Pack',
-      category: 'GALLERY',
-      description: 'All Flavors'
-    }
-  ];
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft')  setLightboxIndex(i => i !== null ? (i - 1 + filteredItems.length) % filteredItems.length : null);
+      if (e.key === 'ArrowRight') setLightboxIndex(i => i !== null ? (i + 1) % filteredItems.length : null);
+      if (e.key === 'Escape')     setLightboxIndex(null);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxIndex]);
 
-  const filteredItems = galleryItems.filter((item) => {
+  const itemKey = (item: GalleryItem) => item._id || String(item.id || item.image);
+
+  const handleImgError = (key: string) =>
+    setImgErrors(prev => new Set([...prev, key]));
+
+  // Only show categories that have items (+ ALL)
+  const presentCats = ['ALL', ...Array.from(new Set(items.map(i => i.category))).sort()];
+  const CATEGORIES = ALL_CATEGORIES.filter(c => presentCats.includes(c));
+
+  const filteredItems = items.filter(item => {
     const matchesFilter = activeFilter === 'ALL' || item.category === activeFilter;
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
-
     return matchesFilter && matchesSearch;
   });
 
+  const lightboxItem = lightboxIndex !== null ? filteredItems[lightboxIndex] : null;
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative h-[400px] md:h-[500px] bg-black overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1920&q=80"
-            alt="Dog with Churpi"
-            className="w-full h-full object-cover opacity-60"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40" />
-        </div>
+    <main className="min-h-screen bg-[#f9f5ef] dark:bg-[#150e09]">
 
-        <div className="relative h-full flex flex-col items-center justify-center px-6 text-center z-10">
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight">
-            GALLERY
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#2f1e14] via-[#3d2512] to-[#1e1108] pt-32 pb-16 md:pb-20">
+        <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 w-80 h-80 rounded-full bg-orange-500/10 blur-3xl" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <nav className="flex items-center justify-center gap-2 text-xs text-amber-200/50 mb-6 uppercase tracking-widest">
+            <Link href="/" className="hover:text-amber-300 transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-amber-200/80">Gallery</span>
+          </nav>
+
+          <div className="inline-flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 rounded-full px-4 py-1.5 mb-6">
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-amber-300 text-xs font-semibold tracking-widest uppercase">Highland Yak Chew</span>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight tracking-tight">
+            Our Gallery
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 italic">
-            Home / <span className="text-orange-400">GALLERY</span>
+          <p className="text-amber-100/60 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            Discover our range of natural Himalayan dog chews — crafted from pure yak milk
+            with premium, dog-friendly flavours your pet will love.
           </p>
-        </div>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm py-8 px-6">
-          <div className="max-w-7xl mx-auto">
-            <h3 className="text-2xl md:text-3xl font-bold text-orange-400 mb-4">Ingredients:</h3>
-            <ul className="text-white/90 text-lg md:text-xl space-y-2">
-              <li className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                Milk
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                Salt & Lime Juice
-              </li>
-            </ul>
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm text-amber-200/50">
+            <span>{items.length} photos</span>
+            <span className="w-1 h-1 rounded-full bg-amber-500/50" />
+            <span>{Math.max(CATEGORIES.length - 1, 0)} flavours</span>
+            <span className="w-1 h-1 rounded-full bg-amber-500/50" />
+            <span>100% natural</span>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Filter Section */}
-      <section className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-md">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="mb-6 max-w-md mx-auto md:mx-0">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* ── Sticky filter bar ────────────────────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-[#f9f5ef]/95 dark:bg-[#150e09]/95 backdrop-blur-sm border-b border-amber-200 dark:border-[#3a2c23] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+
+            {/* Search */}
+            <div className="relative flex-shrink-0 w-full sm:w-60">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search gallery..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-[#1e1510] border border-amber-200 dark:border-[#3a2c23] rounded-xl text-sm text-[#2f1e14] dark:text-[#f5e9dc] placeholder-amber-300 dark:placeholder-amber-700 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
               />
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveFilter(category)}
-                className={`px-6 py-2.5 font-semibold text-sm tracking-wide rounded-lg transition-all duration-300 ${
-                  activeFilter === category
-                    ? 'bg-cyan-500 text-white shadow-lg scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+            {/* Filter pills */}
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all duration-200 ${
+                    activeFilter === cat
+                      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105'
+                      : 'bg-white dark:bg-[#1e1510] text-[#5C4033] dark:text-[#c8b6a6] border border-amber-200 dark:border-[#3a2c23] hover:border-amber-400 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-400'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Gallery Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItems.map((item: GalleryItem, index: number) => (
-              <div
-                key={item.id}
-                className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                onClick={() => setLightboxImage(item)}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="aspect-square overflow-hidden bg-gray-100">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                </div>
+      {/* ── Gallery grid ─────────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="inline-block px-3 py-1 bg-cyan-500 text-white text-xs font-semibold rounded-full mb-3">
-                      {item.category}
+        {/* Loading skeletons */}
+        {fetching ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : filteredItems.length > 0 ? (
+          <>
+            <p className="text-xs text-amber-500 font-bold tracking-widest uppercase mb-8">
+              {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
+              {activeFilter !== 'ALL' && <span className="text-amber-400"> · {activeFilter}</span>}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+              {filteredItems.map((item, index) => {
+                const key = itemKey(item);
+                return (
+                  <div
+                    key={key}
+                    onClick={() => setLightboxIndex(index)}
+                    style={{ transitionDelay: `${Math.min(index * 55, 550)}ms` }}
+                    className={`group relative overflow-hidden rounded-2xl border border-amber-100 dark:border-[#3a2c23] bg-white dark:bg-[#1e1510] shadow-sm hover:shadow-xl hover:shadow-amber-900/10 hover:-translate-y-1.5 transition-all duration-500 cursor-pointer ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  >
+                    {/* Image */}
+                    <div className="aspect-[4/3] overflow-hidden bg-amber-50 dark:bg-[#2a1e16]">
+                      {imgErrors.has(key) ? (
+                        <ImageFallback title={item.title} />
+                      ) : (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          loading="lazy"
+                          onError={() => handleImgError(key)}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      )}
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
-                    <p className="text-white/80 text-sm">{item.description}</p>
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1e1108]/95 via-[#1e1108]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none">
+                      <div className="absolute bottom-[68px] left-0 right-0 p-5">
+                        <span className="inline-block px-2.5 py-0.5 bg-amber-500 text-white text-[10px] font-bold tracking-widest uppercase rounded-full mb-2">
+                          {item.category}
+                        </span>
+                        <h3 className="text-lg font-bold text-white leading-tight mb-1">{item.title}</h3>
+                        <p className="text-white/70 text-xs">{item.description}</p>
+                      </div>
+                      <div className="absolute top-3.5 right-3.5">
+                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <ZoomIn className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card footer */}
+                    <div className="p-4 border-t border-amber-50 dark:border-[#2a1e16]">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold text-[#2f1e14] dark:text-[#f5e9dc] truncate">{item.title}</p>
+                          <p className="text-[11px] text-[#7a5c45] dark:text-[#9a7a68] truncate mt-0.5">{item.description}</p>
+                        </div>
+                        <span className="flex-shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                          {item.category}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
+          </>
+        ) : items.length === 0 ? (
+          /* Gallery is empty — no photos uploaded yet */
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto mb-4">
+              <Camera className="w-7 h-7 text-amber-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">Gallery coming soon</h3>
+            <p className="text-[#7a5c45] dark:text-[#9a7a68] text-sm">
+              Check back soon — we&apos;re adding photos of our products.
+            </p>
           </div>
         ) : (
-          <div className="text-center py-20">
-            <p className="text-2xl text-gray-400">No items found</p>
-            <p className="text-gray-500 mt-2">Try adjusting your filters or search term</p>
+          /* Has items but search/filter returned nothing */
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-7 h-7 text-amber-400" />
+            </div>
+            <h3 className="text-xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2">No items found</h3>
+            <p className="text-[#7a5c45] dark:text-[#9a7a68] text-sm mb-4">
+              Try a different filter or clear your search.
+            </p>
+            <button
+              onClick={() => { setActiveFilter('ALL'); setSearchTerm(''); }}
+              className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-md shadow-amber-500/20"
+            >
+              Clear filters
+            </button>
           </div>
         )}
       </section>
 
-      {/* Lightbox Modal */}
-      {lightboxImage && (
+      {/* ── Lightbox ─────────────────────────────────────────────────── */}
+      {lightboxItem && lightboxIndex !== null && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
-          onClick={() => setLightboxImage(null)}
+          onClick={() => setLightboxIndex(null)}
         >
+          {/* Close */}
           <button
-            className="absolute top-4 right-4 text-white hover:text-cyan-400 transition-colors"
-            onClick={() => setLightboxImage(null)}
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white flex items-center justify-center transition-colors"
+            aria-label="Close"
           >
-            <X className="w-10 h-10" />
+            <X className="w-5 h-5" />
           </button>
 
-          <div className="max-w-5xl w-full">
-            <img
-              src={lightboxImage.image}
-              alt={lightboxImage.title}
-              className="w-full h-auto rounded-lg shadow-2xl"
-            />
-            <div className="text-center mt-6">
-              <h3 className="text-3xl font-bold text-white mb-2">{lightboxImage.title}</h3>
-              <p className="text-white/70 text-lg">{lightboxImage.description}</p>
+          {/* Counter */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-white/70 text-xs font-semibold pointer-events-none">
+            {lightboxIndex + 1} / {filteredItems.length}
+          </div>
+
+          {/* Prev */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => i !== null ? (i - 1 + filteredItems.length) % filteredItems.length : null); }}
+            className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-amber-500 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          {/* Next */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => i !== null ? (i + 1) % filteredItems.length : null); }}
+            className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-amber-500 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300"
+            aria-label="Next"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+
+          {/* Content */}
+          <div
+            className="w-full max-w-4xl mx-14 md:mx-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="rounded-2xl overflow-hidden shadow-2xl bg-[#1e1510] border border-[#3a2c23]">
+              {imgErrors.has(itemKey(lightboxItem)) ? (
+                <div className="aspect-video flex items-center justify-center bg-[#2a1e16]">
+                  <ImageFallback title={lightboxItem.title} />
+                </div>
+              ) : (
+                <img
+                  src={lightboxItem.image}
+                  alt={lightboxItem.title}
+                  className="w-full h-auto max-h-[65vh] object-contain"
+                  onError={() => handleImgError(itemKey(lightboxItem))}
+                />
+              )}
+              <div className="px-6 py-5 flex items-center justify-between gap-4">
+                <div>
+                  <span className="inline-block px-2.5 py-0.5 bg-amber-500 text-white text-[10px] font-bold tracking-widest uppercase rounded-full mb-2">
+                    {lightboxItem.category}
+                  </span>
+                  <h3 className="text-xl font-bold text-white leading-tight">{lightboxItem.title}</h3>
+                  <p className="text-white/60 text-sm mt-1">{lightboxItem.description}</p>
+                </div>
+                <div className="text-right text-xs text-white/40 flex-shrink-0">
+                  <p className="font-semibold">{lightboxIndex + 1} of {filteredItems.length}</p>
+                  <p className="mt-0.5">← → to navigate</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+    </main>
   );
 };
 

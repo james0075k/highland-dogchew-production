@@ -5,6 +5,7 @@ import {
   getUserOrders,
   syncOrderFromPaymentIntent,
 } from '../controllers/orderController.js';
+import { authenticate } from '../middlewares/authMiddleware/authMiddleware.js';
 
 const orderRoute = Router();
 
@@ -17,7 +18,7 @@ orderRoute.post('/sync', syncOrderFromPaymentIntent);
 // GET /api/orders/payment-intent/:paymentIntentId
 orderRoute.get('/payment-intent/:paymentIntentId', getOrderByPaymentIntent);
 
-// GET /api/orders — list all orders (future: add auth)
-orderRoute.get('/', getUserOrders);
+// GET /api/orders — admin only
+orderRoute.get('/', authenticate, getUserOrders);
 
 export default orderRoute;

@@ -3,8 +3,40 @@ import handleError from '../utils/errorHandler.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import handleSuccess from '../utils/sucessHandler.js';
-import path from 'path'
-import fs from 'fs'
+import path from 'path';
+import fs from 'fs';
+
+// ─── Image URL helpers (mirrors instagramPostController pattern) ──────────────
+
+const getUploadedFileUrl = (file, req) => {
+  if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+    return file.path; // Cloudinary URL — works everywhere
+  }
+  return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
+};
+
+const rewriteImageUrl = (url, req) => {
+  if (!url || typeof url !== 'string') return url;
+  if (url.includes('res.cloudinary.com')) return url;
+  if (url.startsWith('/uploads/')) return `${req.protocol}://${req.get('host')}${url}`;
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    const idx = url.indexOf('/uploads/');
+    if (idx === -1) return url;
+    return `${req.protocol}://${req.get('host')}${url.substring(idx)}`;
+  }
+  return url;
+};
+
+const deleteLocalFile = async (imageUrl) => {
+  if (!imageUrl || imageUrl.includes('res.cloudinary.com')) return;
+  const imageName = imageUrl.split('/uploads/')[1];
+  if (!imageName) return;
+  const imagePath = path.join(__dirname, '../../uploads', imageName);
+  if (fs.existsSync(imagePath)) await deleteFile(imagePath);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Create a new testimonial
 export const createTestimonial = async (req, res, next) => {
   try {
@@ -14,8 +46,7 @@ export const createTestimonial = async (req, res, next) => {
       return next(handleError(400, 'Profile image is required'));
     }
 
-    const relativeUrl = getFileUrl(req.file.filename); 
-    const fullImageUrl = `${req.protocol}://${req.get('host')}${relativeUrl}`;
+    const fullImageUrl = getUploadedFileUrl(req.file, req);
 
     const newTestimonial = new TestimonialModel({
       rating,
@@ -23,7 +54,7 @@ export const createTestimonial = async (req, res, next) => {
       name,
       location,
       position,
-      profileImage: fullImageUrl
+      profileImage: fullImageUrl,
     });
 
     const savedTestimonial = await newTestimonial.save();
@@ -36,8 +67,9 @@ export const createTestimonial = async (req, res, next) => {
 // Get all testimonials
 export const getAllTestimonials = async (req, res, next) => {
   try {
-    const testimonials = await TestimonialModel.find().sort({ createdAt: -1 });
-    res.status(200).json(testimonials);
+    const testimonials = await TestimonialModel.find().sort({ createdAt: -1 }).lean();
+    const rewritten = testimonials.map(t => ({ ...t, profileImage: rewriteImageUrl(t.profileImage, req) }));
+    res.status(200).json(rewritten);
   } catch (error) {
     next(error);
   }
@@ -46,9 +78,9 @@ export const getAllTestimonials = async (req, res, next) => {
 // Get a single testimonial by ID
 export const getTestimonialById = async (req, res, next) => {
   try {
-    const testimonial = await TestimonialModel.findById(req.params.id);
+    const testimonial = await TestimonialModel.findById(req.params.id).lean();
     if (!testimonial) return next(handleError(404, 'Testimonial not found'));
-    res.status(200).json(testimonial);
+    res.status(200).json({ ...testimonial, profileImage: rewriteImageUrl(testimonial.profileImage, req) });
   } catch (error) {
     next(error);
   }
@@ -65,29 +97,22 @@ export const updateTestimonial = async (req, res, next) => {
       return next(handleError(404, 'Testimonial not found'));
     }
 
-    // Update text fields
     if (name) testimonial.name = name;
     if (message) testimonial.message = message;
     if (position) testimonial.position = position;
     if (location) testimonial.location = location;
     if (rating) testimonial.rating = parseFloat(rating);
 
-    // Handle image replacement
     if (req.file) {
-      const oldImageName = testimonial.profileImage?.split('/uploads/')[1];
-      if (oldImageName) {
-        const oldImagePath = path.join(__dirname, '../../uploads', oldImageName);
-        if (fs.existsSync(oldImagePath)) {
-          await deleteFile(oldImagePath);
-        }
-      }
-
-      // Save new image URL
-      testimonial.profileImage = `${req.protocol}://${req.get('host')}${getFileUrl(req.file.filename)}`;
+      // Delete old local file only — skip if Cloudinary
+      await deleteLocalFile(testimonial.profileImage);
+      testimonial.profileImage = getUploadedFileUrl(req.file, req);
     }
 
     const updated = await testimonial.save();
-    return handleSuccess(res, 200, 'Testimonial updated successfully', updated);
+    const result = updated.toObject();
+    result.profileImage = rewriteImageUrl(result.profileImage, req);
+    return handleSuccess(res, 200, 'Testimonial updated successfully', result);
   } catch (error) {
     next(error);
   }
@@ -95,26 +120,15 @@ export const updateTestimonial = async (req, res, next) => {
 
 // Delete a testimonial
 export const deleteTestimonial = async (req, res, next) => {
-    try {
-      const deletedTestimonial = await TestimonialModel.findByIdAndDelete(req.params.id);
-      if (!deletedTestimonial) return next(handleError(404, 'Testimonial not found'));
-  
-      // Extract image filename (assuming it's like /uploads/filename.jpg)
-      const profileImageUrl = deletedTestimonial.profileImage;
-      const imageName = profileImageUrl.split('/uploads/')[1];
-      const imagePath = path.join(__dirname, '../../uploads', imageName);
-  
-      // Check and delete the image file
-      if (fs.existsSync(imagePath)) {
-        await deleteFile(imagePath);
-        console.log('Image deleted:', imagePath);
-      } else {
-        console.log('Image file not found:', imagePath);
-      }
-  
-      res.status(200).json({ message: 'Testimonial and image deleted successfully' });
-    } catch (error) {
-      next(error);
-    }
-  };
-  
+  try {
+    const deletedTestimonial = await TestimonialModel.findByIdAndDelete(req.params.id);
+    if (!deletedTestimonial) return next(handleError(404, 'Testimonial not found'));
+
+    // Only attempt local disk deletion — Cloudinary files are skipped automatically
+    await deleteLocalFile(deletedTestimonial.profileImage);
+
+    res.status(200).json({ message: 'Testimonial and image deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

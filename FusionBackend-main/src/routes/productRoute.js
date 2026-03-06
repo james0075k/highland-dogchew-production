@@ -27,8 +27,8 @@ productRoute.get('/:id', getProductById);
 // Protected routes (admin only)
 productRoute.post(
   "/",
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   fieldsUpload([
     { name: "image", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
@@ -38,8 +38,8 @@ productRoute.post(
 
 productRoute.put(
   '/:id',
-  // authenticate,
-  // authorizeRoles('admin'),
+  authenticate,
+  authorizeRoles('admin'),
   fieldsUpload([
     { name: "image", maxCount: 1 },
     { name: "gallery", maxCount: 10 },
@@ -48,9 +48,9 @@ productRoute.put(
 );
 
 productRoute.delete(
-  '/:id', 
-  // authenticate,
-  // authorizeRoles('admin'),
+  '/:id',
+  authenticate,
+  authorizeRoles('admin'),
   deleteProduct
 );
 

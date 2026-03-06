@@ -10,7 +10,7 @@ const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Contact Us", href: "/contact" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Testimonial", href: "/testimonial" },
+  { label: "Testimonials", href: "/testimonials" },
   { label: "Terms and Conditions", href: "/about/terms" },
 ];
 
@@ -18,7 +18,7 @@ const overviewLinks = [
   { label: "Variety", href: "/variety" },
   { label: "Process", href: "/process" },
   { label: "Refund Policy", href: "/refunds" },
-  { label: "Testimonial", href: "/testimonals" },
+  { label: "Testimonials", href: "/testimonials" },
 ];
 
 interface FooterProps {
