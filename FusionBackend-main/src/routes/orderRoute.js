@@ -4,6 +4,8 @@ import {
   getOrderByPaymentIntent,
   getUserOrders,
   syncOrderFromPaymentIntent,
+  trackOrder,
+  getMyOrders,
 } from '../controllers/orderController.js';
 import { authenticate } from '../middlewares/authMiddleware/authMiddleware.js';
 
@@ -14,6 +16,12 @@ orderRoute.post('/create', createOrder);
 
 // POST /api/orders/sync — create order from Stripe PI (works without webhook)
 orderRoute.post('/sync', syncOrderFromPaymentIntent);
+
+// POST /api/orders/track — public parcel tracking (orderNumber + email)
+orderRoute.post('/track', trackOrder);
+
+// POST /api/orders/my-orders — fetch all orders for an email address
+orderRoute.post('/my-orders', getMyOrders);
 
 // GET /api/orders/payment-intent/:paymentIntentId
 orderRoute.get('/payment-intent/:paymentIntentId', getOrderByPaymentIntent);

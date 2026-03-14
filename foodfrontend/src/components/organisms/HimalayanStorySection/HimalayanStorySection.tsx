@@ -174,17 +174,20 @@ export default function HimalayanStorySection() {
               viewport={{ once: true, amount: 0.1 }}
               transition={{ duration: 0.7, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
             >
-              Simply microwave the nugget for about 45 seconds until it puffs up — Let it{' '}
-              <span className="font-bold text-orange-600 dark:text-amber-500">COOL</span>{' '}
-              — and then watch as your dog enjoys the crunchy texture and delicious smoky taste.
+              Maximize every penny of your purchase by ensuring nothing goes to waste! Instead of discarding the end pieces,
+              you can transform them into a fantastic treat for your dog. Simply wash the piece, soak it in hot water, and
+              pat it dry before microwaving it for about 45 seconds until it puffs up. Once it has{' '}
+              <span className="font-bold text-orange-600 dark:text-amber-500">COOLED</span>{' '}
+              completely for your pet&apos;s safety, your dog can enjoy a perfectly smoky and crunchy snack.
             </motion.p>
 
             {/* Numbered steps */}
             <div className="mt-8 space-y-4">
               {[
-                { label: 'Microwave for 45 seconds', sub: 'Until it puffs up nicely' },
-                { label: 'Let it cool completely',    sub: 'Safety first for your pup' },
-                { label: 'Watch them enjoy!',         sub: 'Crunchy texture & smoky taste' },
+                { label: 'Wash & soak in hot water',   sub: 'Prepare the end piece' },
+                { label: 'Pat dry, then microwave 45s', sub: 'Until it puffs up nicely' },
+                { label: 'Let it cool completely',      sub: 'Safety first for your pup' },
+                { label: 'Watch them enjoy!',           sub: 'Perfectly smoky & crunchy snack' },
               ].map((step, i) => (
                 <motion.div
                   key={i}

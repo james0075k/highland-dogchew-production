@@ -116,12 +116,15 @@ export default function Footer({ destinations = [], activities = [], contactInfo
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-10">
         {/* Top row: Logo + Newsletter */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-14">
-          <div className="flex items-center gap-4">
-            <div className="w-[140px] md:w-[160px]">
-              <Logo index={1} />
-            </div>
-            <div className="hidden sm:block h-10 w-px bg-[#2E1F14]/10 dark:bg-[#f5e9dc]/10" />
-            <p className="hidden sm:block text-sm text-[#7A5C4F] dark:text-[#c8b6a6] max-w-[200px] leading-relaxed">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4">
+            <Logo
+              index={1}
+              width={160}
+              height={160}
+              imgClassName="h-[110px] w-[110px] sm:h-[130px] sm:w-[130px] md:h-[150px] md:w-[150px] lg:h-[160px] lg:w-[160px]"
+            />
+            <div className="hidden sm:block h-14 w-px bg-[#2E1F14]/10 dark:bg-[#f5e9dc]/10" />
+            <p className="text-center sm:text-left text-sm text-[#7A5C4F] dark:text-[#c8b6a6] max-w-[200px] leading-relaxed">
               Premium Himalayan dog treats, crafted with care
             </p>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import {
   X,
   Upload,
@@ -117,7 +118,7 @@ const VarietyDashboard = () => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       const response = await fetch(`${API_BASE}/variety/${varietyToDelete._id}`, {
         method: 'DELETE',
@@ -144,7 +145,7 @@ const VarietyDashboard = () => {
 
   const toggleVarietyStatus = async (varietyId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       const response = await fetch(`${API_BASE}/variety/${varietyId}/toggle-status`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
@@ -205,10 +206,10 @@ const handleSubmit = async () => {
 
     setDebugInfo(`Sending ${method} to ${url}...`);
 
-    // Send WITHOUT any headers (let browser set them for FormData)
+    const token = Cookies.get('token');
     const response = await fetch(url, {
       method,
-      // NO headers for FormData uploads
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formDataToSend,
     });
 

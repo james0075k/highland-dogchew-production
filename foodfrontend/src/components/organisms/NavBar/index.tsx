@@ -8,6 +8,7 @@ import { Sun, Moon } from "lucide-react";
 import { IoMdClose } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
 import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
+import { PackageSearch } from "lucide-react";
 import Logo from "@/components/atoms/Logo";
 import { useCart } from "@/context/CartContext";
 import { ContactInfo } from "@/types";
@@ -181,6 +182,14 @@ export default function Navbar() {
                   <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
                 </a>
               )}
+              <Link
+                href="/my-orders"
+                aria-label="My Orders"
+                title="My Orders"
+                className="relative flex items-center justify-center w-7 h-7"
+              >
+                <PackageSearch className="text-[#2E1F14] dark:text-[#c8b6a6] text-[19px] hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
+              </Link>
               <Link href="/cart" className="relative ml-1" aria-label="Shopping cart">
                 <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
                 {cartCount > 0 && (
@@ -213,6 +222,14 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <Link
+              href="/my-orders"
+              aria-label="My Orders"
+              title="My Orders"
+              className="flex items-center justify-center"
+            >
+              <PackageSearch className="text-[#2E1F14] dark:text-[#c8b6a6] text-[22px] hover:text-[#7A5C4F] transition-colors duration-200" />
+            </Link>
             <Link href="/cart" className="relative" aria-label="Shopping cart">
               <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
               {cartCount > 0 && (
@@ -247,6 +264,21 @@ export default function Navbar() {
 
             <li className="px-4 py-2">
               <div className="border-t border-[#2E1F14]/10 dark:border-[#3a2c23]" />
+            </li>
+
+            <li>
+              <Link
+                href="/my-orders"
+                onClick={handleMenuItemClick}
+                className={`flex items-center gap-2.5 px-4 py-3 text-[13px] tracking-[0.10em] uppercase font-medium transition-colors duration-200 ${
+                  pathname === '/my-orders'
+                    ? 'text-[#2E1F14] dark:text-[#f5e9dc] font-medium'
+                    : 'text-[#5C4033]/80 dark:text-[#c8b6a6]/80 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc]'
+                }`}
+              >
+                <PackageSearch className="text-amber-600 dark:text-amber-400 text-base" />
+                My Orders
+              </Link>
             </li>
 
             <li className="px-4">

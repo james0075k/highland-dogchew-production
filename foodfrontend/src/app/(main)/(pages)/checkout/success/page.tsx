@@ -12,6 +12,7 @@ import {
   CreditCard,
   Printer,
   ShoppingBag,
+  Truck,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
@@ -394,7 +395,7 @@ export default function CheckoutSuccessPage() {
           </div>
 
           {/* Actions */}
-          <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => window.print()}
               className="flex items-center justify-center gap-2 border border-[#d8d0c8] dark:border-[#2e2420] rounded py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-[#f0ebe4] dark:hover:bg-[#2a211b] transition-colors"
@@ -402,6 +403,13 @@ export default function CheckoutSuccessPage() {
               <Printer className="w-4 h-4" />
               Print receipt
             </button>
+            <Link
+              href="/track-order"
+              className="flex items-center justify-center gap-2 border border-[#d8d0c8] dark:border-[#2e2420] rounded py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-[#f0ebe4] dark:hover:bg-[#2a211b] transition-colors"
+            >
+              <Truck className="w-4 h-4" />
+              Track your order
+            </Link>
             <Link
               href="/products"
               className="flex items-center justify-center gap-2 bg-[#2f1e14] dark:bg-amber-600 text-white rounded py-3 px-5 text-sm font-medium hover:opacity-90 transition-opacity"

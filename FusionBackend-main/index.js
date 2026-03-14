@@ -53,7 +53,7 @@ const port = process.env.PORT ;
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001', 'https://dogchewuk.vercel.app', 'https://highlanddogchew.co.uk'],  // Your frontend origin
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(cookieParser());

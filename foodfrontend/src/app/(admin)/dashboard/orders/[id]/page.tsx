@@ -8,6 +8,7 @@ import {
   FiArrowLeft, FiUser, FiMapPin, FiShoppingBag, FiDollarSign,
   FiTruck, FiCreditCard, FiCopy, FiCheck, FiRefreshCw,
   FiChevronDown, FiPackage, FiCalendar, FiPhone, FiMail,
+  FiExternalLink,
 } from 'react-icons/fi';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -45,6 +46,9 @@ interface Order {
   paymentIntentId?: string;
   paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
   orderStatus?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  trackingNumber?: string | null;
+  courier?: string;
+  shippedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -71,12 +75,13 @@ const orderBadge: Record<string, string> = {
 
 // Colour accent for the top bar of each section card
 const sectionBar: Record<string, string> = {
-  customer: 'bg-blue-500',
-  address:  'bg-teal-500',
-  products: 'bg-amber-500',
-  pricing:  'bg-emerald-500',
-  controls: 'bg-purple-500',
-  stripe:   'bg-indigo-500',
+  customer:  'bg-blue-500',
+  address:   'bg-teal-500',
+  products:  'bg-amber-500',
+  pricing:   'bg-emerald-500',
+  controls:  'bg-purple-500',
+  stripe:    'bg-indigo-500',
+  tracking:  'bg-teal-600',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -141,10 +146,11 @@ export default function OrderDetailPage() {
   const [order, setOrder]           = useState<Order | null>(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
-  const [newStatus, setNewStatus]   = useState<string>('');
-  const [updating, setUpdating]     = useState(false);
-  const [updateMsg, setUpdateMsg]   = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [copied, setCopied]         = useState(false);
+  const [newStatus, setNewStatus]         = useState<string>('');
+  const [trackingInput, setTrackingInput] = useState<string>('');
+  const [updating, setUpdating]           = useState(false);
+  const [updateMsg, setUpdateMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [copied, setCopied]               = useState(false);
 
   // ── Fetch order ──────────────────────────────────────────────────────────
   const fetchOrder = useCallback(async () => {
@@ -160,6 +166,7 @@ export default function OrderDetailPage() {
       if (data.success && data.data) {
         setOrder(data.data);
         setNewStatus(data.data.orderStatus);
+        setTrackingInput(data.data.trackingNumber || '');
       } else {
         setError(data.message || 'Order not found');
       }
@@ -179,18 +186,24 @@ export default function OrderDetailPage() {
       setUpdating(true);
       setUpdateMsg(null);
       const token = Cookies.get('token');
+      const body: Record<string, string> = { orderStatus: newStatus };
+      if (newStatus === 'shipped' && trackingInput.trim()) {
+        body.trackingNumber = trackingInput.trim();
+      }
+
       const res = await fetch(`${API}/admin/orders/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ orderStatus: newStatus }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
       if (data.success) {
         setOrder(data.data);
+        setTrackingInput(data.data.trackingNumber || '');
         setUpdateMsg({ type: 'success', text: `Status updated to "${cap(newStatus)}"` });
         setTimeout(() => setUpdateMsg(null), 3000);
       } else {
@@ -388,6 +401,49 @@ export default function OrderDetailPage() {
                 to view payment details or issue a refund.
               </p>
             </SectionCard>
+
+            {/* ── Shipping & Tracking ─────────────────────────────────── */}
+            {order.orderStatus === 'shipped' && order.trackingNumber && (
+              <SectionCard title="Shipping & Tracking" icon={FiTruck} barColor={sectionBar.tracking}>
+                <div className="space-y-3">
+                  <div className="flex gap-4 py-2.5 border-b border-gray-50">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-28 shrink-0 pt-0.5">
+                      Courier
+                    </span>
+                    <span className="text-sm text-gray-800 font-medium capitalize">
+                      {order.courier || 'Evri'}
+                    </span>
+                  </div>
+                  <div className="flex gap-4 py-2.5 border-b border-gray-50">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-28 shrink-0 pt-0.5">
+                      Tracking No.
+                    </span>
+                    <span className="text-sm text-gray-800 font-mono font-medium">
+                      {order.trackingNumber}
+                    </span>
+                  </div>
+                  {order.shippedAt && (
+                    <div className="flex gap-4 py-2.5 border-b border-gray-50">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-28 shrink-0 pt-0.5">
+                        Shipped At
+                      </span>
+                      <span className="text-sm text-gray-800 font-medium">
+                        {fmtDate(order.shippedAt)} at {fmtTime(order.shippedAt)}
+                      </span>
+                    </div>
+                  )}
+                  <a
+                    href={`https://www.evri.com/track/parcel/${order.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    <FiExternalLink size={14} />
+                    Track Parcel on Evri
+                  </a>
+                </div>
+              </SectionCard>
+            )}
           </div>
 
           {/* ════════ RIGHT COLUMN ════════ */}
@@ -511,6 +567,25 @@ export default function OrderDetailPage() {
                     />
                   </div>
                 </div>
+
+                {/* Tracking number — visible when "shipped" is selected */}
+                {newStatus === 'shipped' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                      Evri Tracking Number
+                    </label>
+                    <input
+                      type="text"
+                      value={trackingInput}
+                      onChange={(e) => setTrackingInput(e.target.value.toUpperCase())}
+                      placeholder="e.g. H0679A0000008849"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono bg-white outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 text-gray-800 placeholder-gray-300"
+                    />
+                    <p className="mt-1 text-[11px] text-gray-400">
+                      Courier will be set to <strong>Evri</strong> automatically.
+                    </p>
+                  </div>
+                )}
 
                 {/* Update button */}
                 <button

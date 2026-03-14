@@ -52,10 +52,11 @@ export const getOrderById = async (req, res, next) => {
 };
 
 // ─── PATCH /api/admin/orders/:id/status ──────────────────────────────────────
-// Admin can update the delivery / order status (e.g. confirmed → shipped)
+// Admin can update the delivery / order status (e.g. confirmed → shipped).
+// When status is "shipped", optionally accepts trackingNumber.
 export const updateOrderStatus = async (req, res, next) => {
   try {
-    const { orderStatus } = req.body;
+    const { orderStatus, trackingNumber } = req.body;
 
     if (!orderStatus || !VALID_ORDER_STATUSES.includes(orderStatus)) {
       return next(
@@ -63,9 +64,25 @@ export const updateOrderStatus = async (req, res, next) => {
       );
     }
 
+    const update = { orderStatus };
+
+    if (orderStatus === 'shipped') {
+      if (trackingNumber !== undefined && trackingNumber !== null) {
+        const tn = String(trackingNumber).trim();
+        if (tn && !/^[A-Za-z0-9\-]{4,50}$/.test(tn)) {
+          return next(handleError(400, 'Invalid tracking number format'));
+        }
+        if (tn) {
+          update.trackingNumber = tn.toUpperCase();
+          update.courier = 'evri';
+          update.shippedAt = new Date();
+        }
+      }
+    }
+
     const order = await OrderModel.findByIdAndUpdate(
       req.params.id,
-      { orderStatus },
+      update,
       { new: true, runValidators: true }
     );
 

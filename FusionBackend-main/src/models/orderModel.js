@@ -105,6 +105,22 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending',
   },
+
+  // ── Courier tracking ──────────────────────────────────────────────────────
+  trackingNumber: {
+    type: String,
+    default: null,
+    trim: true,
+  },
+  courier: {
+    type: String,
+    default: 'evri',
+    trim: true,
+  },
+  shippedAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 // Auto-generate order number

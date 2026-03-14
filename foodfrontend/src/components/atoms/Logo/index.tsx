@@ -13,9 +13,10 @@ interface LogoProps {
   width?: number;
   height?: number;
   index?: number;
+  imgClassName?: string;
 }
 
-const LogoComponent = ({ width = 75, height = 30, index = 0 }: LogoProps) => {
+const LogoComponent = ({ width = 75, height = 30, index = 0, imgClassName }: LogoProps) => {
   const [logo, setLogo] = useState<LogoType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,6 +49,8 @@ const LogoComponent = ({ width = 75, height = 30, index = 0 }: LogoProps) => {
     );
   }
 
+  const baseImgClass = imgClassName ?? "h-[48px] w-[48px] md:h-[56px] md:w-[56px]";
+
   if (error || !memoizedLogo) {
     return (
       <div className="flex justify-start">
@@ -56,7 +59,7 @@ const LogoComponent = ({ width = 75, height = 30, index = 0 }: LogoProps) => {
           alt="Highland Yakchew"
           width={width}
           height={height}
-          className="h-[48px] w-[48px] md:h-[56px] md:w-[56px] object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]"
+          className={`${baseImgClass} object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]`}
           priority
         />
       </div>
@@ -70,7 +73,7 @@ const LogoComponent = ({ width = 75, height = 30, index = 0 }: LogoProps) => {
         alt={memoizedLogo.alt}
         width={width}
         height={height}
-        className="h-[48px] w-[48px] md:h-[56px] md:w-[56px] object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]"
+        className={`${baseImgClass} object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]`}
         priority
       />
     </div>

@@ -68,6 +68,113 @@ export const getUserOrders = async (req, res, next) => {
   }
 };
 
+// ─── POST /api/orders/my-orders — Fetch all orders by email ──────────────────
+// Body: { email }
+// Returns all orders where shippingAddress.email matches (case-insensitive).
+// Only returns safe customer-facing fields.
+export const getMyOrders = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !String(email).trim()) {
+      return next(handleError(400, 'Email address is required'));
+    }
+
+    const emailLower = String(email).trim().toLowerCase();
+
+    const orders = await OrderModel.find({
+      'shippingAddress.email': { $regex: new RegExp(`^${emailLower}$`, 'i') },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const payload = orders.map((o) => ({
+      orderNumber:    o.orderNumber,
+      orderStatus:    o.orderStatus,
+      paymentStatus:  o.paymentStatus,
+      trackingNumber: o.trackingNumber || null,
+      courier:        o.courier || 'evri',
+      shippedAt:      o.shippedAt || null,
+      createdAt:      o.createdAt,
+      grandTotal:     o.grandTotal,
+      items: (o.items || []).map((i) => ({
+        name:      i.name,
+        size:      i.size,
+        quantity:  i.quantity,
+        unitPrice: i.unitPrice,
+      })),
+      shippingAddress: {
+        fullName:    o.shippingAddress?.fullName,
+        addressLine1: o.shippingAddress?.addressLine1,
+        city:        o.shippingAddress?.city,
+        postcode:    o.shippingAddress?.postcode,
+        country:     o.shippingAddress?.country,
+      },
+    }));
+
+    return handleSuccess(res, 200, `Found ${payload.length} order(s)`, payload);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── POST /api/orders/track — Public parcel tracking ─────────────────────────
+// Body: { orderNumber, email }
+// Validates email against shippingAddress.email; returns limited safe fields.
+export const trackOrder = async (req, res, next) => {
+  try {
+    const { orderNumber, email } = req.body;
+
+    if (!orderNumber || !email) {
+      return next(handleError(400, 'orderNumber and email are required'));
+    }
+
+    const order = await OrderModel.findOne({
+      orderNumber: String(orderNumber).trim().toUpperCase(),
+    }).lean();
+
+    if (!order) return next(handleError(404, 'Order not found'));
+
+    // Validate email matches (case-insensitive)
+    const storedEmail = (order.shippingAddress?.email || '').toLowerCase().trim();
+    if (storedEmail !== String(email).toLowerCase().trim()) {
+      return next(handleError(404, 'Order not found'));
+    }
+
+    // Return only the fields the customer needs
+    const payload = {
+      orderNumber:    order.orderNumber,
+      orderStatus:    order.orderStatus,
+      paymentStatus:  order.paymentStatus,
+      trackingNumber: order.trackingNumber || null,
+      courier:        order.courier || 'evri',
+      shippedAt:      order.shippedAt || null,
+      createdAt:      order.createdAt,
+      items:          (order.items || []).map((i) => ({
+        name:      i.name,
+        size:      i.size,
+        quantity:  i.quantity,
+        unitPrice: i.unitPrice,
+      })),
+      subtotal:      order.subtotal,
+      totalTax:      order.totalTax,
+      totalDelivery: order.totalDelivery,
+      grandTotal:    order.grandTotal,
+      shippingAddress: {
+        fullName:    order.shippingAddress?.fullName,
+        addressLine1: order.shippingAddress?.addressLine1,
+        city:        order.shippingAddress?.city,
+        postcode:    order.shippingAddress?.postcode,
+        country:     order.shippingAddress?.country,
+      },
+    };
+
+    return handleSuccess(res, 200, 'Order found', payload);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── POST /api/orders/sync — FALLBACK order creation ─────────────────────────
 //
 // Flow:
