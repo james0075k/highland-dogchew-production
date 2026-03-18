@@ -46,7 +46,7 @@ export default function YakChewsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0] dark:from-[#1a1410] dark:to-[#241b16] transition-colors duration-300">
-      <section className="pt-40 pb-16 px-4">
+      <section className="pt-[100px] md:pt-[180px] pb-16 px-4">
         <div className="max-w-7xl mx-auto">
           <Link
             href="/products"

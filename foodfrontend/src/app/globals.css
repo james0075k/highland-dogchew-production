@@ -68,29 +68,31 @@ body::-webkit-scrollbar, html::-webkit-scrollbar {
   }
 }
 
-section {
-  padding-top: 48px;
-  padding-bottom: 24px;
-}
-
-@media (max-width: 640px) {
+@layer base {
   section {
-    padding-top: 32px;
-    padding-bottom: 16px;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  section {
-    padding-top: 32px;
+    padding-top: 48px;
     padding-bottom: 24px;
   }
-}
 
-@media (min-width: 1025px) {
-  section {
-    padding-top: 64px;
-    padding-bottom: 32px;
+  @media (max-width: 640px) {
+    section {
+      padding-top: 32px;
+      padding-bottom: 16px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    section {
+      padding-top: 32px;
+      padding-bottom: 24px;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    section {
+      padding-top: 64px;
+      padding-bottom: 32px;
+    }
   }
 }
 

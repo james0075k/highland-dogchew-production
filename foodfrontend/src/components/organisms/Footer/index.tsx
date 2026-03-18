@@ -197,7 +197,7 @@ export default function Footer({ destinations = [], activities = [], contactInfo
           </div>
 
           {/* Contact Details */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <h4 className="text-sm font-bold text-[#2E1F14] dark:text-[#f5e9dc] uppercase tracking-[0.15em] mb-5">Get In Touch</h4>
             <ul className="space-y-3.5 text-sm">
               {contactInfo?.email && (
@@ -243,7 +243,7 @@ export default function Footer({ destinations = [], activities = [], contactInfo
           </div>
 
           {/* Social + Payment */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <h4 className="text-sm font-bold text-[#2E1F14] dark:text-[#f5e9dc] uppercase tracking-[0.15em] mb-5">Follow Us</h4>
             <div className="flex gap-2 mb-6">
               {socialLinks.map(({ Icon, link, label }, index) => (

@@ -291,10 +291,10 @@ const Testimonials = () => {
             Customer Reviews
           </span>
           <h2
-            className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
-            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            className="text-[24px] md:text-[30px] tracking-[0.14em] text-neutral-900 dark:text-neutral-100"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
           >
-            Hear From Our Happy Pups
+            HEAR FROM OUR HAPPY PUPS
           </h2>
         </div>
 
@@ -337,10 +337,10 @@ const Testimonials = () => {
             The Highland Difference
           </span>
           <h2
-            className="text-3xl md:text-4xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
-            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+            className="text-[24px] md:text-[30px] tracking-[0.14em] text-neutral-900 dark:text-neutral-100"
+            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
           >
-            Why Dogs (and Owners) Choose Us
+            WHY DOGS (AND OWNERS) CHOOSE US
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -352,11 +352,11 @@ const Testimonials = () => {
             <div key={title} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-7 text-center shadow-sm hover:shadow-lg dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-300">
               <div className="text-4xl mb-4">{emoji}</div>
               <h3
-                className="text-[15px] md:text-[16px] font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-2"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+                className="text-[18px] md:text-[20px] tracking-[0.12em] text-neutral-900 dark:text-[#f5e9dc] mb-2"
+                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
               >{title}</h3>
               <p
-                className="text-[15px] md:text-[16px] text-[#7A5C4F] dark:text-[#c8b6a6] leading-[1.95]"
+                className="text-[18px] md:text-[19px] text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed"
                 style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
               >{desc}</p>
             </div>
@@ -371,11 +371,11 @@ const Testimonials = () => {
           <div className="relative z-10">
             <Bone className="w-10 h-10 text-white/80 mx-auto mb-4" />
             <h2
-              className="text-3xl md:text-4xl font-black text-white mb-3 leading-tight"
-              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
-            >Your Dog Deserves the Best</h2>
+              className="text-[24px] md:text-[30px] tracking-[0.14em] text-white mb-3"
+              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            >YOUR DOG DESERVES THE BEST</h2>
             <p
-              className="text-white/80 mb-8 max-w-md mx-auto text-[15px] md:text-[16px] leading-[1.95]"
+              className="text-white/80 mb-8 max-w-md mx-auto text-[18px] md:text-[20px] leading-relaxed"
               style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
             >
               Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and tail-waggingly good.

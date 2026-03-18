@@ -126,13 +126,16 @@ const PillarsSection = () => {
             "px-4 py-10 md:px-10 md:py-12",
           ].join(" ")}
         >
-          <h2 className="text-center text-[34px] md:text-[44px] font-semibold tracking-tight text-[#6d6a66]"       style={{
-              fontFamily:
-                'ui-serif, Georgia, "Times New Roman", Times, serif',
+          <h2
+            className="text-center text-[24px] md:text-[30px] tracking-[0.14em] text-neutral-900"
+            style={{
+              fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif',
               fontStyle: "italic",
-            }} >
-            Our pillars
+            }}
+          >
+            OUR PILLARS
           </h2>
+          <div className="mx-auto mt-5 h-px w-24 bg-neutral-300/80" />
 
           <div className="relative mt-8">
             <div
@@ -170,25 +173,23 @@ const PillarsSection = () => {
                         ].join(" ")}
                       >
                         <h3
-                          className="text-center uppercase tracking-[0.12em] text-[17px] md:text-[20px] text-[#111]"
-                             style={{
-              fontFamily:
-                'ui-serif, Georgia, "Times New Roman", Times, serif',
-              fontStyle: "italic",
-            }}
+                          className="text-center uppercase tracking-[0.12em] text-[18px] md:text-[20px] text-[#111]"
+                          style={{
+                            fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif',
+                            fontStyle: "italic",
+                          }}
                         >
                           {p.title}
                         </h3>
 
                         <div
                           className="mt-5 max-h-[300px] md:max-h-[320px] overflow-y-auto pr-1 no-scrollbar"
-                             style={{
-              fontFamily:
-                'ui-serif, Georgia, "Times New Roman", Times, serif',
-              fontStyle: "italic",
-            }}
+                          style={{
+                            fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif',
+                            fontStyle: "italic",
+                          }}
                         >
-                          <div className="text-[19px] md:text-[22px] leading-snug text-[#111] text-center">
+                          <div className="text-[18px] md:text-[20px] leading-relaxed text-[#111] text-center">
                             {p.paragraphs?.map((t, i) => (
                               <p key={i} className="mb-4">
                                 {t}
