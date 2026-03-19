@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 
 const companyLinks = [
   { label: "About Us", href: "/about" },
+  { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
   { label: "Gallery", href: "/gallery" },
   { label: "Testimonials", href: "/testimonials" },
@@ -15,9 +16,12 @@ const companyLinks = [
 ];
 
 const overviewLinks = [
+  { label: "FAQs", href: "/faq" },
   { label: "Variety", href: "/variety" },
   { label: "Process", href: "/process" },
   { label: "Refund Policy", href: "/refunds" },
+  { label: "Shipping Policy", href: "/shipping-policy" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Testimonials", href: "/testimonials" },
 ];
 

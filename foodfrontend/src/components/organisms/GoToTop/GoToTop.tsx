@@ -25,7 +25,8 @@ const GoToTop = () => {
       {showGoToTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-8 right-10  text-white p-3 rounded-full shadow-xl  transition-opacity duration-300 ${showGoToTop ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-50`}
+          aria-label="Scroll to top"
+          className={`fixed bottom-24 right-6 text-white p-3 rounded-full shadow-xl transition-opacity duration-300 ${showGoToTop ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-50`}
         >
           <div className="w-12 h-12 flex items-center justify-center bg-red-600 rounded-full shadow-md border border-orange-600">
             <Image

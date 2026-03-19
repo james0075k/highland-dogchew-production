@@ -10,6 +10,7 @@ import GoToTop from "@/components/organisms/GoToTop/GoToTop";
 import WhatsappWidget from "@/components/organisms/WhatsappWidget/WhatsappWidget";
 import { CartProvider } from "@/context/CartContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import CookieConsent from "@/components/organisms/CookieConsent/CookieConsent";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
@@ -115,12 +116,12 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      { url: '/images/logos.jpeg', type: 'image/jpeg', sizes: '512x512' },
-      { url: '/images/logos.jpeg', type: 'image/jpeg', sizes: '192x192' },
-      { url: '/images/logos.jpeg', type: 'image/jpeg' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/images/logos.png', type: 'image/png', sizes: '192x192' },
+      { url: '/images/logos.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: '/images/logos.jpeg',
-    shortcut: '/images/logos.jpeg',
+    apple: { url: '/images/logos.png', type: 'image/png', sizes: '180x180' },
+    shortcut: '/favicon.png',
   },
 
   manifest: '/site.webmanifest',
@@ -142,7 +143,13 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'Highland Yakchew',
   url: BASE_URL,
-  logo: `${BASE_URL}/images/logos.jpeg`,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${BASE_URL}/images/logos.png`,
+    width: 512,
+    height: 512,
+  },
+  image: `${BASE_URL}/og-image.jpg`,
   description: 'Premium natural yak milk dog chews and Himalayan dog treats, handcrafted for healthy, happy dogs.',
   sameAs: [
     'https://www.instagram.com/highlanddogchew',
@@ -250,6 +257,56 @@ const breadcrumbSchema = {
   ],
 };
 
+const siteNavigationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Highland Yakchew Navigation',
+  itemListElement: [
+    {
+      '@type': 'SiteNavigationElement',
+      position: 1,
+      name: 'Yak Milk Chews',
+      description: '100% natural yak milk dog chews – long-lasting, high-protein, grain-free.',
+      url: `${BASE_URL}/products/yak-chews`,
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 2,
+      name: 'Himalayan Puff Treats',
+      description: 'Light and crunchy puffed yak milk treats your dog will love.',
+      url: `${BASE_URL}/products/puff-treats`,
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 3,
+      name: 'Highland Mix Chews',
+      description: 'Premium variety mix of natural highland yak chews in multiple flavours.',
+      url: `${BASE_URL}/products/highland-mix`,
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 4,
+      name: 'Our Story',
+      description: 'Learn about Highland Yakchew and how we bring Himalayan recipes to your dog.',
+      url: `${BASE_URL}/about`,
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 5,
+      name: 'Blog',
+      description: 'Expert articles on dog nutrition, yak chew guides, and healthy treat tips.',
+      url: `${BASE_URL}/blog`,
+    },
+    {
+      '@type': 'SiteNavigationElement',
+      position: 6,
+      name: 'Contact Us',
+      description: 'Get in touch with the Highland Yakchew team.',
+      url: `${BASE_URL}/contact`,
+    },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -275,6 +332,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavigationSchema) }}
+        />
         {/* Preconnect to API */}
         <link rel="preconnect" href="https://highlanddogchew.co.uk" />
         <link rel="dns-prefetch" href="https://highlanddogchew.co.uk" />
@@ -287,6 +348,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
             <GoToTop />
             <WhatsappWidget />
+            <CookieConsent />
           </CartProvider>
         </ThemeProvider>
       </body>

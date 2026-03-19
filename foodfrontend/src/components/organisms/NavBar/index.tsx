@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Search } from "lucide-react";
 import { IoMdClose } from "react-icons/io";
 import { FiMenu } from "react-icons/fi";
 import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
@@ -12,6 +12,7 @@ import { PackageSearch } from "lucide-react";
 import Logo from "@/components/atoms/Logo";
 import { useCart } from "@/context/CartContext";
 import { ContactInfo } from "@/types";
+import SearchModal from "@/components/organisms/SearchModal/SearchModal";
 
 function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, setTheme } = useTheme();
@@ -49,12 +50,13 @@ const leftLinks = [
 ];
 
 const rightLinks = [
-  { name: "FAQs", href: "/testimonials" },
+  { name: "FAQs", href: "/faq" },
   { name: "Contacts", href: "/contact" },
 ];
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -131,6 +133,7 @@ export default function Navbar() {
     }`;
 
   return (
+    <>
     <nav className={navbarClasses}>
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 lg:py-5">
         {/* Desktop Layout: Left Links | Center Logo | Right Links + Cart */}
@@ -182,6 +185,13 @@ export default function Navbar() {
                   <FaFacebook className="text-[#2E1F14] dark:text-[#c8b6a6] text-lg hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200" />
                 </a>
               )}
+              <button
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+                className="flex items-center justify-center w-7 h-7 text-[#2E1F14] dark:text-[#c8b6a6] hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors duration-200"
+              >
+                <Search size={17} />
+              </button>
               <Link
                 href="/my-orders"
                 aria-label="My Orders"
@@ -203,7 +213,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Layout: Hamburger | Center Logo | Cart */}
+        {/* Mobile Layout: Hamburger | Center Logo | Search + Cart */}
         <div className="flex md:hidden items-center justify-between">
           <button
             onClick={toggleMenu}
@@ -220,18 +230,12 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link
-              href="/my-orders"
-              aria-label="My Orders"
-              title="My Orders"
-              className="flex items-center justify-center"
-            >
-              <PackageSearch className="text-[#2E1F14] dark:text-[#c8b6a6] text-[22px] hover:text-[#7A5C4F] transition-colors duration-200" />
-            </Link>
+          <div className="flex items-center gap-3.5">
+            <button onClick={() => setSearchOpen(true)} aria-label="Search" className="text-[#2E1F14] dark:text-[#c8b6a6] hover:text-[#7A5C4F] transition-colors">
+              <Search size={19} />
+            </button>
             <Link href="/cart" className="relative" aria-label="Shopping cart">
-              <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] transition-colors duration-200" />
+              <FaShoppingCart className="text-[#2E1F14] dark:text-[#c8b6a6] text-[18px] hover:text-[#7A5C4F] transition-colors duration-200" />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[9px] font-bold w-[17px] h-[17px] flex items-center justify-center rounded-full">
                   {cartCount > 9 ? "9+" : cartCount}
@@ -291,8 +295,9 @@ export default function Navbar() {
               </Link>
             </li>
 
-            {/* Mobile social icons */}
-            <li className="flex items-center justify-center gap-5 pt-3 pb-1">
+            {/* Theme + social row */}
+            <li className="flex items-center justify-between px-4 pt-3 pb-1">
+              <ThemeToggle />
               {contactInfo?.socialLinks?.instagram && (
                 <a href={contactInfo.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                   <FaInstagram className="text-[#2E1F14] dark:text-[#c8b6a6] text-xl hover:text-[#7A5C4F] dark:hover:text-amber-400 transition-colors" />
@@ -318,5 +323,11 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+
+    {/* Rendered outside <nav> so that fixed positioning works correctly.
+        The nav has CSS transforms (translate-y) which create a new stacking
+        context and break position:fixed on children. */}
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }

@@ -96,6 +96,7 @@ export default function ProductDetailPage() {
   const [nutritionOpen, setNutritionOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   const addToCartBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -136,6 +137,17 @@ export default function ProductDetailPage() {
           setSelectedInterval(p.subscriptionSettings.intervals[0]);
         }
         if (p.bulkPricing?.length > 0) setSelectedQtyIdx(0);
+        // Fetch related products (same type, exclude current)
+        if (p.productType) {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?type=${p.productType}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) {
+                setRelatedProducts((d.data || []).filter((r: any) => r.slug !== p.slug).slice(0, 4));
+              }
+            })
+            .catch(() => {});
+        }
       } else {
         throw new Error(result.message || 'Failed to load product');
       }
@@ -228,6 +240,39 @@ export default function ProductDetailPage() {
     setToast({ message: `${product.name} added to cart!`, type: 'success' });
   };
 
+  // Build JSON-LD structured data for Google Product snippets
+  const jsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        image: product.gallery?.length > 0 ? product.gallery : [product.image],
+        description: product.description || product.name,
+        brand: { '@type': 'Brand', name: 'Highland Dogchew' },
+        offers: {
+          '@type': 'Offer',
+          url: `https://highlanddogchew.co.uk/products/${product.slug}`,
+          priceCurrency: 'GBP',
+          price: (product.sizes?.[0]?.price > 0 ? product.sizes[0].price : product.price ?? 0).toFixed(2),
+          priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          availability:
+            product.stock > 0 || product.stock === undefined
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+          seller: { '@type': 'Organization', name: 'Highland Dogchew' },
+        },
+        ...(product.reviews > 0 && {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating,
+            reviewCount: product.reviews,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }),
+      }
+    : null;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#1a1410] transition-colors duration-300">
@@ -259,6 +304,13 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#1a1410] pt-36 pb-24 lg:pb-12 transition-colors duration-300">
+      {/* JSON-LD structured data for Google Product snippets */}
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       {/* Toast */}
       {toast && (
         <div
@@ -692,6 +744,30 @@ export default function ProductDetailPage() {
       <div id="reviews">
         <ProductReviews productId={product._id} />
       </div>
+
+      {/* ─── Related Products ─── */}
+      {relatedProducts.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-12 border-t border-gray-200 dark:border-[#3a2c23]">
+          <h2 className="text-xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-6">You May Also Like</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {relatedProducts.map((rp, i) => (
+              <Link key={rp._id} href={`/products/${rp.slug}`} className="group block">
+                <div className="rounded-xl overflow-hidden border border-[#2E1F14]/10 dark:border-[#3a2c23] bg-white dark:bg-[#1f1812] hover:shadow-md transition-shadow">
+                  <div className="relative h-36 bg-gray-100 dark:bg-[#241b16]">
+                    {rp.images?.[0] && (
+                      <Image src={rp.images[0]} alt={rp.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-semibold text-[#2E1F14] dark:text-[#f5e9dc] line-clamp-2 mb-1 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">{rp.name}</p>
+                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400">£{Number(rp.price).toFixed(2)}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─── Universal Sticky Bar ───
           • Mobile: always visible (desktop button is display:none → IntersectionObserver fires immediately)

@@ -1,17 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ArrowUpDown } from 'lucide-react';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
 import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
+type SortKey = 'rating' | 'price-asc' | 'price-desc' | 'name';
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'rating',     label: 'Best Rated'    },
+  { key: 'price-asc',  label: 'Price: Low–High' },
+  { key: 'price-desc', label: 'Price: High–Low' },
+  { key: 'name',       label: 'Name A–Z'      },
+];
+
 export default function YakChewsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState<SortKey>('rating');
 
   useEffect(() => {
     fetchProducts();
@@ -39,10 +48,18 @@ export default function YakChewsPage() {
     }
   };
 
-  const sorted = [...products].sort((a, b) => {
-    if ((b.rating || 0) === (a.rating || 0)) return (b.reviews || 0) - (a.reviews || 0);
-    return (b.rating || 0) - (a.rating || 0);
-  });
+  const sorted = useMemo(() => {
+    const arr = [...products] as any[];
+    switch (sortBy) {
+      case 'price-asc':  return arr.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case 'price-desc': return arr.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case 'name':       return arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      default:           return arr.sort((a, b) => {
+        if ((b.rating || 0) === (a.rating || 0)) return (b.reviews || 0) - (a.reviews || 0);
+        return (b.rating || 0) - (a.rating || 0);
+      });
+    }
+  }, [products, sortBy]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fff8f0] to-[#f3e5d0] dark:from-[#1a1410] dark:to-[#241b16] transition-colors duration-300">
@@ -92,6 +109,31 @@ export default function YakChewsPage() {
           {!loading && !error && products.length === 0 && (
             <div className="py-16 text-center">
               <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-lg">No yak milk chews found</p>
+            </div>
+          )}
+
+          {/* Sort bar */}
+          {!loading && !error && sorted.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#2E1F14]/10 dark:border-[#3a2c23]">
+              <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
+                <span className="font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">{sorted.length}</span> products
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#C4A882] dark:text-amber-500 flex-shrink-0" />
+                {SORT_OPTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSortBy(key)}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                      sortBy === key
+                        ? 'bg-[#2E1F14] dark:bg-amber-700 text-white border-[#2E1F14] dark:border-amber-700'
+                        : 'text-[#7A5C4F] dark:text-[#c8b6a6] border-[#2E1F14]/15 dark:border-[#3a2c23] hover:border-[#2E1F14]/40 dark:hover:border-amber-600'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

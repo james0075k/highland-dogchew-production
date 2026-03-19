@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import Image from 'next/image';
 import {
   motion,
   useScroll,
@@ -98,20 +99,20 @@ export default function SizeGuideSection() {
     {
       title: 'FULL OF CALCIUM & PROTEIN',
       body:  'Packed with essential nutrients for strong bones and muscles',
-      color: 'bg-orange-500 dark:bg-amber-700',
-      path:  'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+      icon:  '/images/icon/calcium.png',
+      glow:  'rgba(251,146,60,0.35)',
     },
     {
       title: '100% NATURAL',
       body:  'Made from pure yak milk with no artificial additives',
-      color: 'bg-green-500 dark:bg-green-700',
-      path:  'M5 13l4 4L19 7',
+      icon:  '/images/icon/recycle.png',
+      glow:  'rgba(34,197,94,0.35)',
     },
     {
       title: 'GMO & GLUTEN FREE',
       body:  'Safe for dogs with sensitive stomachs and allergies',
-      color: 'bg-blue-500 dark:bg-blue-700',
-      path:  'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+      icon:  '/images/icon/gultonfree.png',
+      glow:  'rgba(59,130,246,0.35)',
     },
   ];
 
@@ -195,37 +196,62 @@ export default function SizeGuideSection() {
             <SplitHeading text="Why it's so good?" delay={0.05} />
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feat, i) => (
               <motion.div
                 key={feat.title}
-                className="text-center"
+                className="text-center flex flex-col items-center"
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{
                   duration: 0.65,
-                  delay: i * 0.12,
+                  delay: i * 0.14,
                   ease: [0.22, 1, 0.36, 1],
                 }}
               >
+                {/* Icon with float + glow animation */}
                 <motion.div
-                  className={`w-16 h-16 mx-auto mb-4 ${feat.color} rounded-full flex items-center justify-center`}
-                  initial={{ scale: 0.6, opacity: 0 }}
+                  className="relative w-24 h-24 mx-auto mb-5 flex items-center justify-center"
+                  initial={{ scale: 0.5, opacity: 0 }}
                   whileInView={{ scale: 1, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{
-                    duration: 0.5,
-                    delay: 0.15 + i * 0.12,
+                    duration: 0.55,
+                    delay: 0.15 + i * 0.14,
                     ease: [0.34, 1.56, 0.64, 1],
                   }}
+                  animate={{
+                    y: [0, -6, 0],
+                  }}
+                  // @ts-ignore — framer-motion animate + whileInView coexist fine
+                  style={{ animationIterationCount: 'infinite' }}
+                  whileHover={{ scale: 1.12 }}
                 >
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feat.path} />
-                  </svg>
+                  {/* Glow ring */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: feat.glow, filter: 'blur(14px)' }}
+                    animate={{ scale: [1, 1.18, 1], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                  />
+                  {/* Float loop */}
+                  <motion.div
+                    animate={{ y: [0, -7, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}
+                    className="relative z-10 w-20 h-20"
+                  >
+                    <Image
+                      src={feat.icon}
+                      alt={feat.title}
+                      fill
+                      className="object-contain drop-shadow-xl"
+                    />
+                  </motion.div>
                 </motion.div>
-                <h4 className="text-xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-2">{feat.title}</h4>
-                <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">{feat.body}</p>
+
+                <h4 className="text-xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-2 tracking-wide">{feat.title}</h4>
+                <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm leading-relaxed max-w-[220px]">{feat.body}</p>
               </motion.div>
             ))}
           </div>

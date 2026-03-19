@@ -8,8 +8,8 @@ const WhatsappWidget = () => {
 
   // Your WhatsApp number (format: country code + number, no spaces or special characters)
   const whatsappNumber = '9779851254578'; // Replace with your actual number
-  const businessName = 'Highland Churpi';
-  const avatar = 'https://ui-avatars.com/api/?name=Highland+Churpi&background=25D366&color=fff&size=128';
+  const businessName = 'Highland Yakchew';
+  const avatar = '/images/logos.jpeg';
 
   // const quickMessages = [
   //   { id: 1, text: 'Hello! I want to know more about your products' },
@@ -40,7 +40,7 @@ const WhatsappWidget = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-32 right-12 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group"
+          className="fixed bottom-44 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group"
           aria-label="Open WhatsApp chat"
         >
           <MessageCircle className="w-7 h-7" />
@@ -50,7 +50,7 @@ const WhatsappWidget = () => {
 
       {/* WhatsApp Widget */}
       {isOpen && (
-        <div className="fixed bottom-32 right-12 z-50 w-[380px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+        <div className="fixed bottom-44 right-6 z-50 w-[380px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 flex items-start justify-between">
             <div className="flex items-center gap-3 flex-1">
@@ -58,7 +58,7 @@ const WhatsappWidget = () => {
                 <img
                   src={avatar}
                   alt={businessName}
-                  className="w-12 h-12 rounded-full border-2 border-white"
+                  className="w-12 h-12 rounded-full border-2 border-white object-cover"
                 />
                 <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-white rounded-full border-2 border-green-500" />
               </div>
