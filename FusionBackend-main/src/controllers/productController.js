@@ -193,11 +193,37 @@ export const getAllProducts = async (req, res, next) => {
       filter.productType = req.query.type;
     }
 
+    // Search filter — case-insensitive match on name or description
+    const searchQuery = req.query.search?.trim();
+    if (searchQuery) {
+      const regex = { $regex: searchQuery, $options: 'i' };
+      filter.$or = [{ name: regex }, { description: regex }];
+    }
+
     const products = await ProductModel.find(filter)
       .populate('variety', 'name category')
       .sort({ createdAt: -1 });
 
-    const rewritten = products.map(p => rewriteProductImages(p, req));
+    let rewritten = products.map(p => rewriteProductImages(p, req));
+
+    // Relevance scoring when searching: exact(3) > starts-with(2) > contains(1)
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      rewritten = rewritten
+        .map(p => {
+          const name = (p.name || '').toLowerCase();
+          const desc = (p.description || '').toLowerCase();
+          let score = 0;
+          if (name === q) score = 3;
+          else if (name.startsWith(q)) score = 2;
+          else if (name.includes(q) || desc.includes(q)) score = 1;
+          return { ...p, _score: score };
+        })
+        .filter(p => p._score > 0)
+        .sort((a, b) => b._score - a._score)
+        .map(({ _score, ...p }) => p);
+    }
+
     return handleSuccess(res, 200, 'All products fetched successfully', rewritten);
   } catch (error) {
     next(error);

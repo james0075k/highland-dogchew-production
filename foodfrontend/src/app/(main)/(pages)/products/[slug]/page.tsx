@@ -754,8 +754,8 @@ export default function ProductDetailPage() {
               <Link key={rp._id} href={`/products/${rp.slug}`} className="group block">
                 <div className="rounded-xl overflow-hidden border border-[#2E1F14]/10 dark:border-[#3a2c23] bg-white dark:bg-[#1f1812] hover:shadow-md transition-shadow">
                   <div className="relative h-36 bg-gray-100 dark:bg-[#241b16]">
-                    {rp.images?.[0] && (
-                      <Image src={rp.images[0]} alt={rp.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {(rp.image || rp.gallery?.[0]) && (
+                      <Image src={rp.image || rp.gallery![0]} alt={rp.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     )}
                   </div>
                   <div className="p-3">
