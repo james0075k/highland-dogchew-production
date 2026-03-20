@@ -75,13 +75,14 @@ const orderBadge: Record<string, string> = {
 
 // Colour accent for the top bar of each section card
 const sectionBar: Record<string, string> = {
-  customer:  'bg-blue-500',
-  address:   'bg-teal-500',
-  products:  'bg-amber-500',
-  pricing:   'bg-emerald-500',
-  controls:  'bg-purple-500',
-  stripe:    'bg-indigo-500',
-  tracking:  'bg-teal-600',
+  customer:     'bg-blue-500',
+  address:      'bg-teal-500',
+  products:     'bg-amber-500',
+  pricing:      'bg-emerald-500',
+  controls:     'bg-purple-500',
+  stripe:       'bg-indigo-500',
+  tracking:     'bg-teal-600',
+  subscription: 'bg-emerald-600',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -151,6 +152,8 @@ export default function OrderDetailPage() {
   const [updating, setUpdating]           = useState(false);
   const [updateMsg, setUpdateMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [copied, setCopied]               = useState(false);
+  const [linkedSubs, setLinkedSubs]       = useState<any[]>([]);
+  const [subsLoading, setSubsLoading]     = useState(false);
 
   // ── Fetch order ──────────────────────────────────────────────────────────
   const fetchOrder = useCallback(async () => {
@@ -177,7 +180,27 @@ export default function OrderDetailPage() {
     }
   }, [API, id]);
 
+  const fetchLinkedSubscriptions = useCallback(async (email: string) => {
+    if (!email) return;
+    setSubsLoading(true);
+    try {
+      const token = Cookies.get('token');
+      const res = await fetch(`${API}/admin/subscriptions?search=${encodeURIComponent(email)}&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setLinkedSubs(data.data.subscriptions || []);
+    } catch { /* silent */ }
+    finally { setSubsLoading(false); }
+  }, [API]);
+
   useEffect(() => { fetchOrder(); }, [fetchOrder]);
+
+  useEffect(() => {
+    if (order?.shippingAddress?.email) {
+      fetchLinkedSubscriptions(order.shippingAddress.email);
+    }
+  }, [order, fetchLinkedSubscriptions]);
 
   // ── Update status ────────────────────────────────────────────────────────
   const handleStatusUpdate = async () => {
@@ -533,6 +556,72 @@ export default function OrderDetailPage() {
                   </span>
                 </div>
               </div>
+            </SectionCard>
+
+            {/* ── Linked Subscriptions ───────────────────────────────── */}
+            <SectionCard title="Linked Subscriptions" icon={FiRefreshCw} barColor={sectionBar.subscription}>
+              {subsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                  <FiRefreshCw className="animate-spin" size={14} /> Loading subscriptions…
+                </div>
+              ) : linkedSubs.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-gray-400">No subscriptions linked to this order&apos;s email.</p>
+                  {addr.email && (
+                    <Link
+                      href={`/dashboard/subscriptions?search=${encodeURIComponent(addr.email)}`}
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-600 hover:underline"
+                    >
+                      Search subscriptions for {addr.email}
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {linkedSubs.map((sub: any) => {
+                    const statusColors: Record<string, string> = {
+                      active:         'bg-emerald-100 text-emerald-700 border-emerald-200',
+                      paused:         'bg-amber-100 text-amber-700 border-amber-200',
+                      payment_failed: 'bg-red-100 text-red-700 border-red-200',
+                      cancelled:      'bg-slate-100 text-slate-600 border-slate-200',
+                    };
+                    const statusLabels: Record<string, string> = {
+                      active: 'Active', paused: 'Paused',
+                      payment_failed: 'Failed', cancelled: 'Cancelled',
+                    };
+                    return (
+                      <div key={sub._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{sub.productName}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {sub.size} · Qty {sub.quantity} · {sub.intervalLabel}
+                          </p>
+                          <p className="text-[10px] font-mono text-gray-400 mt-0.5">{sub.subscriptionId}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-3">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[sub.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                            {statusLabels[sub.status] || sub.status}
+                          </span>
+                          <Link
+                            href={`/dashboard/subscriptions/${sub._id}`}
+                            className="text-[10px] text-indigo-600 hover:underline flex items-center gap-0.5"
+                          >
+                            View <FiExternalLink size={9} />
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {addr.email && (
+                    <Link
+                      href={`/dashboard/subscriptions?search=${encodeURIComponent(addr.email)}`}
+                      className="block text-center text-xs text-emerald-600 hover:underline mt-1"
+                    >
+                      View all subscriptions for {addr.email}
+                    </Link>
+                  )}
+                </div>
+              )}
             </SectionCard>
 
             {/* ── Order Controls ─────────────────────────────────────── */}

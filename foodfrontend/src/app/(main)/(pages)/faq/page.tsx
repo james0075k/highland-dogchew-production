@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
@@ -53,6 +53,11 @@ const categories = [
   },
 ];
 
+const serifItalic: React.CSSProperties = {
+  fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif',
+  fontStyle: "italic",
+};
+
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -61,11 +66,11 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-start justify-between gap-4 py-4 text-left group"
       >
-        <span className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors leading-snug">{q}</span>
+        <span style={serifItalic} className="text-[15px] font-semibold text-[#2E1F14] dark:text-[#f5e9dc] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors leading-snug">{q}</span>
         <ChevronDown className={`w-4 h-4 flex-shrink-0 mt-0.5 text-[#C4A882] dark:text-amber-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed pb-4">{a}</p>
+        <p style={serifItalic} className="text-[14px] text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed pb-4">{a}</p>
       )}
     </div>
   );
@@ -80,7 +85,7 @@ export default function FAQPage() {
       <section className="bg-gradient-to-b from-[#F4EDE4] to-[#FDFAF6] dark:from-[#1f1812] dark:to-[#1a1209] border-b border-[#2E1F14]/10 dark:border-[#3a2c23]">
         <div className="max-w-3xl mx-auto px-6 py-14 text-center">
           <p className="text-xs font-bold tracking-[0.25em] uppercase text-[#C4A882] dark:text-amber-500 mb-3">Help Centre</p>
-          <h1 className="text-4xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-3">Frequently Asked Questions</h1>
+          <h1 style={serifItalic} className="text-4xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-3">Frequently Asked Questions</h1>
           <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Can't find what you're looking for? <Link href="/contact" className="underline underline-offset-2 text-[#8B5E3C] dark:text-amber-400">Contact us</Link></p>
         </div>
       </section>
@@ -112,8 +117,8 @@ export default function FAQPage() {
 
         {/* Still need help */}
         <div className="mt-10 rounded-2xl bg-gradient-to-br from-[#F4EDE4] to-[#E8DFD1] dark:from-[#1f1812] dark:to-[#18120e] border border-[#2E1F14]/10 dark:border-[#3a2c23] p-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#C4A882] dark:text-amber-500 mb-2">Still need help?</p>
-          <p className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm mb-5">Our team is happy to help with any questions about our products or your order.</p>
+          <p style={serifItalic} className="text-sm font-semibold uppercase tracking-widest text-[#C4A882] dark:text-amber-500 mb-2">Still need help?</p>
+          <p style={serifItalic} className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm mb-5">Our team is happy to help with any questions about our products or your order.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/contact" className="bg-[#2E1F14] dark:bg-amber-700 hover:bg-[#3D2B1C] dark:hover:bg-amber-600 text-white text-sm font-semibold px-8 py-3 rounded-full transition-colors">
               Contact Us

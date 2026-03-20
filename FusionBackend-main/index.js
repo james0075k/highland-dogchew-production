@@ -33,6 +33,8 @@ import promoCodeRoute from './src/routes/promoCodeRoute.js';
 import orderRoute from './src/routes/orderRoute.js';
 import productWebhookRoute from './src/routes/productWebhookRoute.js';
 import adminOrderRoute from './src/routes/adminOrderRoute.js';
+import adminSubscriptionRoute from './src/routes/adminSubscriptionRoute.js';
+import subscriptionProcessRoute from './src/routes/subscriptionProcessRoute.js';
 import newsletterRoute from './src/routes/newsletterRoute.js';
 import instagramPostRoute from './src/routes/instagramPostRoute.js';
 import instagramRoute from './src/routes/instagramRoute.js';
@@ -123,6 +125,8 @@ app.use(`/${api}/cart-payments`, cartPaymentRoute);
 app.use(`/${api}/promo`, promoCodeRoute);
 app.use(`/${api}/orders`, orderRoute);
 app.use(`/${api}/admin/orders`, adminOrderRoute);
+app.use(`/${api}/admin/subscriptions`, adminSubscriptionRoute);
+app.use(`/${api}/subscriptions`, subscriptionProcessRoute);
 app.use(`/${api}/newsletter`, newsletterRoute);
 app.use(`/${api}/instagram-posts`, instagramPostRoute);
 app.use(`/${api}/instagram`, instagramRoute);
@@ -142,6 +146,28 @@ Connection();
 app.listen(port, ()=>{
     console.log(`Hamro Kam port ${port} ma chaldai xa`)
 })
+
+// ─── Daily subscription renewal cron ─────────────────────────────────────────
+// Runs once per day (every 24 hours). Kept simple — no extra packages needed.
+import('./src/controllers/subscriptionProcessController.js').then(({ processSubscriptions }) => {
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+  // Run once shortly after startup to catch any subs missed while server was down
+  setTimeout(() => {
+    processSubscriptions().catch((err) =>
+      console.error('[cron] Startup sweep failed:', err.message)
+    );
+  }, 60_000); // 1 minute after start
+
+  // Then run every 24 hours
+  setInterval(() => {
+    processSubscriptions().catch((err) =>
+      console.error('[cron] Daily sweep failed:', err.message)
+    );
+  }, TWENTY_FOUR_HOURS);
+
+  console.log('[cron] Subscription renewal cron scheduled (every 24 h)');
+}).catch((err) => console.error('[cron] Failed to load subscription processor:', err.message));
 
 
 

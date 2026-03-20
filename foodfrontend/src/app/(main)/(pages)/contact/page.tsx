@@ -32,6 +32,11 @@ function toWhatsApp(phone: string) {
   return `https://wa.me/${phone.replace(/\D/g, '')}`;
 }
 
+const serifItalic: React.CSSProperties = {
+  fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif',
+  fontStyle: 'italic',
+};
+
 /* ── Info card ─────────────────────────────────────────────────────── */
 function InfoCard({
   Icon, label, value, href, iconBg,
@@ -51,7 +56,7 @@ function InfoCard({
         <p className="text-xs font-bold tracking-widest uppercase text-amber-600 dark:text-amber-500 mb-1">
           {label}
         </p>
-        <p className="text-neutral-900 dark:text-[#f5e9dc] font-medium text-sm leading-relaxed group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+        <p style={serifItalic} className="text-neutral-900 dark:text-[#f5e9dc] font-medium text-[15px] leading-relaxed group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
           {value}
         </p>
       </div>
@@ -227,10 +232,10 @@ export default function ContactPage() {
               <span className="inline-block text-xs font-black tracking-widest uppercase text-amber-600 dark:text-amber-500 mb-2">
                 Send a Message
               </span>
-              <h2 className="text-3xl font-bold text-neutral-900 dark:text-[#f5e9dc] mb-2">
+              <h2 style={serifItalic} className="text-3xl font-bold text-neutral-900 dark:text-[#f5e9dc] mb-2">
                 We&apos;d Love to Hear From You
               </h2>
-              <p className="text-neutral-500 dark:text-[#c8b6a6] text-sm leading-relaxed">
+              <p style={serifItalic} className="text-neutral-500 dark:text-[#c8b6a6] text-[15px] leading-relaxed">
                 Fill in the form and our team will respond within 24 hours.
               </p>
             </div>
@@ -330,8 +335,8 @@ export default function ContactPage() {
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-neutral-900 dark:text-[#f5e9dc] text-sm mb-1">We respond within 24 hours</p>
-                  <p className="text-xs text-neutral-500 dark:text-[#c8b6a6] leading-relaxed">
+                  <p style={serifItalic} className="font-bold text-neutral-900 dark:text-[#f5e9dc] text-[15px] mb-1">We respond within 24 hours</p>
+                  <p style={serifItalic} className="text-sm text-neutral-500 dark:text-[#c8b6a6] leading-relaxed">
                     Our team is dedicated to answering every enquiry about our natural Himalayan dog chews.
                   </p>
                 </div>
@@ -344,8 +349,8 @@ export default function ContactPage() {
               className="group flex items-center justify-between p-5 bg-white dark:bg-[#1e1510] rounded-2xl border border-neutral-200 dark:border-[#3a2c23] shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-300"
             >
               <div>
-                <p className="font-bold text-neutral-900 dark:text-[#f5e9dc] text-sm mb-0.5">Looking for FAQs?</p>
-                <p className="text-xs text-neutral-500 dark:text-[#c8b6a6]">Browse common questions & reviews</p>
+                <p style={serifItalic} className="font-bold text-neutral-900 dark:text-[#f5e9dc] text-[15px] mb-0.5">Looking for FAQs?</p>
+                <p style={serifItalic} className="text-sm text-neutral-500 dark:text-[#c8b6a6]">Browse common questions & reviews</p>
               </div>
               <ChevronRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform duration-200" />
             </Link>

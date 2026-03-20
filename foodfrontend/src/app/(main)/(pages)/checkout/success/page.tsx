@@ -13,8 +13,11 @@ import {
   Printer,
   ShoppingBag,
   Truck,
+  RefreshCcw,
+  Calendar,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useSubscriptionContext, type Subscription } from '@/context/SubscriptionContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,12 +152,34 @@ export default function CheckoutSuccessPage() {
   const searchParams  = useSearchParams();
   const paymentIntent = searchParams.get('payment_intent');
   const { clearCart } = useCart();
+  const { addSubscription } = useSubscriptionContext();
 
-  const [order,   setOrder]   = useState<OrderData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [order,       setOrder]       = useState<OrderData | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [createdSubs, setCreatedSubs] = useState<Subscription[]>([]);
 
-  // Clear cart once on mount
-  useEffect(() => { clearCart(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Capture subscription cart items BEFORE clearing, then clear
+  useEffect(() => {
+    const piKey = paymentIntent || 'unknown';
+    if (!sessionStorage.getItem(`hyk_sub_created_${piKey}`)) {
+      try {
+        const raw = localStorage.getItem('highland-dogchew-cart');
+        if (raw) {
+          const cartItems = JSON.parse(raw);
+          const subItems = cartItems.filter(
+            (i: any) => i.isSubscription && i.subscriptionInterval
+          );
+          if (subItems.length > 0) {
+            sessionStorage.setItem(
+              `hyk_sub_pending_${piKey}`,
+              JSON.stringify(subItems)
+            );
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    clearCart();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!paymentIntent) { setLoading(false); return; }
@@ -163,6 +188,36 @@ export default function CheckoutSuccessPage() {
       setLoading(false);
     });
   }, [paymentIntent]);
+
+  // Create subscription records once order is confirmed
+  useEffect(() => {
+    if (!order || !paymentIntent) return;
+    const createdKey = `hyk_sub_created_${paymentIntent}`;
+    const pendingKey = `hyk_sub_pending_${paymentIntent}`;
+    if (sessionStorage.getItem(createdKey)) return;
+    try {
+      const raw = sessionStorage.getItem(pendingKey);
+      if (raw) {
+        const pendingSubs = JSON.parse(raw);
+        const newSubs: Subscription[] = pendingSubs.map((item: any) =>
+          addSubscription({
+            productId:     item.productId,
+            productName:   item.name,
+            productSlug:   item.slug,
+            productImage:  item.image,
+            size:          item.size,
+            quantity:      item.quantity,
+            unitPrice:     item.unitPrice,
+            intervalLabel: item.subscriptionInterval,
+            orderNumber:   order.orderNumber,
+          })
+        );
+        setCreatedSubs(newSubs);
+        sessionStorage.removeItem(pendingKey);
+        sessionStorage.setItem(createdKey, '1');
+      }
+    } catch { /* ignore */ }
+  }, [order, paymentIntent, addSubscription]);
 
   // ─── Loading ──────────────────────────────────────────────────────────────
 
@@ -393,6 +448,62 @@ export default function CheckoutSuccessPage() {
               </div>
             </div>
           </div>
+
+          {/* ── Subscription confirmation (if any) ── */}
+          {createdSubs.length > 0 && (
+            <div className="mt-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <RefreshCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h2 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                  Subscribe &amp; Save activated
+                </h2>
+              </div>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-4">
+                Your recurring deliveries are set up. You can manage, skip or cancel them anytime.
+              </p>
+              <div className="space-y-3">
+                {createdSubs.map((sub) => {
+                  // Compute next delivery display date
+                  const nextDate = new Date(sub.nextDelivery);
+                  const nextFormatted = nextDate.toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  });
+                  return (
+                    <div
+                      key={sub.id}
+                      className="bg-white dark:bg-[#1e1812] rounded-lg p-3.5 border border-emerald-100 dark:border-emerald-900/40"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc] line-clamp-1">
+                          {sub.productName}
+                        </p>
+                        <span className="text-[10px] font-mono text-[#aaa] dark:text-[#555] flex-shrink-0">
+                          {sub.id}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
+                        <span className="flex items-center gap-1">
+                          <RefreshCcw className="w-3 h-3 text-emerald-500" />
+                          {sub.intervalLabel}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-emerald-500" />
+                          Next delivery: <strong className="text-[#2f1e14] dark:text-[#f5e9dc] ml-0.5">{nextFormatted}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <Link
+                href="/track-order?tab=subscriptions"
+                className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-emerald-300 dark:border-emerald-700 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+                Manage subscriptions
+              </Link>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3">

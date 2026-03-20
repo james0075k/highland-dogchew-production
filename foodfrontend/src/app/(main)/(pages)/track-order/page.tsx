@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Package,
   Search,
@@ -13,7 +14,9 @@ import {
   ChevronLeft,
   Loader2,
   AlertCircle,
+  RefreshCcw,
 } from 'lucide-react';
+import MySubscriptions from '@/components/subscription/MySubscriptions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,14 +88,22 @@ function getStepIndex(status: string): number {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type PageTab = 'track' | 'subscriptions';
+
 export default function TrackOrderPage() {
   const API = process.env.NEXT_PUBLIC_API_URL;
-
+  const searchParams = useSearchParams();
+  const [pageTab, setPageTab]         = useState<PageTab>('track');
   const [orderNumber, setOrderNumber] = useState('');
   const [email, setEmail]             = useState('');
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [result, setResult]           = useState<TrackResult | null>(null);
+
+  // Support ?tab=subscriptions deep-link (e.g. from success page)
+  useEffect(() => {
+    if (searchParams.get('tab') === 'subscriptions') setPageTab('subscriptions');
+  }, [searchParams]);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,17 +152,46 @@ export default function TrackOrderPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <Truck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-[#2f1e14] dark:text-[#f5e9dc]">Track Your Order</h1>
-          </div>
-          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] ml-[52px]">
-            Enter your order number and email address to track your parcel.
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] mb-1">My Orders</h1>
+          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
+            Track your deliveries and manage your subscriptions.
           </p>
         </div>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 p-1 bg-[#f0ebe4] dark:bg-[#2a2018] rounded-xl mb-7">
+          <button
+            onClick={() => setPageTab('track')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150 ${
+              pageTab === 'track'
+                ? 'bg-white dark:bg-[#1e1812] text-[#2f1e14] dark:text-[#f5e9dc] shadow-sm'
+                : 'text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2f1e14] dark:hover:text-[#f5e9dc]'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            Track Order
+          </button>
+          <button
+            onClick={() => setPageTab('subscriptions')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-150 ${
+              pageTab === 'subscriptions'
+                ? 'bg-white dark:bg-[#1e1812] text-[#2f1e14] dark:text-[#f5e9dc] shadow-sm'
+                : 'text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-[#2f1e14] dark:hover:text-[#f5e9dc]'
+            }`}
+          >
+            <RefreshCcw className="w-4 h-4" />
+            My Subscriptions
+          </button>
+        </div>
+
+        {/* Subscriptions tab */}
+        {pageTab === 'subscriptions' && (
+          <MySubscriptions prefillEmail={result?.shippingAddress?.email || email || ''} />
+        )}
+
+        {/* Track Order tab */}
+        {pageTab === 'track' && (<>
 
         {/* Search form */}
         <form
@@ -395,6 +435,8 @@ export default function TrackOrderPage() {
 
           </div>
         )}
+
+        </>)}
 
       </div>
     </div>

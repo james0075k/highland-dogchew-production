@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { Trash2, Plus, Minus, ShoppingBag, ChevronLeft } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ChevronLeft, RefreshCcw } from 'lucide-react';
 import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
 
 export default function CartPage() {
@@ -91,7 +91,16 @@ export default function CartPage() {
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="min-w-0 flex-1 mr-2">
+                        {/* Subscription badge */}
+                        {item.isSubscription && (
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+                              <RefreshCcw className="w-2.5 h-2.5" />
+                              Subscribe &amp; Save
+                            </span>
+                          </div>
+                        )}
                         <Link
                           href={`/products/${item.slug}`}
                           className="font-bold text-[#2f1e14] dark:text-[#f5e9dc] hover:text-amber-600 dark:hover:text-amber-400 transition-colors line-clamp-2"
@@ -99,10 +108,16 @@ export default function CartPage() {
                           {item.name}
                         </Link>
                         <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] mt-1">Size: {item.size}</p>
+                        {item.isSubscription && item.subscriptionInterval && (
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 flex items-center gap-1">
+                            <RefreshCcw className="w-3 h-3" />
+                            {item.subscriptionInterval} · recurring delivery
+                          </p>
+                        )}
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.productId, item.size)}
-                        className="text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                        onClick={() => removeFromCart(item.productId, item.size, item.isSubscription)}
+                        className="text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1 flex-shrink-0"
                         title="Remove item"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -114,7 +129,7 @@ export default function CartPage() {
                       <div className="flex items-center border border-amber-200 dark:border-[#3a2c23] rounded-lg bg-white dark:bg-[#2d221c]">
                         <button
                           onClick={() =>
-                            updateQuantity(item.productId, item.size, item.quantity - 1)
+                            updateQuantity(item.productId, item.size, item.quantity - 1, item.isSubscription)
                           }
                           disabled={item.quantity <= 1}
                           className="p-2 hover:bg-amber-50 dark:hover:bg-[#3a2c23] disabled:opacity-30 transition-colors rounded-l-lg text-[#2f1e14] dark:text-[#f5e9dc]"
@@ -126,16 +141,23 @@ export default function CartPage() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.productId, item.size, item.quantity + 1)
+                            updateQuantity(item.productId, item.size, item.quantity + 1, item.isSubscription)
                           }
                           className="p-2 hover:bg-amber-50 dark:hover:bg-[#3a2c23] transition-colors rounded-r-lg text-[#2f1e14] dark:text-[#f5e9dc]"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
-                      <span className="font-bold text-lg text-[#2f1e14] dark:text-[#f5e9dc]">
-                        £{(item.unitPrice * item.quantity).toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        <span className="font-bold text-lg text-[#2f1e14] dark:text-[#f5e9dc]">
+                          £{(item.unitPrice * item.quantity).toFixed(2)}
+                        </span>
+                        {item.isSubscription && (
+                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            per delivery
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Per-item breakdown */}
@@ -191,6 +213,18 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Subscription notice */}
+              {items.some((i) => i.isSubscription) && (
+                <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-1.5">
+                    <RefreshCcw className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Total shown is <strong>per delivery</strong>. Recurring charges apply on your chosen schedule. Cancel or skip anytime.
+                    </span>
+                  </p>
+                </div>
+              )}
 
               <button
                 onClick={handleCheckout}

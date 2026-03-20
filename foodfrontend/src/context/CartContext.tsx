@@ -28,8 +28,8 @@ export interface PromoInfo {
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: Omit<CartItem, 'tax' | 'delivery'>) => void;
-  removeFromCart: (productId: string, size: string) => void;
-  updateQuantity: (productId: string, size: string, quantity: number) => void;
+  removeFromCart: (productId: string, size: string, isSubscription?: boolean) => void;
+  updateQuantity: (productId: string, size: string, quantity: number, isSubscription?: boolean) => void;
   clearCart: () => void;
   cartCount: number;
   subtotal: number;
@@ -91,8 +91,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = useCallback((newItem: Omit<CartItem, 'tax' | 'delivery'>) => {
     setItems((prev) => {
+      // Subscription and one-time purchases of the same product are separate line items
       const idx = prev.findIndex(
-        (i) => i.productId === newItem.productId && i.size === newItem.size
+        (i) =>
+          i.productId === newItem.productId &&
+          i.size === newItem.size &&
+          !!i.isSubscription === !!newItem.isSubscription
       );
 
       if (idx >= 0) {
@@ -112,17 +116,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const removeFromCart = useCallback((productId: string, size: string) => {
+  const removeFromCart = useCallback((productId: string, size: string, isSubscription?: boolean) => {
     setItems((prev) => prev.filter(
-      (i) => !(i.productId === productId && i.size === size)
+      (i) => !(
+        i.productId === productId &&
+        i.size === size &&
+        (isSubscription === undefined || !!i.isSubscription === !!isSubscription)
+      )
     ));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, size: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, size: string, quantity: number, isSubscription?: boolean) => {
     if (quantity < 1) return;
     setItems((prev) =>
       prev.map((i) => {
-        if (i.productId === productId && i.size === size) {
+        if (
+          i.productId === productId &&
+          i.size === size &&
+          (isSubscription === undefined || !!i.isSubscription === !!isSubscription)
+        ) {
           return enrichItem({ ...i, quantity });
         }
         return i;

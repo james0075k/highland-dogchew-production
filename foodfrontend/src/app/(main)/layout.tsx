@@ -9,6 +9,7 @@ import Navbar from "@/components/organisms/NavBar";
 import GoToTop from "@/components/organisms/GoToTop/GoToTop";
 import WhatsappWidget from "@/components/organisms/WhatsappWidget/WhatsappWidget";
 import { CartProvider } from "@/context/CartContext";
+import { SubscriptionProvider } from "@/context/SubscriptionContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import CookieConsent from "@/components/organisms/CookieConsent/CookieConsent";
 
@@ -343,12 +344,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <ThemeProvider>
           <CartProvider>
-            <Navbar />
-            {children}
-            <Footer />
-            <GoToTop />
-            <WhatsappWidget />
-            <CookieConsent />
+            <SubscriptionProvider>
+              <Navbar />
+              {children}
+              <Footer />
+              <GoToTop />
+              <WhatsappWidget />
+              <CookieConsent />
+            </SubscriptionProvider>
           </CartProvider>
         </ThemeProvider>
       </body>

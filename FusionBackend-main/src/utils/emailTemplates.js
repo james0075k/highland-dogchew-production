@@ -1,5 +1,5 @@
 /**
- * Email HTML templates for Highland Dog Chew orders.
+ * Email HTML templates for Highland Dog Chew orders and subscriptions.
  * All templates return complete HTML strings suitable for nodemailer.
  */
 
@@ -257,4 +257,109 @@ export function adminOrderEmailHtml(order, meta) {
   `;
 
   return layout(`New Order – ${order.orderNumber}`, body);
+}
+
+// ─── Subscription Renewal Charged ────────────────────────────────────────────
+
+export function subscriptionRenewalEmailHtml(sub, order) {
+  const addr = sub.shippingAddress || {};
+  const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
+
+  const body = `
+    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Your Subscription Has Been Renewed</h2>
+    <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
+      Hi ${firstName}, your recurring delivery has been charged and will be on its way soon.
+    </p>
+
+    <!-- Subscription ID banner -->
+    <div style="background:#f5f0e8;border-radius:8px;padding:14px 20px;margin-bottom:28px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="font-size:13px;color:#7a5c4f;">Subscription</td>
+          <td style="font-size:14px;font-weight:700;text-align:right;">${sub.subscriptionId}</td>
+        </tr>
+        <tr>
+          <td style="font-size:13px;color:#7a5c4f;padding-top:6px;">Order</td>
+          <td style="font-size:14px;font-weight:700;text-align:right;padding-top:6px;">${order?.orderNumber || '—'}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Product summary -->
+    <h3 style="margin:0 0 12px;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#7a5c4f;">
+      This Delivery
+    </h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f0ebe3;">
+          <p style="margin:0;font-weight:600;font-size:14px;">${sub.productName}</p>
+          <p style="margin:2px 0 0;font-size:13px;color:#7a5c4f;">Size: ${sub.size || 'Default'} &nbsp;·&nbsp; Qty: ${sub.quantity} &nbsp;·&nbsp; ${sub.intervalLabel}</p>
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #f0ebe3;text-align:right;font-weight:600;font-size:14px;">
+          £${(sub.unitPrice * sub.quantity).toFixed(2)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 0;font-size:14px;font-weight:700;">Total Charged</td>
+        <td style="padding:10px 0;font-size:14px;font-weight:700;text-align:right;color:${brand.accent};">
+          £${order ? order.grandTotal.toFixed(2) : (sub.unitPrice * sub.quantity).toFixed(2)}
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="${brand.siteUrl}/track-order?tab=subscriptions"
+         style="display:inline-block;background:${brand.accent};color:#fff;font-weight:700;font-size:14px;
+                padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.05em;">
+        Manage My Subscription
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#7a5c4f;text-align:center;line-height:1.6;">
+      Need to pause or cancel? Contact us at
+      <a href="mailto:${brand.supportEmail}" style="color:${brand.accent};text-decoration:none;">${brand.supportEmail}</a>
+    </p>
+  `;
+
+  return layout(`Subscription Renewed – ${sub.subscriptionId}`, body);
+}
+
+// ─── Subscription Payment Failed ─────────────────────────────────────────────
+
+export function subscriptionPaymentFailedEmailHtml(sub, reason) {
+  const addr = sub.shippingAddress || {};
+  const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
+
+  const body = `
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-weight:700;font-size:15px;color:#b91c1c;">⚠️ Subscription Payment Failed</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#7f1d1d;">We were unable to charge your payment method for your subscription renewal.</p>
+    </div>
+
+    <p style="margin:0 0 20px;color:#7a5c4f;font-size:15px;">
+      Hi ${firstName}, your subscription <strong>${sub.subscriptionId}</strong> (${sub.productName}, ${sub.intervalLabel}) could not be renewed.
+    </p>
+
+    ${reason ? `<p style="margin:0 0 20px;font-size:14px;color:#2f1e14;"><strong>Reason:</strong> ${reason}</p>` : ''}
+
+    <p style="margin:0 0 24px;font-size:14px;color:#7a5c4f;">
+      Please update your payment method or contact us so we can resolve this for you.
+      Your subscription is currently on hold until payment succeeds.
+    </p>
+
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="mailto:${brand.supportEmail}"
+         style="display:inline-block;background:${brand.accent};color:#fff;font-weight:700;font-size:14px;
+                padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.05em;">
+        Contact Support
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#7a5c4f;text-align:center;">
+      ${brand.supportEmail}
+    </p>
+  `;
+
+  return layout(`Action Required – Subscription Payment Failed`, body);
 }

@@ -595,10 +595,12 @@ export default function CheckoutPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             items: items.map((i) => ({
-              productId: i.productId,
-              size: i.size,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
+              productId:            i.productId,
+              size:                 i.size,
+              quantity:             i.quantity,
+              unitPrice:            i.unitPrice,
+              isSubscription:       i.isSubscription       || false,
+              subscriptionInterval: i.subscriptionInterval || null,
             })),
             promoCode: promoKey,
           }),
