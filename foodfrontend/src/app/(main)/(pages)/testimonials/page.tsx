@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Star, Quote, BadgeCheck, ShieldCheck, Bone, Heart,
+  Timer, Leaf, Stethoscope, ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -128,8 +129,8 @@ function TestimonialCard({ t, delay = 0 }: { t: Testimonial; delay?: number }) {
               {t.position ? `${t.position} · ` : ""}{t.location}
             </p>
           </div>
-          <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 rounded-full px-2 py-0.5 font-semibold flex-shrink-0">
-            ✓ Verified
+          <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 rounded-full px-2 py-0.5 font-semibold flex-shrink-0">
+            <BadgeCheck className="w-3 h-3" /> Verified
           </span>
         </div>
       </div>
@@ -261,21 +262,24 @@ const Testimonials = () => {
       <section className="mx-auto max-w-5xl px-4 py-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { icon: <Star className="w-5 h-5 text-amber-400 fill-amber-400" />, stat: "4.9★", label: "Average Rating" },
-            { icon: <BadgeCheck className="w-5 h-5 text-emerald-500" />, stat: "500+", label: "Verified Reviews" },
-            { icon: <ShieldCheck className="w-5 h-5 text-blue-500" />, stat: "Vet", label: "Approved Formula" },
-            { icon: <Heart className="w-5 h-5 text-rose-400 fill-rose-400" />, stat: "100%", label: "Natural Ingredients" },
-          ].map(({ icon, stat, label }) => (
-            <div key={label} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-              <div className="flex justify-center mb-2">{icon}</div>
-              <p
-                className="text-2xl font-black text-[#2f1e14] dark:text-[#f5e9dc]"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
-              >{stat}</p>
-              <p
-                className="text-[15px] md:text-[16px] text-[#7A5C4F] dark:text-[#c8b6a6] font-medium mt-0.5"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
-              >{label}</p>
+            { Icon: Star, fill: true, stat: "4.9", label: "Average Rating" },
+            { Icon: BadgeCheck, fill: false, stat: "500+", label: "Verified Reviews" },
+            { Icon: ShieldCheck, fill: false, stat: "Vet", label: "Approved Formula" },
+            { Icon: Heart, fill: true, stat: "100%", label: "Natural Ingredients" },
+          ].map(({ Icon, fill, stat, label }) => (
+            <div key={label} className="group bg-white dark:bg-[#1e160f] border border-[#2E1F14]/6 dark:border-[#3a2c23] rounded-2xl p-5 text-center hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+              <div className="flex justify-center mb-2">
+                <Icon
+                  className={`w-5 h-5 transition-colors duration-200 ${fill ? 'fill-[#B8976A]/30' : ''}`}
+                  style={{ color: 'var(--color-gold)' }}
+                />
+              </div>
+              <p className="font-antique text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {stat}
+              </p>
+              <p className="text-xs font-medium mt-0.5 tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                {label}
+              </p>
             </div>
           ))}
         </div>
@@ -329,35 +333,66 @@ const Testimonials = () => {
 
       {/* ── Why dog owners love us ───────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <div className="text-center mb-10">
-          <span
-            className="inline-block text-[15px] md:text-[16px] font-bold tracking-widest text-amber-600 dark:text-amber-400 uppercase mb-2"
-            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
-          >
-            The Highland Difference
-          </span>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px w-10" style={{ background: 'var(--color-gold)' }} />
+            <span
+              className="text-[11px] font-semibold tracking-[0.25em] uppercase"
+              style={{ color: 'var(--color-gold)' }}
+            >
+              The Highland Difference
+            </span>
+            <div className="h-px w-10" style={{ background: 'var(--color-gold)' }} />
+          </div>
           <h2
-            className="text-[24px] md:text-[30px] tracking-[0.14em] text-neutral-900 dark:text-neutral-100"
-            style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+            className="font-antique text-2xl md:text-[32px] tracking-[-0.01em] leading-[1.2]"
+            style={{ color: 'var(--text-primary)' }}
           >
-            WHY DOGS (AND OWNERS) CHOOSE US
+            Why Dogs (And Owners) Choose Us
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { emoji: "🦴", title: "Long-Lasting Chews", desc: "Our yak milk chews last hours — not minutes. Keep your dog engaged and calm naturally." },
-            { emoji: "🌿", title: "100% Natural Recipe", desc: "No grain, no gluten, no artificial additives. Just wholesome yak and cow milk from Himalayan pastures." },
-            { emoji: "🐾", title: "Vet-Approved Formula", desc: "Recommended by veterinarians for dental health, protein content, and gentle digestion." },
-          ].map(({ emoji, title, desc }) => (
-            <div key={title} className="bg-white dark:bg-[#1e160f] border border-amber-100 dark:border-amber-900/30 rounded-2xl p-7 text-center shadow-sm hover:shadow-lg dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-1 transition-all duration-300">
-              <div className="text-4xl mb-4">{emoji}</div>
+            { Icon: Timer, title: "Long-Lasting Chews", desc: "Our yak milk chews last hours — not minutes. Keep your dog engaged and calm naturally.", accent: 'rgba(184,151,106,0.35)' },
+            { Icon: Leaf, title: "100% Natural Recipe", desc: "No grain, no gluten, no artificial additives. Just wholesome yak and cow milk from Himalayan pastures.", accent: 'rgba(154,123,82,0.35)' },
+            { Icon: Stethoscope, title: "Vet-Approved Formula", desc: "Recommended by veterinarians for dental health, protein content, and gentle digestion.", accent: 'rgba(212,188,142,0.35)' },
+          ].map(({ Icon, title, desc, accent }, i) => (
+            <div
+              key={title}
+              className="group relative bg-white dark:bg-[#1e160f] border border-[#2E1F14]/6 dark:border-[#3a2c23] rounded-2xl p-8 text-center hover:shadow-xl dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)] hover:-translate-y-1.5 transition-all duration-300 card-animate"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              {/* Gold top accent line */}
+              <div
+                className="absolute top-0 left-6 right-6 h-[2px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(90deg, transparent, var(--color-gold), transparent)' }}
+              />
+
+              {/* Icon with glow */}
+              <div className="relative w-16 h-16 mx-auto mb-5 flex items-center justify-center">
+                <div
+                  className="absolute inset-0 rounded-full opacity-60 group-hover:opacity-90 transition-opacity duration-300"
+                  style={{ background: accent, filter: 'blur(12px)' }}
+                />
+                <div
+                  className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center border"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,253,248,0.9), rgba(244,237,228,0.7))',
+                    borderColor: 'var(--color-gold-light)',
+                  }}
+                >
+                  <div className="absolute inset-0 rounded-full bg-[#1e160f] opacity-0 dark:opacity-100" />
+                  <Icon className="relative z-10 w-5 h-5" style={{ color: 'var(--color-gold)' }} />
+                </div>
+              </div>
+
               <h3
-                className="text-[18px] md:text-[20px] tracking-[0.12em] text-neutral-900 dark:text-[#f5e9dc] mb-2"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+                className="font-antique text-lg md:text-xl mb-2"
+                style={{ color: 'var(--text-primary)' }}
               >{title}</h3>
               <p
-                className="text-[18px] md:text-[19px] text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
+                className="text-sm leading-relaxed"
+                style={{ color: 'var(--text-muted)' }}
               >{desc}</p>
             </div>
           ))}
@@ -366,32 +401,42 @@ const Testimonials = () => {
 
       {/* ── CTA banner ───────────────────────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-4 pb-16">
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 p-10 text-center shadow-xl">
-          <div className="pointer-events-none absolute inset-0 opacity-10 bg-[url('/images/paws-pattern.svg')] bg-repeat bg-[length:80px]" />
+        <div className="relative rounded-3xl overflow-hidden p-10 md:p-14 text-center shadow-xl" style={{ background: 'linear-gradient(135deg, #2E1F14, #3D2B1C, #4a3528)' }}>
+          {/* Subtle grain overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.04]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+              backgroundSize: '200px 200px',
+            }}
+          />
+          {/* Gold border accent at top */}
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, transparent 10%, #B8976A 50%, transparent 90%)' }} />
+
           <div className="relative z-10">
-            <Bone className="w-10 h-10 text-white/80 mx-auto mb-4" />
-            <h2
-              className="text-[24px] md:text-[30px] tracking-[0.14em] text-white mb-3"
-              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
-            >YOUR DOG DESERVES THE BEST</h2>
-            <p
-              className="text-white/80 mb-8 max-w-md mx-auto text-[18px] md:text-[20px] leading-relaxed"
-              style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif', fontStyle: "italic" }}
-            >
+            {/* Icon */}
+            <div className="w-14 h-14 mx-auto mb-5 rounded-full border border-[#B8976A]/40 flex items-center justify-center" style={{ background: 'rgba(184,151,106,0.1)' }}>
+              <Heart className="w-6 h-6 text-[#D4BC8E] fill-[#D4BC8E]/20" />
+            </div>
+
+            <h2 className="font-antique text-2xl md:text-[32px] text-[#F4EDE4] mb-3 tracking-[-0.01em]">
+              Your Dog Deserves the Best
+            </h2>
+            <p className="text-[#c8b6a6] mb-8 max-w-md mx-auto text-sm md:text-base leading-relaxed">
               Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and tail-waggingly good.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/products"
-                className="inline-block bg-white text-amber-700 font-bold px-8 py-3.5 rounded-full hover:bg-amber-50 transition-colors shadow-lg text-[15px] md:text-[16px] tracking-wide"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+                className="group inline-flex items-center justify-center gap-2 text-sm font-semibold px-8 py-3.5 rounded-full transition-all duration-300 tracking-wide shadow-lg hover:shadow-xl"
+                style={{ background: 'linear-gradient(135deg, #B8976A, #9A7B52)', color: '#fff' }}
               >
                 Shop All Products
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/products/yak-chews"
-                className="inline-block bg-white/10 text-white border border-white/30 font-semibold px-8 py-3.5 rounded-full hover:bg-white/20 transition-colors text-[15px] md:text-[16px] tracking-wide"
-                style={{ fontFamily: 'ui-serif, Georgia, "Times New Roman", Times, serif' }}
+                className="inline-flex items-center justify-center text-sm font-semibold text-[#D4BC8E] border border-[#B8976A]/30 px-8 py-3.5 rounded-full hover:bg-[#B8976A]/10 hover:border-[#B8976A]/50 transition-all duration-300 tracking-wide"
               >
                 Try Yak Milk Chews
               </Link>

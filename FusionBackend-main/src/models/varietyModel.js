@@ -26,8 +26,7 @@ const varietySchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Blueberry', 'Strawberry', 'Pumpkin', 'Honey'],
-    unique: true, 
+    unique: true,
   },
   isActive: {
     type: Boolean,

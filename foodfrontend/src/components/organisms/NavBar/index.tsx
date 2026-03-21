@@ -10,6 +10,7 @@ import { FiMenu } from "react-icons/fi";
 import { FaShoppingCart, FaInstagram, FaFacebook, FaTiktok, FaEnvelope } from "react-icons/fa";
 import { PackageSearch } from "lucide-react";
 import Logo from "@/components/atoms/Logo";
+import PawBackground from "@/components/atoms/PawBackground";
 import { useCart } from "@/context/CartContext";
 import { ContactInfo } from "@/types";
 import SearchModal from "@/components/organisms/SearchModal/SearchModal";
@@ -149,7 +150,14 @@ export default function Navbar() {
 
           {/* Center Logo */}
           <Link href="/" className="flex flex-col items-center justify-center gap-1 cursor-pointer">
-            <Logo index={isTransparentState ? 1 : 0} />
+            <PawBackground size="sm">
+              <Logo
+                index={isTransparentState ? 1 : 0}
+                width={70}
+                height={70}
+                imgClassName="h-[56px] w-[56px] md:h-[66px] md:w-[66px]"
+              />
+            </PawBackground>
             <span className="font-antique text-2xl lg:text-[28px] text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.04em] leading-tight font-bold">
               Highland Yakchew
             </span>
@@ -224,7 +232,14 @@ export default function Navbar() {
           </button>
 
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <Logo index={isTransparentState ? 1 : 0} />
+            <PawBackground size="sm">
+              <Logo
+                index={isTransparentState ? 1 : 0}
+                width={60}
+                height={60}
+                imgClassName="h-[52px] w-[52px]"
+              />
+            </PawBackground>
             <span className="font-antique text-xl text-[#2E1F14] dark:text-[#f5e9dc] tracking-[0.03em] font-bold">
               Highland Yakchew
             </span>

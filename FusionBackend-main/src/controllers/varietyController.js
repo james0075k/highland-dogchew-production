@@ -1,5 +1,6 @@
 import VarietyModel from '../models/varietyModel.js';
 import ProductModel from '../models/productModel.js';
+import CategoryModel from '../models/categoryModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
@@ -49,6 +50,12 @@ export const createVariety = async (req, res, next) => {
     }
 
     const fullImageUrl = getUploadedFileUrl(req.file, req);
+
+    // Validate category exists in Category collection
+    const categoryExists = await CategoryModel.findOne({ name: category, isActive: true });
+    if (!categoryExists) {
+      return next(handleError(400, `Invalid category: "${category}" does not exist`));
+    }
 
     const varietyData = {
       name,
@@ -150,6 +157,14 @@ export const updateVariety = async (req, res, next) => {
 
     if (req.file) {
       updatedData.image = getUploadedFileUrl(req.file, req);
+    }
+
+    // Validate category if it's being updated
+    if (updatedData.category) {
+      const categoryExists = await CategoryModel.findOne({ name: updatedData.category, isActive: true });
+      if (!categoryExists) {
+        return next(handleError(400, `Invalid category: "${updatedData.category}" does not exist`));
+      }
     }
 
     const updated = await VarietyModel.findByIdAndUpdate(id, updatedData, {

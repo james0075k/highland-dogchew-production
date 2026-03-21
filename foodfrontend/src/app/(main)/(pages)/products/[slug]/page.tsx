@@ -242,7 +242,22 @@ export default function ProductDetailPage() {
     setToast({ message: `${product.name} added to cart!`, type: 'success' });
   };
 
-  const jsonLd = product
+  // Resolve the lowest available price for JSON-LD (Google requires a non-zero number)
+  const jsonLdPrice = (() => {
+    // Priority: first size price → base product price → bulk pricing minimum
+    if (product?.sizes?.length > 0) {
+      const firstSizePrice = product.sizes.find((s: any) => s.price > 0)?.price;
+      if (firstSizePrice) return +Number(firstSizePrice).toFixed(2);
+    }
+    if (product?.price > 0) return +Number(product.price).toFixed(2);
+    if (product?.bulkPricing?.length > 0) {
+      const minBulk = Math.min(...product.bulkPricing.map((b: any) => b.price));
+      if (minBulk > 0) return +Number(minBulk).toFixed(2);
+    }
+    return null;
+  })();
+
+  const jsonLd = product && jsonLdPrice
     ? {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -254,12 +269,47 @@ export default function ProductDetailPage() {
           '@type': 'Offer',
           url: `https://highlanddogchew.co.uk/products/${product.slug}`,
           priceCurrency: 'GBP',
-          price: (product.sizes?.[0]?.price > 0 ? product.sizes[0].price : product.price ?? 0).toFixed(2),
+          price: jsonLdPrice,
           priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           availability:
             product.stock > 0 || product.stock === undefined
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            applicableCountry: 'GB',
+            returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            merchantReturnDays: 14,
+            returnMethod: 'https://schema.org/ReturnByMail',
+            returnFees: 'https://schema.org/FreeReturn',
+          },
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingRate: {
+              '@type': 'MonetaryAmount',
+              value: '2.99',
+              currency: 'GBP',
+            },
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'GB',
+            },
+            deliveryTime: {
+              '@type': 'ShippingDeliveryTime',
+              handlingTime: {
+                '@type': 'QuantitativeValue',
+                minValue: 0,
+                maxValue: 1,
+                unitCode: 'DAY',
+              },
+              transitTime: {
+                '@type': 'QuantitativeValue',
+                minValue: 2,
+                maxValue: 5,
+                unitCode: 'DAY',
+              },
+            },
+          },
           seller: { '@type': 'Organization', name: 'Highland Dogchew' },
         },
         ...(product.reviews > 0 && {

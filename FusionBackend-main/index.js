@@ -39,6 +39,7 @@ import newsletterRoute from './src/routes/newsletterRoute.js';
 import instagramPostRoute from './src/routes/instagramPostRoute.js';
 import instagramRoute from './src/routes/instagramRoute.js';
 import galleryItemRoute from './src/routes/galleryItemRoute.js';
+import categoryRoute from './src/routes/categoryRoute.js';
 
 
 
@@ -131,6 +132,7 @@ app.use(`/${api}/newsletter`, newsletterRoute);
 app.use(`/${api}/instagram-posts`, instagramPostRoute);
 app.use(`/${api}/instagram`, instagramRoute);
 app.use(`/${api}/gallery`, galleryItemRoute);
+app.use(`/${api}/categories`, categoryRoute);
 
 
 //error middleware route pachi

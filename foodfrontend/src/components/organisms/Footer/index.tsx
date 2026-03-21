@@ -3,6 +3,7 @@
 import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiPhone, FiMapPin, FiCheck, FiLoader } from "react-icons/fi";
 import Logo from "@/components/atoms/Logo";
+import PawBackground from "@/components/atoms/PawBackground";
 import { ContactInfo } from "@/types";
 import { useState, useEffect } from "react";
 
@@ -121,12 +122,14 @@ export default function Footer({ destinations = [], activities = [], contactInfo
         {/* Top row: Logo + Newsletter */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-14">
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4">
-            <Logo
-              index={1}
-              width={160}
-              height={160}
-              imgClassName="h-[110px] w-[110px] sm:h-[130px] sm:w-[130px] md:h-[150px] md:w-[150px] lg:h-[160px] lg:w-[160px]"
-            />
+            <PawBackground size="lg">
+              <Logo
+                index={1}
+                width={190}
+                height={190}
+                imgClassName="h-[120px] w-[120px] sm:h-[140px] sm:w-[140px] md:h-[160px] md:w-[160px] lg:h-[180px] lg:w-[180px]"
+              />
+            </PawBackground>
             <div className="hidden sm:block h-14 w-px bg-[#2E1F14]/10 dark:bg-[#f5e9dc]/10" />
             <p className="text-center sm:text-left text-sm text-[#7A5C4F] dark:text-[#c8b6a6] max-w-[200px] leading-relaxed">
               Premium Himalayan dog treats, crafted with care
@@ -146,6 +149,7 @@ export default function Footer({ destinations = [], activities = [], contactInfo
                   placeholder="Enter your email address"
                   disabled={newsletterState === 'loading' || newsletterState === 'success'}
                   className="w-full px-5 py-3 text-sm bg-transparent text-[#2E1F14] dark:text-[#f5e9dc] border-none focus:outline-none placeholder-[#7A5C4F]/40 dark:placeholder-[#c8b6a6]/40 disabled:opacity-60"
+                  suppressHydrationWarning
                 />
                 <button
                   type="submit"

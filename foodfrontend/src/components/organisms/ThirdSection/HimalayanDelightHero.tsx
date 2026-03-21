@@ -29,8 +29,8 @@ const HimalayanDelightHero = () => {
         style={{ willChange: 'transform' }}
       >
         <img
-          src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=1920&q=80"
-          alt="Himalayan Dog Chew Background"
+          src="/images/dog-9.jpeg"
+          alt="Husky standing on Himalayan mountain rocks"
           className="w-full h-full object-cover"
         />
       </motion.div>
@@ -40,19 +40,19 @@ const HimalayanDelightHero = () => {
 
       {/* Decorative floating cheese pieces */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12 w-32 h-32 md:w-40 md:h-40 opacity-90 animate-float">
-        <img src="https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80" alt="Cheese"
+        <img src="/images/dog-2.jpeg" alt="Malamute with stick"
           className="w-full h-full object-cover rounded-lg transform -rotate-12" />
       </div>
       <div className="absolute top-8 right-8 md:top-12 md:right-12 w-32 h-32 md:w-48 md:h-32 opacity-90 animate-float-delayed">
-        <img src="https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80" alt="Cheese"
+        <img src="/images/dog-7.jpeg" alt="Husky side profile"
           className="w-full h-full object-cover rounded-lg transform rotate-6" />
       </div>
       <div className="absolute bottom-8 left-4 md:bottom-12 md:left-8 w-28 h-28 md:w-36 md:h-36 opacity-90 animate-float">
-        <img src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=400&q=80" alt="Cheese"
+        <img src="/images/dog-19.jpeg" alt="Bernese Mountain Dog"
           className="w-full h-full object-cover rounded-lg transform rotate-12" />
       </div>
       <div className="absolute bottom-8 right-4 md:bottom-12 md:right-12 w-36 h-24 md:w-48 md:h-32 opacity-90 animate-float-delayed">
-        <img src="https://images.unsplash.com/photo-1452195100486-9cc805987862?w=400&q=80" alt="Cheese"
+        <img src="/images/dog-20.jpeg" alt="Rottweiler at sunset"
           className="w-full h-full object-cover rounded-lg transform -rotate-6" />
       </div>
 

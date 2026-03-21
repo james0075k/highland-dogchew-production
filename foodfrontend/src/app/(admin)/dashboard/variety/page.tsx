@@ -14,13 +14,15 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Plus,
+  Tag,
 } from 'lucide-react';
 
 const VarietyDashboard = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: 'Blueberry',
+    category: '',
     displayOrder: '0',
   });
 
@@ -37,11 +39,20 @@ const VarietyDashboard = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [varietyToDelete, setVarietyToDelete] = useState(null);
 
+  // Categories state
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryMessage, setCategoryMessage] = useState({ type: '', text: '' });
+
   // Debug state
   const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
     fetchVarieties();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -68,6 +79,92 @@ const VarietyDashboard = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const response = await fetch(`${API_BASE}/categories`);
+      const result = await response.json();
+      if (result.success) {
+        const cats = result.data || [];
+        setCategories(cats);
+        // Set default category to first available if current is empty
+        if (!formData.category && cats.length > 0) {
+          setFormData((prev) => ({ ...prev, category: cats[0].name }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    try {
+      setCategoryLoading(true);
+      setCategoryMessage({ type: '', text: '' });
+      const token = Cookies.get('token');
+
+      const response = await fetch(`${API_BASE}/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setCategoryMessage({ type: 'success', text: 'Category added!' });
+        setNewCategoryName('');
+        fetchCategories();
+        setTimeout(() => setCategoryMessage({ type: '', text: '' }), 2000);
+      } else {
+        setCategoryMessage({ type: 'error', text: result.message || 'Failed to add category' });
+      }
+    } catch (error) {
+      setCategoryMessage({ type: 'error', text: `Error: ${error.message}` });
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    try {
+      setCategoryLoading(true);
+      setCategoryMessage({ type: '', text: '' });
+      const token = Cookies.get('token');
+
+      const response = await fetch(`${API_BASE}/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setCategoryMessage({ type: 'success', text: 'Category deleted!' });
+        fetchCategories();
+        setTimeout(() => setCategoryMessage({ type: '', text: '' }), 2000);
+      } else {
+        setCategoryMessage({ type: 'error', text: result.message || 'Failed to delete category' });
+      }
+    } catch (error) {
+      setCategoryMessage({ type: 'error', text: `Error: ${error.message}` });
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  // Check if a category is in use by any variety
+  const isCategoryInUse = (categoryName) => {
+    return varieties.some((v) => v.category === categoryName);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -86,7 +183,7 @@ const VarietyDashboard = () => {
     setFormData({
       name: variety.name || '',
       description: variety.description || '',
-      category: variety.category || 'Blueberry',
+      category: variety.category || '',
       displayOrder: (variety.displayOrder ?? 0).toString(),
     });
     setImage(null);
@@ -99,7 +196,7 @@ const VarietyDashboard = () => {
     setFormData({
       name: '',
       description: '',
-      category: 'Blueberry',
+      category: categories.length > 0 ? categories[0].name : '',
       displayOrder: '0',
     });
     setImage(null);
@@ -165,102 +262,78 @@ const VarietyDashboard = () => {
     }
   };
 
-const handleSubmit = async () => {
-  console.log('🔵 Form submitted!');
-  setLoading(true);
-  setMessage({ type: '', text: '' });
-  setDebugInfo('Starting submission...');
-
-  try {
-    // Check for image requirement - REMOVE THIS TEMPORARILY FOR TESTING
-    // if (!editingVariety && !image) {
-    //   setMessage({ type: 'error', text: 'Please upload a variety image' });
-    //   setLoading(false);
-    //   return;
-    // }
-
-    const formDataToSend = new FormData();
-    
-    // Add all fields
-    formDataToSend.append('name', formData.name.trim());
-    formDataToSend.append('description', formData.description.trim());
-    formDataToSend.append('category', formData.category);
-    formDataToSend.append('displayOrder', formData.displayOrder);
-    
-    // Only append image if it exists
-    if (image) {
-      formDataToSend.append('image', image);
-    }
-
-    const url = editingVariety
-      ? `${API_BASE}/variety/${editingVariety._id}`
-      : `${API_BASE}/variety`;
-
-    const method = editingVariety ? 'PUT' : 'POST';
-
-    console.log('📡 Sending request to:', url);
-    console.log('📦 FormData entries:');
-    for (let [key, value] of formDataToSend.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-
-    setDebugInfo(`Sending ${method} to ${url}...`);
-
-    const token = Cookies.get('token');
-    const response = await fetch(url, {
-      method,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formDataToSend,
-    });
-
-    console.log('📥 Response status:', response.status);
-    setDebugInfo(`Response status: ${response.status}`);
-
-    // Get response as text first to see what's returned
-    const responseText = await response.text();
-    console.log('📦 Raw response:', responseText);
+  const handleSubmit = async () => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    setDebugInfo('Starting submission...');
 
     try {
-      // Try to parse as JSON
-      const result = JSON.parse(responseText);
-      console.log('✅ Parsed JSON:', result);
+      const formDataToSend = new FormData();
 
-      if (response.ok && result.success) {
-        setMessage({
-          type: 'success',
-          text: editingVariety ? '✅ Variety updated successfully!' : '✅ Variety created successfully!',
-        });
-        
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-        handleCancelEdit();
-        fetchVarieties();
-      } else {
-        setMessage({ 
-          type: 'error', 
-          text: `❌ ${result.message || result.error || 'Failed to save variety'}` 
-        });
-        setDebugInfo(`Error: ${result.message}`);
+      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('description', formData.description.trim());
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('displayOrder', formData.displayOrder);
+
+      if (image) {
+        formDataToSend.append('image', image);
       }
-    } catch (parseError) {
-      console.error('❌ Not valid JSON:', responseText);
-      setMessage({ 
-        type: 'error', 
-        text: `❌ Server returned non-JSON: ${responseText.substring(0, 100)}` 
+
+      const url = editingVariety
+        ? `${API_BASE}/variety/${editingVariety._id}`
+        : `${API_BASE}/variety`;
+
+      const method = editingVariety ? 'PUT' : 'POST';
+
+      setDebugInfo(`Sending ${method} to ${url}...`);
+
+      const token = Cookies.get('token');
+      const response = await fetch(url, {
+        method,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formDataToSend,
       });
-      setDebugInfo(`Parse error: ${parseError.message}`);
+
+      setDebugInfo(`Response status: ${response.status}`);
+
+      const responseText = await response.text();
+
+      try {
+        const result = JSON.parse(responseText);
+
+        if (response.ok && result.success) {
+          setMessage({
+            type: 'success',
+            text: editingVariety ? 'Variety updated successfully!' : 'Variety created successfully!',
+          });
+
+          setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+          handleCancelEdit();
+          fetchVarieties();
+        } else {
+          setMessage({
+            type: 'error',
+            text: result.message || result.error || 'Failed to save variety',
+          });
+          setDebugInfo(`Error: ${result.message}`);
+        }
+      } catch (parseError) {
+        setMessage({
+          type: 'error',
+          text: `Server returned non-JSON: ${responseText.substring(0, 100)}`,
+        });
+        setDebugInfo(`Parse error: ${parseError.message}`);
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: `Network error: ${error.message}`,
+      });
+      setDebugInfo(`Network error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('❌ Network error:', error);
-    setMessage({ 
-      type: 'error', 
-      text: `❌ Network error: ${error.message}` 
-    });
-    setDebugInfo(`Network error: ${error.message}`);
-  } finally {
-    setLoading(false);
-    console.log('🔵 Form submission complete');
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 relative">
@@ -278,15 +351,25 @@ const handleSubmit = async () => {
             <h1 className="text-3xl font-bold text-gray-800">
               {editingVariety ? 'Edit Variety' : 'Add New Variety'}
             </h1>
-            {editingVariety && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                onClick={() => setShowCategoryModal(true)}
+                className="px-4 py-2 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition flex items-center gap-1"
               >
-                Cancel Edit
+                <Tag className="w-4 h-4" />
+                Manage Categories
               </button>
-            )}
+              {editingVariety && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Debug Info */}
@@ -329,18 +412,36 @@ const handleSubmit = async () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="Blueberry">Blueberry</option>
-                    <option value="Strawberry">Strawberry</option>
-                    <option value="Pumpkin">Pumpkin</option>
-                    <option value="Honey">Honey</option>
-                  </select>
+                  {loadingCategories ? (
+                    <div className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-400">
+                      Loading categories...
+                    </div>
+                  ) : categories.length === 0 ? (
+                    <div className="w-full px-4 py-2 border border-orange-300 bg-orange-50 rounded-lg text-orange-700 text-sm">
+                      No categories found.{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowCategoryModal(true)}
+                        className="underline font-medium"
+                      >
+                        Add one first
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat._id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div>
@@ -542,7 +643,7 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      {/* Delete Modal */}
+      {/* Delete Variety Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteModal(false)} />
@@ -580,6 +681,117 @@ const handleSubmit = async () => {
                 className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-60"
               >
                 {loading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Categories Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCategoryModal(false)} />
+
+          <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Tag className="w-5 h-5 text-purple-600" />
+                Manage Categories
+              </h3>
+              <button
+                type="button"
+                className="p-1 rounded hover:bg-gray-100"
+                onClick={() => setShowCategoryModal(false)}
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {categoryMessage.text && (
+              <div
+                className={`mb-4 p-3 rounded-lg text-sm ${
+                  categoryMessage.type === 'success'
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {categoryMessage.text}
+              </div>
+            )}
+
+            {/* Add new category */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                placeholder="New category name..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={categoryLoading || !newCategoryName.trim()}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition disabled:opacity-50 flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </button>
+            </div>
+
+            {/* Categories list */}
+            <div className="max-h-64 overflow-y-auto">
+              {loadingCategories ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : categories.length === 0 ? (
+                <p className="text-center py-8 text-gray-500 text-sm">No categories yet. Add one above.</p>
+              ) : (
+                <div className="space-y-2">
+                  {categories.map((cat) => {
+                    const inUse = isCategoryInUse(cat.name);
+                    return (
+                      <div
+                        key={cat._id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div>
+                          <span className="font-medium text-gray-800">{cat.name}</span>
+                          {inUse && (
+                            <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                              In use
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCategory(cat._id)}
+                          disabled={categoryLoading || inUse}
+                          title={inUse ? 'Cannot delete: category is in use by a variety' : 'Delete category'}
+                          className={`p-1.5 rounded-lg transition ${
+                            inUse
+                              ? 'text-gray-300 cursor-not-allowed'
+                              : 'text-red-500 hover:bg-red-50 hover:text-red-700'
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="w-full py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+              >
+                Close
               </button>
             </div>
           </div>

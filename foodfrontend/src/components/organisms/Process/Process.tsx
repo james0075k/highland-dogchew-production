@@ -12,7 +12,7 @@ const Process = () => {
         'Purchase and delivery are conducted under a controlled quality system',
         'Before receiving the milk, it undergoes mandatory platform tests such as the alcohol test, acidity, COB, and MBRT to ensure quality'
       ],
-      image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&q=80'
+      image: '/images/dog-1.jpeg'
     },
     {
       number: 2,
@@ -22,7 +22,7 @@ const Process = () => {
         'All storage conditions are automated and scheduled according to applied checklists to maintain consistency',
         'The First-In-First-Out (FIFO) system is strictly followed to ensure that the oldest stock is used first, thereby preserving product freshness'
       ],
-      image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&q=80'
+      image: '/images/dog-4.jpeg'
     },
     {
       number: 3,
@@ -32,7 +32,7 @@ const Process = () => {
         'All mandatory quality parameters are followed without exception to ensure the highest quality product',
         'We offer customization of the CHURPI dog chew based on the buyer\'s specific requirements, allowing for adjustments to ingredients and formulations as needed'
       ],
-      image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800&q=80'
+      image: '/images/dog-6.jpeg'
     },
     {
       number: 4,
@@ -43,7 +43,7 @@ const Process = () => {
         'After coagulation, the milk solids are filtered, boiled, and cooked for 15-20 minutes before being molded and pressed into the desired shape',
         'The fresh CHURPI cakes are then obtained after 8-10 hours of hydraulic pressing'
       ],
-      image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800&q=80'
+      image: '/images/dog-8.jpeg'
     },
     {
       number: 5,
@@ -53,7 +53,7 @@ const Process = () => {
         'The entire manufacturing process is conducted using stainless steel machines to maintain proper hygiene and sanitation',
         'After pressing, the CHURPI cakes are stored at a temperature of 2-5 degrees Celsius before moving on to the slicing stage'
       ],
-      image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80'
+      image: '/images/dog-11.jpeg'
     },
     {
       number: 6,
@@ -63,7 +63,7 @@ const Process = () => {
         'Each sliced bar is verified against the size requirements specified by the buyer',
         'The final product meets the desired specifications as outlined in the purchase order'
       ],
-      image: 'https://images.unsplash.com/photo-1615751072497-5f5169febe17?w=800&q=80'
+      image: '/images/dog-18.jpeg'
     },
     {
       number: 7,
@@ -74,7 +74,7 @@ const Process = () => {
         'The process includes grading, sorting, smoking, buffing, sterilizing, blunting, and other required finishing procedures',
         'The entire process is conducted under strict surveillance to maintain consistent quality throughout'
       ],
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80'
+      image: '/images/dog-26.jpeg'
     },
     {
       number: 8,
@@ -85,7 +85,7 @@ const Process = () => {
         'Before delivery, the CHURPI undergoes quality assurance checks and receives prime certifications',
         'The final product meets the highest standards'
       ],
-      image: 'https://images.unsplash.com/photo-1615751072497-5f5169febe17?w=800&q=80'
+      image: '/images/dog-30.jpeg'
     }
   ];
 
@@ -93,7 +93,7 @@ const Process = () => {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative h-[400px] bg-cover bg-center" 
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1920&q=80')" }}>
+        style={{ backgroundImage: "url('/images/dog-29.jpeg')" }}>
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
