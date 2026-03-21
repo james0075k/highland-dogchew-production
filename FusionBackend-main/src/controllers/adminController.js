@@ -167,7 +167,7 @@ export const changeAdminPassword = async (req, res) => {
     admin.password = newPassword;
     await admin.save();
 
-    // Send confirmation email via Gmail SMTP
+    // Send confirmation email via Hostinger SMTP
     try {
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f8fafc;border-radius:12px;">
@@ -255,7 +255,7 @@ export const forgotPassword = async (req, res) => {
 
     // Build reset URL — APP_URL is the frontend origin (no /admin/ prefix;
     // (admin) is a Next.js route group, not a URL segment)
-    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3000";
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "https://highlanddogchew.co.uk";
     const resetUrl = `${appUrl}/reset-password/${resetToken}`;
 
     const html = `

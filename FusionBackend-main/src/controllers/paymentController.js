@@ -46,8 +46,8 @@ export const createCheckoutSession = async (req, res, next) => {
         customerEmail: booking.guestInfo.email,
         customerName: booking.guestInfo.name,
       },
-       success_url: `http://localhost:3000/payment-success?bookingId=${booking._id}&sessionId={CHECKOUT_SESSION_ID}`,
-  cancel_url: `http://localhost:3000/payment-cancel?bookingId=${booking._id}`,  
+       success_url: `${process.env.APP_URL || 'https://highlanddogchew.co.uk'}/payment-success?bookingId=${booking._id}&sessionId={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${process.env.APP_URL || 'https://highlanddogchew.co.uk'}/payment-cancel?bookingId=${booking._id}`,
     });
 
     await BookingModel.findByIdAndUpdate(bookingId, {

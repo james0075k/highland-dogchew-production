@@ -14,6 +14,7 @@
 import Stripe from 'stripe';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
+import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
 
@@ -213,6 +214,11 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
     // ── Delegate to shared util — passes customerOverride so empty metadata ────
     //    orders are backfilled with sessionStorage data from the checkout page.
     const { order, created } = await createOrderFromPI(pi, customer || null);
+
+    // Create subscription records if this PI contains subscription items
+    if (pi.metadata?.hasSubscription === 'true') {
+      await createSubscriptionsFromPI(pi, order);
+    }
 
     console.log(`[sync] ${created ? '✅ Created' : '⏭️  Already existed'}: Order ${order.orderNumber} (PI: ${pi.id})`);
     return handleSuccess(res, created ? 201 : 200, created ? 'Order created' : 'Order fetched', order);

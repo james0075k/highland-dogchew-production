@@ -28,6 +28,7 @@ export function buildOrderItems(lineItems) {
     size:      item.size      || 'Default',
     quantity:  Number(item.quantity)  || 1,
     unitPrice: Number(item.unitPrice) || 0,
+    subscriptionInterval: item.subscriptionInterval || null,
   }));
 }
 
@@ -144,10 +145,11 @@ export async function createOrderFromPI(pi, customerOverride = null) {
 
   // ── Confirmation emails (fire-and-forget) ─────────────────────────────────────
   if (email) {
+    const hasSubscription = meta.hasSubscription === 'true';
     sendEmail({
       to: email,
       subject: `Your Order Confirmation – Highland Yak Chew (${order.orderNumber})`,
-      html: customerOrderEmailHtml(order, firstName),
+      html: customerOrderEmailHtml(order, firstName, { hasSubscription }),
     }).catch((err) => console.error('[order] Customer email failed:', err.message));
   }
 

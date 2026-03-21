@@ -7,6 +7,13 @@
 import SubscriptionModel from '../models/subscriptionModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
+import sendEmail from '../utils/sendEmail.js';
+import {
+  subscriptionCancelledCustomerEmailHtml,
+  subscriptionCancelledAdminEmailHtml,
+  subscriptionPausedEmailHtml,
+  subscriptionResumedEmailHtml,
+} from '../utils/emailTemplates.js';
 
 // ─── GET /api/admin/subscriptions/stats ──────────────────────────────────────
 export const getSubscriptionStats = async (req, res, next) => {
@@ -103,9 +110,41 @@ export const updateSubscriptionStatus = async (req, res, next) => {
     const sub = await SubscriptionModel.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true, select: '_id subscriptionId status email productName' }
+      { new: true }
     );
     if (!sub) return next(handleError(404, 'Subscription not found'));
+
+    // Send notification email based on new status (fire-and-forget)
+    if (sub.email) {
+      if (status === 'cancelled') {
+        sendEmail({
+          to: sub.email,
+          subject: `Your Highland Yak Chew subscription has been cancelled – ${sub.subscriptionId}`,
+          html: subscriptionCancelledCustomerEmailHtml(sub),
+        }).catch((err) => console.error('[admin] Cancel customer email failed:', err.message));
+
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+          sendEmail({
+            to: adminEmail,
+            subject: `Subscription Cancelled – ${sub.subscriptionId}`,
+            html: subscriptionCancelledAdminEmailHtml(sub),
+          }).catch((err) => console.error('[admin] Cancel admin email failed:', err.message));
+        }
+      } else if (status === 'paused') {
+        sendEmail({
+          to: sub.email,
+          subject: `Your Highland Yak Chew subscription has been paused – ${sub.subscriptionId}`,
+          html: subscriptionPausedEmailHtml(sub),
+        }).catch((err) => console.error('[admin] Pause email failed:', err.message));
+      } else if (status === 'active') {
+        sendEmail({
+          to: sub.email,
+          subject: `Your Highland Yak Chew subscription has been resumed – ${sub.subscriptionId}`,
+          html: subscriptionResumedEmailHtml(sub),
+        }).catch((err) => console.error('[admin] Resume email failed:', err.message));
+      }
+    }
 
     return handleSuccess(res, 200, 'Subscription status updated', { subscription: sub });
   } catch (err) {

@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { triggerSubscriptionProcess } from '../controllers/subscriptionProcessController.js';
 import SubscriptionModel from '../models/subscriptionModel.js';
+import sendEmail from '../utils/sendEmail.js';
+import {
+  subscriptionCancelledCustomerEmailHtml,
+  subscriptionCancelledAdminEmailHtml,
+  subscriptionPausedEmailHtml,
+  subscriptionResumedEmailHtml,
+} from '../utils/emailTemplates.js';
 
 const subscriptionProcessRoute = Router();
 
@@ -50,6 +57,22 @@ subscriptionProcessRoute.patch('/:subscriptionId/cancel', async (req, res) => {
     sub.status = 'cancelled';
     await sub.save();
 
+    // Send cancellation emails (fire-and-forget)
+    sendEmail({
+      to: sub.email,
+      subject: `Your Highland Yak Chew subscription has been cancelled – ${sub.subscriptionId}`,
+      html: subscriptionCancelledCustomerEmailHtml(sub),
+    }).catch((err) => console.error('[sub] Cancel customer email failed:', err.message));
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      sendEmail({
+        to: adminEmail,
+        subject: `Subscription Cancelled – ${sub.subscriptionId}`,
+        html: subscriptionCancelledAdminEmailHtml(sub),
+      }).catch((err) => console.error('[sub] Cancel admin email failed:', err.message));
+    }
+
     return res.status(200).json({ success: true, message: 'Subscription cancelled successfully' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to cancel subscription' });
@@ -75,6 +98,13 @@ subscriptionProcessRoute.patch('/:subscriptionId/pause', async (req, res) => {
 
     sub.status = 'paused';
     await sub.save();
+
+    sendEmail({
+      to: sub.email,
+      subject: `Your Highland Yak Chew subscription has been paused – ${sub.subscriptionId}`,
+      html: subscriptionPausedEmailHtml(sub),
+    }).catch((err) => console.error('[sub] Pause email failed:', err.message));
+
     return res.status(200).json({ success: true, message: 'Subscription paused' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to pause subscription' });
@@ -100,6 +130,13 @@ subscriptionProcessRoute.patch('/:subscriptionId/resume', async (req, res) => {
 
     sub.status = 'active';
     await sub.save();
+
+    sendEmail({
+      to: sub.email,
+      subject: `Your Highland Yak Chew subscription has been resumed – ${sub.subscriptionId}`,
+      html: subscriptionResumedEmailHtml(sub),
+    }).catch((err) => console.error('[sub] Resume email failed:', err.message));
+
     return res.status(200).json({ success: true, message: 'Subscription resumed' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to resume subscription' });

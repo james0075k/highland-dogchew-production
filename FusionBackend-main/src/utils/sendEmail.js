@@ -7,18 +7,23 @@ import nodemailer from 'nodemailer';
  *   SMTP_HOST  = smtp.hostinger.com
  *   SMTP_PORT  = 465  (SSL) or 587 (STARTTLS)
  *   SMTP_USER  = admin@highlanddogchew.co.uk
- *   SMTP_PASS  = your_mailbox_password
+ *   SMTP_PASS  = (mailbox password)
  *   SMTP_FROM  = "Highland Yak Chew <admin@highlanddogchew.co.uk>"
  *
- * Port 465 → secure: true (implicit SSL)
- * Port 587 → secure: false + requireTLS: true (STARTTLS)
+ * Port 465 -> secure: true (implicit SSL)
+ * Port 587 -> secure: false + requireTLS: true (STARTTLS)
  */
 const sendEmail = async ({ to, subject, html }) => {
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const user = process.env.SMTP_USER || process.env.SMTP_EMAIL;
-  const pass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
-  const from = process.env.SMTP_FROM || `"Highland Yak Chew" <${user}>`;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM || '"Highland Yak Chew" <admin@highlanddogchew.co.uk>';
+
+  if (!user || !pass) {
+    console.error('[email] SMTP_USER or SMTP_PASS not set — cannot send email');
+    return;
+  }
 
   // Port 465 = implicit SSL (secure: true); port 587 = STARTTLS (secure: false)
   const useSSL = port === 465;
