@@ -135,7 +135,7 @@ export default function ProductDetailPage() {
         if (p.subscriptionSettings?.intervals?.length > 0) {
           setSelectedInterval(p.subscriptionSettings.intervals[0]);
         }
-        if (p.bulkPricing?.length > 0) setSelectedQtyIdx(0);
+        if (p.bulkPricing?.length > 0 || p.sizes?.some((s: any) => s.bulkTiers?.length > 0)) setSelectedQtyIdx(0);
         if (p.productType) {
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?type=${p.productType}`)
             .then(r => r.json())
@@ -179,13 +179,32 @@ export default function ProductDetailPage() {
   }, [effectiveUnitPrice, product, selectedSizeObj]);
 
   const adjustedBulkPricing = useMemo(() => {
+    // Size-specific bulk tiers take priority
+    if (selectedSizeObj?.bulkTiers?.length > 0) {
+      return selectedSizeObj.bulkTiers.map((tier: any) => ({
+        quantity: tier.minQty,
+        price: tier.salePrice,
+        originalPrice: tier.originalPrice,
+        discount: tier.discountPercent,
+      }));
+    }
+    // Fall back to global bulkPricing with priceRatio adjustment
     if (!product?.bulkPricing) return [];
     return product.bulkPricing.map((tier: any) => ({
       ...tier,
       price: tier.price * priceRatio,
       originalPrice: tier.originalPrice * priceRatio,
     }));
-  }, [product, priceRatio]);
+  }, [product, priceRatio, selectedSizeObj]);
+
+  // Reset bulk tier selection when size changes
+  useEffect(() => {
+    if (adjustedBulkPricing.length > 0) {
+      setSelectedQtyIdx(0);
+    } else {
+      setSelectedQtyIdx(null);
+    }
+  }, [selectedSize]);
 
   const currentTier = useMemo(() => {
     if (selectedQtyIdx !== null && adjustedBulkPricing[selectedQtyIdx]) {
@@ -221,8 +240,22 @@ export default function ProductDetailPage() {
     ? Math.round(((displayOriginalPrice - displayUnitPrice) / displayOriginalPrice) * 100)
     : 0;
 
+  // Stock tracking
+  const effectiveStock = useMemo(() => {
+    if (!product?.trackStock) return null;
+    if (selectedSizeObj?.stockQuantity != null) return selectedSizeObj.stockQuantity as number;
+    return product.stockQuantity ?? 0;
+  }, [product, selectedSizeObj]);
+
+  const isOutOfStock = product?.trackStock && effectiveStock !== null && effectiveStock <= 0;
+  const isLowStock = product?.trackStock && effectiveStock !== null && effectiveStock > 0 && effectiveStock <= 10;
+
   const handleAddToCart = () => {
     if (!product) return;
+    if (isOutOfStock) {
+      setToast({ message: 'This product is out of stock', type: 'error' });
+      return;
+    }
     if (product.sizes?.length > 0 && !selectedSize) {
       setToast({ message: 'Please select a size first', type: 'error' });
       return;
@@ -238,6 +271,7 @@ export default function ProductDetailPage() {
       originalPrice: +effectiveOriginalPrice.toFixed(2),
       isSubscription: purchaseOption === 'repeat',
       subscriptionInterval: purchaseOption === 'repeat' ? selectedInterval : undefined,
+      ...(product.trackStock && effectiveStock !== null ? { maxStock: effectiveStock } : {}),
     });
     setToast({ message: `${product.name} added to cart!`, type: 'success' });
   };
@@ -272,9 +306,9 @@ export default function ProductDetailPage() {
           price: jsonLdPrice,
           priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           availability:
-            product.stock > 0 || product.stock === undefined
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+            product.trackStock && (product.stockQuantity ?? 0) <= 0
+              ? 'https://schema.org/OutOfStock'
+              : 'https://schema.org/InStock',
           hasMerchantReturnPolicy: {
             '@type': 'MerchantReturnPolicy',
             applicableCountry: 'GB',
@@ -350,7 +384,7 @@ export default function ProductDetailPage() {
 
   const images = product.gallery?.length > 0 ? product.gallery : [product.image];
   const hasSizes = product.sizes?.length > 0;
-  const hasBulkPricing = product.bulkPricing?.length > 0;
+  const hasBulkPricing = adjustedBulkPricing.length > 0;
   const hasNutritionFacts = product.nutritionFacts?.items?.length > 0;
   const usePillSizes = hasSizes && product.sizes.length <= 6;
 
@@ -777,15 +811,27 @@ export default function ProductDetailPage() {
               )}
             </div>
 
+            {/* Stock warnings */}
+            {isOutOfStock && (
+              <div className="mb-3 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-semibold text-center">
+                Out of Stock
+              </div>
+            )}
+            {isLowStock && !isOutOfStock && (
+              <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm font-semibold text-center">
+                Only {effectiveStock} left in stock!
+              </div>
+            )}
+
             {/* ── ADD TO CART — Desktop ── */}
             <button
               ref={addToCartBtnRef}
               onClick={handleAddToCart}
-              disabled={hasSizes && !selectedSize}
+              disabled={(hasSizes && !selectedSize) || !!isOutOfStock}
               className="hidden lg:flex w-full bg-[#2E1F14] hover:bg-[#432d1f] active:bg-[#1a1209] disabled:bg-gray-300 disabled:cursor-not-allowed dark:bg-amber-700 dark:hover:bg-amber-600 dark:disabled:bg-[#2a2018] text-white font-bold py-4 px-8 rounded-xl items-center justify-center gap-3 text-sm tracking-wide shadow-sm hover:shadow-md transition-all duration-200 mb-4"
             >
               <ShoppingCart className="w-4.5 h-4.5" />
-              {hasSizes && !selectedSize ? 'Select a size' : 'ADD TO CART'}
+              {isOutOfStock ? 'OUT OF STOCK' : hasSizes && !selectedSize ? 'Select a size' : 'ADD TO CART'}
             </button>
 
             {/* Trust signals */}
@@ -967,12 +1013,11 @@ export default function ProductDetailPage() {
 
             <button
               onClick={handleAddToCart}
-              disabled={hasSizes && !selectedSize}
+              disabled={(hasSizes && !selectedSize) || !!isOutOfStock}
               className="flex-1 lg:flex-none lg:min-w-[180px] bg-[#2E1F14] hover:bg-[#432d1f] dark:bg-amber-700 dark:hover:bg-amber-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm shadow transition-all duration-200"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span className="hidden lg:inline">ADD TO CART</span>
-              <span className="lg:hidden">ADD TO CART</span>
+              {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
             </button>
           </div>
         </div>

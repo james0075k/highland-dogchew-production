@@ -56,17 +56,46 @@ async function resolveAndCalculate(items, promoCode) {
       throw new CartError(404, 'One or more products in your cart are no longer available.');
     }
 
+    // ── Stock validation ───────────────────────────────────────────────────
+    if (product.trackStock) {
+      let availableStock = product.stockQuantity || 0;
+      if (item.size && product.sizes?.length > 0) {
+        const sizeForStock = product.sizes.find(
+          (s) => s.label === item.size || s.value === item.size
+        );
+        if (sizeForStock) availableStock = sizeForStock.stockQuantity || 0;
+      }
+      if (item.quantity > availableStock) {
+        throw new CartError(400, `Insufficient stock for "${product.name}"${item.size ? ` (${item.size})` : ''}. Only ${availableStock} available.`);
+      }
+    }
+
     // ── Resolve authoritative server-side price ──────────────────────────────
     let expectedPrice = product.price; // base fallback
+    let sizeData = null;
 
     if (item.size && product.sizes?.length > 0) {
-      const sizeData = product.sizes.find(
+      sizeData = product.sizes.find(
         (s) => s.label === item.size || s.value === item.size
       );
       if (sizeData?.price != null) expectedPrice = sizeData.price;
     }
 
-    if (product.bulkPricing?.length > 0) {
+    // Size-specific bulk tiers take priority
+    let bulkResolved = false;
+    if (sizeData?.bulkTiers?.length > 0) {
+      // Find the highest minQty tier where item.quantity >= tier.minQty
+      const applicable = sizeData.bulkTiers
+        .filter((t) => item.quantity >= t.minQty)
+        .sort((a, b) => b.minQty - a.minQty);
+      if (applicable.length > 0) {
+        expectedPrice = applicable[0].salePrice;
+        bulkResolved = true;
+      }
+    }
+
+    // Fall back to global bulkPricing exact-match (backward compat)
+    if (!bulkResolved && product.bulkPricing?.length > 0) {
       const bulk = product.bulkPricing.find((b) => b.quantity === item.quantity);
       if (bulk) expectedPrice = bulk.price;
     }

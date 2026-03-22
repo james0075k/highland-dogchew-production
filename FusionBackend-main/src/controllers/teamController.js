@@ -6,6 +6,12 @@ import fs from 'fs';
 import path from 'path';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 
+const safeJsonParse = (str, fallback = []) => {
+  if (!str) return fallback;
+  if (typeof str !== 'string') return str;
+  try { return JSON.parse(str); } catch { return fallback; }
+};
+
 // Create Team Member
 export const createTeamMember = async (req, res, next) => {
   try {
@@ -24,7 +30,7 @@ export const createTeamMember = async (req, res, next) => {
     const image = `${req.protocol}://${req.get('host')}${getFileUrl(req.files.image[0].filename)}`;
 
     // Parse certifications array (JSON string) or default to empty array
-    const certs = certifications ? JSON.parse(certifications) : [];
+    const certs = safeJsonParse(certifications, []);
 
     // Attach uploaded certification images URLs to certifications array items (by index)
     if (req.files.imageUrls && req.files.imageUrls.length) {
@@ -42,7 +48,7 @@ export const createTeamMember = async (req, res, next) => {
       shortinfo,
       contactNumber,
       certifications: certs,
-      socialLinks: socialLinks ? JSON.parse(socialLinks) : {},
+      socialLinks: safeJsonParse(socialLinks, {}),
     });
 
     const saved = await newMember.save();
@@ -79,12 +85,12 @@ export const updateTeamMember = async (req, res, next) => {
 
     // Parse certifications from JSON string if provided
     if (certifications) {
-      member.certifications = JSON.parse(certifications);
+      member.certifications = safeJsonParse(certifications, []);
     }
 
     // Parse socialLinks if provided
     if (socialLinks) {
-      member.socialLinks = JSON.parse(socialLinks);
+      member.socialLinks = safeJsonParse(socialLinks, {});
     }
 
     // Update main image if uploaded

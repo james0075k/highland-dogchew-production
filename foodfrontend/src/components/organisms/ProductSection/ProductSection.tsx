@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronDown, Bell, Sparkles } from 'lucide-react';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
 
 interface Product {
@@ -114,7 +114,7 @@ export default function ProductSection({
     return () => io.disconnect();
   }, [loading]);
 
-  if (!loading && !error && products.length === 0) return null;
+  const isEmpty = !loading && !error && products.length === 0;
 
   const LIMIT = 4;
   const displayed = expanded ? products : products.slice(0, LIMIT);
@@ -161,7 +161,7 @@ export default function ProductSection({
           </p>
         </div>
 
-        {/* ── Product grid ─────────────────────────────────────────────── */}
+        {/* ── Product grid / Empty state ──────────────────────────────── */}
         <div ref={gridRef} className="ps-grid">
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -179,6 +179,77 @@ export default function ProductSection({
                 Retry
               </button>
             </div>
+          ) : isEmpty ? (
+            /* ── Coming Soon — premium empty state ──────────────────── */
+            <div className="relative">
+              {/* Placeholder cards (blurred/ghost) */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 opacity-[0.08] dark:opacity-[0.06] pointer-events-none select-none" aria-hidden="true">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gray-300 dark:bg-[#3a2c23] rounded-2xl overflow-hidden">
+                    <div className="aspect-[9/14] bg-gray-200 dark:bg-[#2a2018]" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-3 bg-gray-300 dark:bg-[#3a2c23] rounded w-3/4" />
+                      <div className="h-2 bg-gray-200 dark:bg-[#2a2018] rounded w-1/2" />
+                      <div className="h-4 bg-gray-300 dark:bg-[#3a2c23] rounded w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Overlay card */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative max-w-md w-full mx-4">
+                  {/* Glow effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-amber-400/20 via-orange-300/20 to-amber-400/20 dark:from-amber-600/10 dark:via-orange-500/10 dark:to-amber-600/10 rounded-3xl blur-xl" />
+
+                  <div className="relative bg-white/95 dark:bg-[#1e1510]/95 backdrop-blur-xl rounded-2xl border border-amber-200/60 dark:border-amber-800/40 shadow-2xl shadow-amber-900/5 dark:shadow-black/30 px-8 py-10 text-center">
+                    {/* Sparkle icon */}
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 mb-5">
+                      <Sparkles className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+                    </div>
+
+                    <h3 className="text-xl md:text-2xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-2 tracking-tight">
+                      Coming Soon
+                    </h3>
+                    <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] mb-6 leading-relaxed max-w-xs mx-auto">
+                      We&apos;re handcrafting something special. Be the first to know when our new {title.toLowerCase()} are available.
+                    </p>
+
+                    {/* Notify CTA */}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Link
+                        href="/contact"
+                        className="group inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold bg-[#2E1F14] dark:bg-amber-600 text-white hover:bg-[#432d1f] dark:hover:bg-amber-500 shadow-lg shadow-amber-900/10 transition-all duration-300"
+                      >
+                        <Bell className="w-4 h-4" />
+                        Notify Me
+                      </Link>
+                      <Link
+                        href="/products"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+                      >
+                        Browse other products
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+
+                    {/* Trust line */}
+                    <div className="mt-6 pt-5 border-t border-amber-100 dark:border-amber-900/30">
+                      <div className="flex items-center justify-center gap-4 text-[11px] text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60 font-medium">
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                          100% Natural
+                        </span>
+                        <span className="w-px h-3 bg-gray-300 dark:bg-[#3a2c23]" />
+                        <span>Handcrafted in the Himalayas</span>
+                        <span className="w-px h-3 bg-gray-300 dark:bg-[#3a2c23]" />
+                        <span>Free UK Delivery</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {displayed.map((p, i) => (
@@ -194,7 +265,7 @@ export default function ProductSection({
         </div>
 
         {/* ── Actions row ──────────────────────────────────────────────── */}
-        {!loading && !error && (
+        {!loading && !error && !isEmpty && (
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10 md:mt-12">
 
             {/* View More (if more than 4) */}

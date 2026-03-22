@@ -13,7 +13,7 @@ import { authenticate, authorizeRoles } from '../middlewares/authMiddleware/auth
 
 heroBannerRoute.post("/", singleUpload('bannerImage'), authenticate, authorizeRoles('admin'),  createHeroBanner);
 heroBannerRoute.get("/:page", readBannerByPage);
-heroBannerRoute.put("/:page", singleUpload("bannerImage"), updateHeroBanner);
+heroBannerRoute.put("/:page", singleUpload("bannerImage"), authenticate, authorizeRoles('admin'), updateHeroBanner);
 heroBannerRoute.delete("/:id", authenticate, authorizeRoles('admin'),  deleteHeroBanner);
 
 export default heroBannerRoute;

@@ -16,6 +16,7 @@ export interface CartItem {
   delivery: number;  // per-item delivery
   isSubscription?: boolean;
   subscriptionInterval?: string;
+  maxStock?: number;
 }
 
 export interface PromoInfo {
@@ -103,9 +104,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Update existing item quantity
         const updated = [...prev];
         const existing = updated[idx];
+        let newQty = existing.quantity + newItem.quantity;
+        const stock = newItem.maxStock ?? existing.maxStock;
+        if (stock != null) newQty = Math.min(newQty, stock);
         const merged = {
           ...existing,
-          quantity: existing.quantity + newItem.quantity,
+          quantity: newQty,
+          ...(newItem.maxStock != null ? { maxStock: newItem.maxStock } : {}),
         };
         updated[idx] = enrichItem(merged);
         return updated;
@@ -135,7 +140,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           i.size === size &&
           (isSubscription === undefined || !!i.isSubscription === !!isSubscription)
         ) {
-          return enrichItem({ ...i, quantity });
+          const cappedQty = i.maxStock != null ? Math.min(quantity, i.maxStock) : quantity;
+          return enrichItem({ ...i, quantity: cappedQty });
         }
         return i;
       })

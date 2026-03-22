@@ -229,11 +229,21 @@ export const getVarietyWithProducts = async (req, res, next) => {
 
     const products = await ProductModel.find({ variety: id }).sort({ createdAt: -1 });
 
+    // Rewrite product image URLs so they resolve correctly in production
+    const rewrittenProducts = products.map(p => {
+      const obj = p.toObject ? p.toObject() : { ...p };
+      obj.image = rewriteImageUrl(obj.image, req);
+      if (Array.isArray(obj.gallery)) {
+        obj.gallery = obj.gallery.map(u => rewriteImageUrl(u, req));
+      }
+      return obj;
+    });
+
     const result = {
       ...variety,
       image: rewriteImageUrl(variety.image, req),
-      products,
-      productCount: products.length,
+      products: rewrittenProducts,
+      productCount: rewrittenProducts.length,
     };
 
     return handleSuccess(res, 200, 'Variety with products fetched successfully', result);

@@ -44,6 +44,12 @@ const rewriteImageUrl = (url, req) => {
   return url;
 };
 
+const safeJsonParse = (str, fallback = []) => {
+  if (!str) return fallback;
+  if (typeof str !== 'string') return str;
+  try { return JSON.parse(str); } catch { return fallback; }
+};
+
 const rewriteProductImages = (product, req) => {
   const p = product.toObject ? product.toObject() : { ...product };
   p.image = rewriteImageUrl(p.image, req);
@@ -104,18 +110,14 @@ export const createProduct = async (req, res, next) => {
       galleryUrls = req.files.gallery.map(file => getUploadedFileUrl(file, req));
     }
 
-    // Parse JSON strings
-    const parsedFeatures = features ? JSON.parse(features) : [];
-    const parsedSizes = sizes ? JSON.parse(sizes) : [];
-    const parsedBulkPricing = bulkPricing ? JSON.parse(bulkPricing) : [];
+    // Parse JSON strings (safe — returns fallback on malformed input)
+    const parsedFeatures = safeJsonParse(features, []);
+    const parsedSizes = safeJsonParse(sizes, []);
+    const parsedBulkPricing = safeJsonParse(bulkPricing, []);
 
     // Parse advanced pricing settings
-    const parsedPricingSettings = pricingSettings
-      ? (typeof pricingSettings === 'string' ? JSON.parse(pricingSettings) : pricingSettings)
-      : {};
-    const parsedSubscriptionSettings = subscriptionSettings
-      ? (typeof subscriptionSettings === 'string' ? JSON.parse(subscriptionSettings) : subscriptionSettings)
-      : {};
+    const parsedPricingSettings = safeJsonParse(pricingSettings, {});
+    const parsedSubscriptionSettings = safeJsonParse(subscriptionSettings, {});
 
     // Validate pricing settings
     const taxPct = parseFloat(parsedPricingSettings.taxPercentage) || 0;
@@ -127,6 +129,10 @@ export const createProduct = async (req, res, next) => {
     if (subDiscount < 0 || subDiscount > 100) {
       return next(handleError(400, 'Subscription discount must be between 0 and 100'));
     }
+
+    // Parse stock fields
+    const trackStock = req.body.trackStock === 'true' || req.body.trackStock === true;
+    const stockQty = parseInt(req.body.stockQuantity) || 0;
 
     // Build product data
     const productData = {
@@ -145,6 +151,8 @@ export const createProduct = async (req, res, next) => {
       reviews: reviews ? parseInt(reviews) : 0,
       image: fullImageUrl,
       gallery: galleryUrls,
+      trackStock,
+      stockQuantity: stockQty,
       pricingSettings: {
         taxPercentage: taxPct,
         deliveryCharge: delCharge,
@@ -312,26 +320,26 @@ export const updateProduct = async (req, res, next) => {
     if (updatedData.updatedAt) delete updatedData.updatedAt;
     if (updatedData.__v) delete updatedData.__v;
 
-    // Parse JSON strings if they exist
+    // Parse JSON strings if they exist (safe — returns fallback on malformed input)
     if (updatedData.features && typeof updatedData.features === 'string') {
-      updatedData.features = JSON.parse(updatedData.features);
+      updatedData.features = safeJsonParse(updatedData.features, []);
     }
     if (updatedData.sizes && typeof updatedData.sizes === 'string') {
-      updatedData.sizes = JSON.parse(updatedData.sizes);
+      updatedData.sizes = safeJsonParse(updatedData.sizes, []);
     }
     if (updatedData.bulkPricing && typeof updatedData.bulkPricing === 'string') {
-      updatedData.bulkPricing = JSON.parse(updatedData.bulkPricing);
+      updatedData.bulkPricing = safeJsonParse(updatedData.bulkPricing, []);
     }
     if (updatedData.gallery && typeof updatedData.gallery === 'string') {
-      updatedData.gallery = JSON.parse(updatedData.gallery);
+      updatedData.gallery = safeJsonParse(updatedData.gallery, []);
     }
 
     // Parse advanced pricing/subscription settings
     if (updatedData.pricingSettings && typeof updatedData.pricingSettings === 'string') {
-      updatedData.pricingSettings = JSON.parse(updatedData.pricingSettings);
+      updatedData.pricingSettings = safeJsonParse(updatedData.pricingSettings, {});
     }
     if (updatedData.subscriptionSettings && typeof updatedData.subscriptionSettings === 'string') {
-      updatedData.subscriptionSettings = JSON.parse(updatedData.subscriptionSettings);
+      updatedData.subscriptionSettings = safeJsonParse(updatedData.subscriptionSettings, {});
     }
 
     // Validate pricing settings if provided
@@ -362,6 +370,14 @@ export const updateProduct = async (req, res, next) => {
           ? updatedData.subscriptionSettings.intervals
           : [],
       };
+    }
+
+    // Parse stock fields
+    if (updatedData.trackStock !== undefined) {
+      updatedData.trackStock = updatedData.trackStock === 'true' || updatedData.trackStock === true;
+    }
+    if (updatedData.stockQuantity !== undefined) {
+      updatedData.stockQuantity = parseInt(updatedData.stockQuantity) || 0;
     }
 
     // Convert numeric strings to numbers

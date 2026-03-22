@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { ArrowUp } from 'lucide-react';
 
 const GoToTop = () => {
   const [showGoToTop, setShowGoToTop] = useState(false);
@@ -21,25 +21,17 @@ const GoToTop = () => {
   };
 
   return (
-    <div>
-      {showGoToTop && (
-        <button
-          onClick={scrollToTop}
-          aria-label="Scroll to top"
-          className={`fixed bottom-24 right-6 text-white p-3 rounded-full shadow-xl transition-opacity duration-300 ${showGoToTop ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-50`}
-        >
-          <div className="w-12 h-12 flex items-center justify-center bg-red-600 rounded-full shadow-md border border-orange-600">
-            <Image
-              src="/images/GoToTop.svg"
-              className="w-6 h-6"
-              width={24}
-              height={24}
-              alt="Scroll to Top"
-            />
-          </div>
-        </button>
-      )}
-    </div>
+    <button
+      onClick={scrollToTop}
+      aria-label="Scroll to top"
+      className={`fixed left-1/2 -translate-x-1/2 bottom-[72px] sm:bottom-6 z-[55] flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/90 dark:bg-[#1e1510]/90 backdrop-blur-md border border-gray-200/80 dark:border-[#2a2018]/80 rounded-full shadow-lg shadow-black/5 dark:shadow-black/20 text-[#2E1F14] dark:text-[#c8b6a6] hover:bg-white dark:hover:bg-[#1e1510] hover:shadow-xl active:scale-95 sm:hover:scale-105 transition-all duration-300 ${
+        showGoToTop
+          ? 'opacity-100 translate-y-0 pointer-events-auto'
+          : 'opacity-0 translate-y-4 pointer-events-none'
+      }`}
+    >
+      <ArrowUp className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={2.5} />
+    </button>
   );
 };
 

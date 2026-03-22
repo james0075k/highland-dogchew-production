@@ -46,11 +46,19 @@ import categoryRoute from './src/routes/categoryRoute.js';
 
 dotenv.config();
 
+// ─── Validate required environment variables at startup ──────────────────────
+const requiredEnvVars = ['mongoConnectionString', 'JWT_SECRET', 'STRIPE_SECRET_KEY'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error(`[STARTUP] Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('[STARTUP] Please check your .env file');
+  process.exit(1);
+}
+
 const app = express();
-const api = process.env.API_URL || 'api'; 
+const api = process.env.API_URL || 'api';
 
-
-const port = process.env.PORT ;
+const port = process.env.PORT || 3333;
 
 
 app.use(cors({
@@ -141,19 +149,39 @@ app.use(`/${api}/gallery`, galleryItemRoute);
 app.use(`/${api}/categories`, categoryRoute);
 
 
-//error middleware route pachi
-app.use(errorMiddleware)
+// 404 handler for unknown API routes
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith(`/${api}/`)) {
+    return res.status(404).json({
+      success: false,
+      statusCode: 404,
+      message: `Route not found: ${req.method} ${req.originalUrl}`,
+    });
+  }
+  next();
+});
+
+// Error middleware (must be last)
+app.use(errorMiddleware);
+
+// Global unhandled rejection / exception catchers
+process.on('unhandledRejection', (reason) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err.message);
+  process.exit(1);
+});
 
 
 
 
-// Database connection
-Connection(); 
-
-
-app.listen(port, ()=>{
-    console.log(`Hamro Kam port ${port} ma chaldai xa`)
-})
+// Database connection — wait for DB before accepting requests
+Connection().then(() => {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+});
 
 // ─── Daily subscription renewal cron ─────────────────────────────────────────
 // Runs once per day (every 24 hours). Kept simple — no extra packages needed.

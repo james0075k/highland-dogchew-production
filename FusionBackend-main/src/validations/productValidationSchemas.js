@@ -1,8 +1,17 @@
 import Joi from 'joi';
 
+const bulkTierValidationSchema = Joi.object({
+  minQty: Joi.number().required(),
+  salePrice: Joi.number().required(),
+  originalPrice: Joi.number().required(),
+  discountPercent: Joi.number().default(0),
+});
+
 const sizeSchema = Joi.object({
   label: Joi.string().required(),
   value: Joi.string().required(),
+  bulkTiers: Joi.array().items(bulkTierValidationSchema).optional(),
+  stockQuantity: Joi.number().min(0).default(0).optional(),
 });
 
 const bulkPricingSchema = Joi.object({
@@ -28,6 +37,8 @@ export const productValidationSchema = Joi.object({
   sizes: Joi.array().items(sizeSchema).optional(),
   bulkPricing: Joi.array().items(bulkPricingSchema).optional(),
   gallery: Joi.array().items(Joi.string()).optional(),
+  trackStock: Joi.boolean().default(false).optional(),
+  stockQuantity: Joi.number().min(0).default(0).optional(),
 });
 
 

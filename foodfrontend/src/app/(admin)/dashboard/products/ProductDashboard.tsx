@@ -13,6 +13,8 @@ import {
   ChevronRight,
   ChevronLeft,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface ProductDashboardProps {
@@ -32,7 +34,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     rating: '0',
     reviews: '0',
     features: [''],
-    sizes: [{ label: '', value: '', price: '', originalPrice: '' }],
+    sizes: [{ label: '', value: '', price: '', originalPrice: '', bulkTiers: [] as any[], stockQuantity: '' }],
     bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
     // Advanced pricing settings
     taxPercentage: '0',
@@ -42,6 +44,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     // Subscribe & Save: admin enters specific week/month numbers
     weeklyOptions: [] as number[],
     monthlyOptions: [] as number[],
+    // Stock management
+    trackStock: false,
+    stockQuantity: '0',
   });
 
   const [weekInput, setWeekInput] = useState('');
@@ -65,6 +70,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   // Varieties state
   const [varieties, setVarieties] = useState([]);
   const [loadingVarieties, setLoadingVarieties] = useState(true);
+
+  // Collapsible sizes state
+  const [expandedSizes, setExpandedSizes] = useState<boolean[]>([]);
 
   // Debug state
   const [debugInfo, setDebugInfo] = useState('');
@@ -155,14 +163,61 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   const removeFeature = (index) =>
     setFormData((prev) => ({ ...prev, features: prev.features.filter((_, i) => i !== index) }));
 
-  const addSize = () => setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, { label: '', value: '', price: '', originalPrice: '' }] }));
+  const addSize = () => {
+    setFormData((prev) => ({ ...prev, sizes: [...prev.sizes, { label: '', value: '', price: '', originalPrice: '', bulkTiers: [], stockQuantity: '' }] }));
+    setExpandedSizes((prev) => [...prev, false]);
+  };
   const updateSize = (index, field, value) => {
     const newSizes = [...formData.sizes];
     newSizes[index][field] = value;
     setFormData((prev) => ({ ...prev, sizes: newSizes }));
   };
-  const removeSize = (index) =>
+  const removeSize = (index) => {
     setFormData((prev) => ({ ...prev, sizes: prev.sizes.filter((_, i) => i !== index) }));
+    setExpandedSizes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleSizeExpand = (index: number) => {
+    setExpandedSizes((prev) => {
+      const next = [...prev];
+      next[index] = !next[index];
+      return next;
+    });
+  };
+
+  const addBulkTierToSize = (sizeIdx: number) => {
+    const newSizes = [...formData.sizes];
+    newSizes[sizeIdx] = {
+      ...newSizes[sizeIdx],
+      bulkTiers: [...(newSizes[sizeIdx].bulkTiers || []), { minQty: '', salePrice: '', originalPrice: '', discountPercent: '' }],
+    };
+    setFormData((prev) => ({ ...prev, sizes: newSizes }));
+  };
+
+  const updateBulkTier = (sizeIdx: number, tierIdx: number, field: string, value: string) => {
+    const newSizes = [...formData.sizes];
+    const tiers = [...(newSizes[sizeIdx].bulkTiers || [])];
+    tiers[tierIdx] = { ...tiers[tierIdx], [field]: value };
+    // Auto-calculate discount percent
+    if (field === 'salePrice' || field === 'originalPrice') {
+      const sp = parseFloat(field === 'salePrice' ? value : tiers[tierIdx].salePrice);
+      const op = parseFloat(field === 'originalPrice' ? value : tiers[tierIdx].originalPrice);
+      if (sp > 0 && op > 0 && op > sp) {
+        tiers[tierIdx].discountPercent = Math.round(((op - sp) / op) * 100).toString();
+      }
+    }
+    newSizes[sizeIdx] = { ...newSizes[sizeIdx], bulkTiers: tiers };
+    setFormData((prev) => ({ ...prev, sizes: newSizes }));
+  };
+
+  const removeBulkTier = (sizeIdx: number, tierIdx: number) => {
+    const newSizes = [...formData.sizes];
+    newSizes[sizeIdx] = {
+      ...newSizes[sizeIdx],
+      bulkTiers: (newSizes[sizeIdx].bulkTiers || []).filter((_, i) => i !== tierIdx),
+    };
+    setFormData((prev) => ({ ...prev, sizes: newSizes }));
+  };
 
   const addBulkPrice = () =>
     setFormData((prev) => ({
@@ -197,8 +252,15 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
             value: s.value || '',
             price: (s.price != null ? s.price : '').toString(),
             originalPrice: (s.originalPrice != null ? s.originalPrice : '').toString(),
+            bulkTiers: (s.bulkTiers || []).map((t: any) => ({
+              minQty: (t.minQty ?? '').toString(),
+              salePrice: (t.salePrice ?? '').toString(),
+              originalPrice: (t.originalPrice ?? '').toString(),
+              discountPercent: (t.discountPercent ?? '').toString(),
+            })),
+            stockQuantity: (s.stockQuantity ?? '').toString(),
           }))
-        : [{ label: '', value: '', price: '', originalPrice: '' }],
+        : [{ label: '', value: '', price: '', originalPrice: '', bulkTiers: [], stockQuantity: '' }],
       bulkPricing: product.bulkPricing?.length
         ? product.bulkPricing
         : [{ quantity: '', price: '', originalPrice: '', discount: '' }],
@@ -208,7 +270,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       subscriptionDiscount: (product.subscriptionSettings?.discountPercentage ?? 0).toString(),
       weeklyOptions: product.subscriptionSettings?.weeklyOptions ?? [],
       monthlyOptions: product.subscriptionSettings?.monthlyOptions ?? [],
+      trackStock: product.trackStock ?? false,
+      stockQuantity: (product.stockQuantity ?? 0).toString(),
     });
+    setExpandedSizes(new Array(product.sizes?.length || 1).fill(false));
     setImage(null);
     setImagePreview(product.image || null);
     setGalleryImages([]);
@@ -230,7 +295,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       rating: '0',
       reviews: '0',
       features: [''],
-      sizes: [{ label: '', value: '', price: '', originalPrice: '' }],
+      sizes: [{ label: '', value: '', price: '', originalPrice: '', bulkTiers: [], stockQuantity: '' }],
       bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
       taxPercentage: '0',
       deliveryCharge: '0',
@@ -238,7 +303,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       subscriptionDiscount: '0',
       weeklyOptions: [],
       monthlyOptions: [],
+      trackStock: false,
+      stockQuantity: '0',
     });
+    setExpandedSizes([]);
     setImage(null);
     setImagePreview(null);
     setGalleryImages([]);
@@ -325,9 +393,22 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
             value: s.value,
             ...(s.price ? { price: parseFloat(s.price) } : {}),
             ...(s.originalPrice ? { originalPrice: parseFloat(s.originalPrice) } : {}),
+            bulkTiers: (s.bulkTiers || [])
+              .filter((t: any) => t.minQty && t.salePrice)
+              .map((t: any) => ({
+                minQty: parseInt(t.minQty),
+                salePrice: parseFloat(t.salePrice),
+                originalPrice: parseFloat(t.originalPrice) || parseFloat(t.salePrice),
+                discountPercent: parseFloat(t.discountPercent) || 0,
+              })),
+            stockQuantity: parseInt(s.stockQuantity) || 0,
           }))
       ));
       formDataToSend.append('bulkPricing', JSON.stringify(formData.bulkPricing.filter((bp) => bp.quantity && bp.price)));
+
+      // Stock management
+      formDataToSend.append('trackStock', formData.trackStock.toString());
+      formDataToSend.append('stockQuantity', formData.stockQuantity);
 
       // Advanced pricing settings
       formDataToSend.append('pricingSettings', JSON.stringify({
@@ -738,7 +819,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-700">Sizes</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">Price per size is optional — leave blank to use the product base price</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Price per size is optional — leave blank to use the product base price. Click a size to expand bulk tiers.</p>
                 </div>
                 <button
                   type="button"
@@ -750,53 +831,150 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                 </button>
               </div>
               <div className="space-y-3">
-                <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-500 px-1">
-                  <span>Label (Display)</span>
-                  <span>Value (ID)</span>
-                  <span>Sale Price £</span>
-                  <span>Original Price £</span>
-                </div>
                 {formData.sizes.map((size, index) => (
-                  <div key={index} className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={size.label}
-                      onChange={(e) => updateSize(index, 'label', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-                      placeholder="Small 30-40g"
-                    />
-                    <input
-                      type="text"
-                      value={size.value}
-                      onChange={(e) => updateSize(index, 'value', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-                      placeholder="small-30-40g"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={size.price}
-                      onChange={(e) => updateSize(index, 'price', e.target.value)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-                      placeholder="4.49"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={size.originalPrice}
-                      onChange={(e) => updateSize(index, 'originalPrice', e.target.value)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-                      placeholder="7.50"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeSize(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
+                    {/* Size header row */}
+                    <div className="flex gap-2 items-center p-3 bg-gray-50">
+                      <button
+                        type="button"
+                        onClick={() => toggleSizeExpand(index)}
+                        className="p-1 text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+                      >
+                        {expandedSizes[index] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                      <input
+                        type="text"
+                        value={size.label}
+                        onChange={(e) => updateSize(index, 'label', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                        placeholder="Label (e.g. Small 30-40g)"
+                      />
+                      <input
+                        type="text"
+                        value={size.value}
+                        onChange={(e) => updateSize(index, 'value', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                        placeholder="Value (e.g. small-30-40g)"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={size.price}
+                        onChange={(e) => updateSize(index, 'price', e.target.value)}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                        placeholder="Sale £"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={size.originalPrice}
+                        onChange={(e) => updateSize(index, 'originalPrice', e.target.value)}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                        placeholder="Orig £"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSize(index)}
+                        className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex-shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Expanded: Bulk Tiers + Stock per size */}
+                    {expandedSizes[index] && (
+                      <div className="p-4 border-t border-gray-200 bg-white space-y-4">
+                        {/* Bulk Pricing Tiers */}
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-sm font-semibold text-gray-600">Bulk Pricing Tiers</h4>
+                            <button
+                              type="button"
+                              onClick={() => addBulkTierToSize(index)}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-xs"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Add Tier
+                            </button>
+                          </div>
+                          {(size.bulkTiers || []).length > 0 && (
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-500 px-1">
+                                <span>Min Qty</span>
+                                <span>Sale Price £</span>
+                                <span>Original Price £</span>
+                                <span>Disc %</span>
+                                <span></span>
+                              </div>
+                              {(size.bulkTiers || []).map((tier: any, tIdx: number) => (
+                                <div key={tIdx} className="grid grid-cols-5 gap-2 items-center">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={tier.minQty}
+                                    onChange={(e) => updateBulkTier(index, tIdx, 'minQty', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="e.g. 3"
+                                  />
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={tier.salePrice}
+                                    onChange={(e) => updateBulkTier(index, tIdx, 'salePrice', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="3.99"
+                                  />
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={tier.originalPrice}
+                                    onChange={(e) => updateBulkTier(index, tIdx, 'originalPrice', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="5.99"
+                                  />
+                                  <input
+                                    type="number"
+                                    value={tier.discountPercent}
+                                    readOnly
+                                    className="px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-500"
+                                    placeholder="Auto"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeBulkTier(index, tIdx)}
+                                    className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {(size.bulkTiers || []).length === 0 && (
+                            <p className="text-xs text-gray-400 italic">No bulk tiers for this size. Click "Add Tier" to add quantity-based pricing.</p>
+                          )}
+                        </div>
+
+                        {/* Per-size stock (only visible when trackStock is on) */}
+                        {formData.trackStock && (
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-600 mb-1">Stock Quantity</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={size.stockQuantity}
+                              onChange={(e) => updateSize(index, 'stockQuantity', e.target.value)}
+                              className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                              placeholder="0"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -804,7 +982,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
 
             <div className="border-b pb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Bulk Pricing</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-700">Global Bulk Pricing</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Applies when the product has no sizes. For per-size bulk pricing, expand each size above.</p>
+                </div>
                 <button
                   type="button"
                   onClick={addBulkPrice}
@@ -856,6 +1037,65 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Stock Management */}
+            <div className="border-b pb-6">
+              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
+                <h2 className="text-xl font-semibold text-gray-700 mb-1">Stock Management</h2>
+                <p className="text-sm text-gray-500 mb-5">Enable stock tracking to prevent overselling. When enabled, customers cannot add more than available stock to their cart.</p>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-700">Track Stock</h3>
+                    <p className="text-sm text-gray-500">Enable inventory tracking for this product</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, trackStock: !prev.trackStock }))}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      formData.trackStock ? 'bg-emerald-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        formData.trackStock ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {formData.trackStock && (
+                  <div className="bg-white rounded-lg p-4 border border-emerald-100">
+                    {formData.sizes.some((s) => s.label && s.value) ? (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-3">Stock per size (expand each size card above to set stock)</p>
+                        <div className="space-y-2">
+                          {formData.sizes.filter((s) => s.label && s.value).map((s, i) => (
+                            <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                              <span className="text-sm text-gray-700 font-medium">{s.label || s.value}</span>
+                              <span className="text-sm font-bold text-emerald-700">{s.stockQuantity || 0} units</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Global Stock Quantity</label>
+                        <input
+                          type="number"
+                          name="stockQuantity"
+                          value={formData.stockQuantity}
+                          onChange={handleChange}
+                          min="0"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder="e.g. 100"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

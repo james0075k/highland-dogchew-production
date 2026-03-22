@@ -1,18 +1,17 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
+const Connection = async () => {
+  try {
+    if (!process.env.mongoConnectionString) {
+      console.error('[DB] Missing mongoConnectionString environment variable');
+      process.exit(1);
+    }
+    await mongoose.connect(process.env.mongoConnectionString);
+    console.log('[DB] Connected to MongoDB Atlas successfully');
+  } catch (err) {
+    console.error('[DB] Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  }
+};
 
-const Connection = ()=>{
-
-   mongoose.connect(process.env.mongoConnectionString).then(()=>{
-    console.log("Connection established succesfully in mangodb atlas");
-    
-
-   }).catch((err)=>{
-    console.log("Connection failed unfortunetly", err)
-
-   })
-
-}
-
-
-export default Connection; 
+export default Connection;

@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 
+const bulkTierSchema = new mongoose.Schema({
+  minQty: { type: Number, required: true },
+  salePrice: { type: Number, required: true },
+  originalPrice: { type: Number, required: true },
+  discountPercent: { type: Number, default: 0 },
+}, { _id: false });
+
 const sizeSchema = new mongoose.Schema({
   label: {
     type: String,
@@ -17,6 +24,11 @@ const sizeSchema = new mongoose.Schema({
   originalPrice: {
     type: Number,
     default: null,
+  },
+  bulkTiers: [bulkTierSchema],
+  stockQuantity: {
+    type: Number,
+    default: 0,
   },
 }, { _id: false });
 
@@ -123,6 +135,16 @@ const productSchema = new mongoose.Schema({
     monthlyOptions: [{ type: Number, min: 1 }],
     // Kept for backward compatibility with old products
     intervals: [{ type: String }],
+  },
+
+  // Stock management
+  trackStock: {
+    type: Boolean,
+    default: false,
+  },
+  stockQuantity: {
+    type: Number,
+    default: 0,
   },
 
   // Nutrition / Guaranteed Analysis

@@ -11,6 +11,7 @@
  */
 
 import OrderModel from '../models/orderModel.js';
+import ProductModel from '../models/productModel.js';
 import PromoCodeModel from '../models/promoCodeModel.js';
 import sendEmail from './sendEmail.js';
 import { customerOrderEmailHtml, adminOrderEmailHtml } from './emailTemplates.js';
@@ -133,6 +134,35 @@ export async function createOrderFromPI(pi, customerOverride = null) {
       if (winner) return { order: winner, created: false };
     }
     throw err;
+  }
+
+  // ── Stock decrement (fire-and-forget — never blocks order creation) ───────────
+  try {
+    const lineItems = safeParse(meta.items);
+    for (const item of lineItems) {
+      if (!item.productId) continue;
+      const qty = Number(item.quantity) || 1;
+      if (item.size && item.size !== 'Default') {
+        // Per-size stock decrement
+        await ProductModel.updateOne(
+          { _id: item.productId, 'sizes.value': item.size, trackStock: true },
+          { $inc: { 'sizes.$.stockQuantity': -qty } }
+        ).catch(() => {});
+        // Also try matching by label
+        await ProductModel.updateOne(
+          { _id: item.productId, 'sizes.label': item.size, trackStock: true },
+          { $inc: { 'sizes.$.stockQuantity': -qty } }
+        ).catch(() => {});
+      } else {
+        // Global stock decrement
+        await ProductModel.updateOne(
+          { _id: item.productId, trackStock: true },
+          { $inc: { stockQuantity: -qty } }
+        ).catch(() => {});
+      }
+    }
+  } catch (stockErr) {
+    console.error('[order] Stock decrement failed:', stockErr.message);
   }
 
   // ── Promo code usage increment (fire-and-forget) ──────────────────────────────

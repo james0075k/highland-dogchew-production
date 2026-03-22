@@ -16,19 +16,21 @@ import { ContactInfo } from "@/types";
 import SearchModal from "@/components/organisms/SearchModal/SearchModal";
 
 function ThemeToggle({ className = "" }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return <div className="w-7 h-7" />;
 
+  const isDark = resolvedTheme === "dark";
+
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label="Toggle theme"
       className={`flex items-center justify-center w-7 h-7 rounded-full transition-colors duration-200 text-[#2E1F14] dark:text-[#c8b6a6] hover:text-[#7A5C4F] dark:hover:text-amber-400 ${className}`}
     >
-      {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+      {isDark ? <Sun size={17} /> : <Moon size={17} />}
     </button>
   );
 }
