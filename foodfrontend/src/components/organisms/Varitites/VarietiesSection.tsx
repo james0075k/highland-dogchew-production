@@ -162,7 +162,7 @@ function VarietyCard({ variety, index, onClick, prefersReduced }: { variety: Var
         }}
       >
         <button className="flex-1 h-11 bg-gradient-to-r from-[#B8976A] to-[#9A7B52] hover:from-[#9A7B52] hover:to-[#7A5C4F] text-white text-[11px] font-semibold tracking-[0.16em] uppercase flex items-center justify-center rounded-xl shadow-lg transition-all duration-300" style={{ fontFamily: 'var(--font-dm-sans)' }}>
-          View Products
+          Buy Product
         </button>
       </div>
     </motion.div>
@@ -194,7 +194,7 @@ function MobileVarietyCard({ variety, onClick }: { variety: Variety; onClick: ()
 
       <div className="absolute bottom-0 left-0 right-0 p-4">
         <button className="w-full h-11 bg-gradient-to-r from-[#B8976A] to-[#9A7B52] text-white text-[11px] font-semibold tracking-[0.16em] uppercase rounded-xl shadow-lg transition-colors" style={{ fontFamily: 'var(--font-dm-sans)' }}>
-          View Products
+          Buy Product
         </button>
       </div>
     </div>
@@ -257,6 +257,43 @@ const VarietiesSection = () => {
   const maxIndex = Math.max(0, varieties.length - 1);
   const nextSlide = () => setCurrentIndex(p => Math.min(p + 1, maxIndex));
   const prevSlide = () => setCurrentIndex(p => Math.max(p - 1, 0));
+
+  /* ── Touch swipe state ── */
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const isSwiping = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
+    isSwiping.current = true;
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping.current) return;
+    touchEndX.current = e.touches[0].clientX;
+    const diff = touchEndX.current - touchStartX.current;
+    // Limit swipe offset and add resistance at edges
+    const atStart = currentIndex === 0 && diff > 0;
+    const atEnd = currentIndex === maxIndex && diff < 0;
+    const resistance = (atStart || atEnd) ? 0.25 : 1;
+    setSwipeOffset(diff * resistance);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwiping.current) return;
+    isSwiping.current = false;
+    const diff = touchEndX.current - touchStartX.current;
+    const threshold = 50;
+    if (diff < -threshold) {
+      nextSlide();
+    } else if (diff > threshold) {
+      prevSlide();
+    }
+    setSwipeOffset(0);
+  };
 
   return (
     <section className="w-full bg-[var(--surface-page)] transition-colors duration-300 pt-0 md:pt-0 lg:pt-0">
@@ -346,8 +383,19 @@ const VarietiesSection = () => {
 
             {/* Mobile carousel */}
             <div className="md:hidden">
-              <div className="relative overflow-hidden">
-                <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+              <div
+                className="relative overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div
+                  className="flex ease-out"
+                  style={{
+                    transform: `translateX(calc(-${currentIndex * 100}% + ${swipeOffset}px))`,
+                    transition: isSwiping.current ? 'none' : 'transform 500ms ease-out',
+                  }}
+                >
                   {varieties.map(variety => (
                     <div key={variety._id} className="min-w-full px-1">
                       <MobileVarietyCard variety={variety} onClick={() => handleViewVariety(variety._id)} />
