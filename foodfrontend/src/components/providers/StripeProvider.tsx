@@ -25,19 +25,6 @@ export default function StripeProvider({
       options={{
         clientSecret,
         loader: 'auto',
-        // Priority order for payment method tabs shown to the customer.
-        // Only methods enabled in the Stripe Dashboard will actually appear.
-        // Enabled: card, link, apple_pay, revolut_pay, bancontact, eps,
-        //          amazon_pay, kakao_pay, naver_pay, payco, samsung_pay
-        paymentMethodOrder: [
-          'card',
-          'apple_pay',
-          'link',
-          'revolut_pay',
-          'amazon_pay',
-          'bancontact',
-          'eps',
-        ],
         appearance: {
           theme,
           variables: {
