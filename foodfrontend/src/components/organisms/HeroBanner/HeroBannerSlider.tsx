@@ -6,7 +6,7 @@ const HeroBannerSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isVideoPaused, setIsVideoPaused] = useState(false);
-  const videoRefs = useRef([]);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const slides = [
     {
@@ -105,7 +105,7 @@ const HeroBannerSlider = () => {
           {/* Background Video with Overlay */}
           <div className="absolute inset-0">
             <video
-              ref={(el) => (videoRefs.current[index] = el)}
+              ref={(el) => { videoRefs.current[index] = el; }}
               className="w-full h-full object-cover"
               loop
               muted

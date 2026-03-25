@@ -1,5 +1,4 @@
 import express from 'express'
-import dotenv from 'dotenv'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
 
@@ -41,13 +40,15 @@ import instagramRoute from './src/routes/instagramRoute.js';
 import galleryItemRoute from './src/routes/galleryItemRoute.js';
 import categoryRoute from './src/routes/categoryRoute.js';
 
-
-
-
-dotenv.config();
-
 // ─── Validate required environment variables at startup ──────────────────────
-const requiredEnvVars = ['mongoConnectionString', 'JWT_SECRET', 'STRIPE_SECRET_KEY'];
+// NOTE: dotenv.config() is called in entry.js BEFORE this module loads.
+//       Do not call it here — in ESM, imports run before module body code.
+const requiredEnvVars = [
+  'mongoConnectionString',
+  'JWT_SECRET',
+  'STRIPE_SECRET_KEY',
+  'PRODUCT_WEBHOOK_SECRET', // required — webhook signature verification fails without it
+];
 const missingVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingVars.length > 0) {
   console.error(`[STARTUP] Missing required environment variables: ${missingVars.join(', ')}`);
@@ -57,9 +58,12 @@ if (missingVars.length > 0) {
 
 const app = express();
 const api = process.env.API_URL || 'api';
-
 const port = process.env.PORT || 3333;
 
+// Trust the first proxy hop (Nginx / Cloudflare / Railway / Heroku).
+// Required for express-rate-limit to read the real client IP from X-Forwarded-For
+// instead of the reverse proxy's IP (which would make all clients share one bucket).
+app.set('trust proxy', 1);
 
 app.use(cors({
   origin: [
@@ -80,38 +84,18 @@ app.use('/uploads', express.static('uploads'));
 // Webhook route MUST be before express.json() — Stripe needs raw body
 app.use(`/${api}/webhook`, productWebhookRoute);
 
-app.use(express.json({
-  limit: '1000mb',      
-  parameterLimit: 100000,
-}));
+// C-2 fix: was 1000mb — a 1 GB POST would exhaust server memory.
+// Payment + API routes need at most a few KB; uploads use their own multer limits.
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ limit: '50kb', extended: true }));
 
-app.use(express.urlencoded({ 
-  limit: '1000mb',        
-  extended: true,
-  parameterLimit: 100000
-}));
-
-
-
-// Debugging middleware
-app.use((req, res, next) => {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
+// L-3 fix: only log requests in non-production environments
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, _res, next) => {
+    console.log(`[dev] ${req.method} ${req.url}`);
     next();
   });
-
-  
-  app.use((req, res, next) => {
-  if (req.headers['content-length']) {
-    const size = parseInt(req.headers['content-length']);
-    console.log(`Request size: ${(size / 1024 / 1024).toFixed(2)}MB`);
-    
-    // Log if request is too large
-    if (size > 1000 * 1024 * 1024) {
-      console.log('WARNING: Request exceeds 1GB');
-    }
-  }
-  next();
-});
+}
 
 app.use(`/${api}/logo`, LogoRoute);
 app.use(`/${api}/testimonials`, testimonialRoute);
@@ -119,10 +103,10 @@ app.use(`/${api}/faqs`, faqRoute);
 app.use(`/${api}/partners`, partnerRoute);
 app.use(`/${api}/blogs`, blogRoute);
 app.use(`/${api}/destinations`, destinationRoute);
-app.use(`/${api}/stats`, statRoute);  
+app.use(`/${api}/stats`, statRoute);
 app.use(`/${api}/contact`, contactRoute);
 app.use(`/${api}/herobanner`, heroBannerRoute);
-app.use(`/${api}/tour/tour-packages`, tourPackageRoute  );
+app.use(`/${api}/tour/tour-packages`, tourPackageRoute);
 app.use(`/${api}/tour/bookings`, BookingRoute);
 app.use(`/${api}/reviews`, ReviewRoute);
 app.use(`/${api}/admin`, adminRoute);
@@ -148,7 +132,6 @@ app.use(`/${api}/instagram`, instagramRoute);
 app.use(`/${api}/gallery`, galleryItemRoute);
 app.use(`/${api}/categories`, categoryRoute);
 
-
 // 404 handler for unknown API routes
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith(`/${api}/`)) {
@@ -173,9 +156,6 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-
-
-
 // Database connection — wait for DB before accepting requests
 Connection().then(() => {
   app.listen(port, () => {
@@ -184,7 +164,6 @@ Connection().then(() => {
 });
 
 // ─── Daily subscription renewal cron ─────────────────────────────────────────
-// Runs once per day (every 24 hours). Kept simple — no extra packages needed.
 import('./src/controllers/subscriptionProcessController.js').then(({ processSubscriptions }) => {
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
@@ -204,6 +183,3 @@ import('./src/controllers/subscriptionProcessController.js').then(({ processSubs
 
   console.log('[cron] Subscription renewal cron scheduled (every 24 h)');
 }).catch((err) => console.error('[cron] Failed to load subscription processor:', err.message));
-
-
-

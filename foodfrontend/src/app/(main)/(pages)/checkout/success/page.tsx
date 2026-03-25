@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   CheckCircle,
@@ -15,6 +15,7 @@ import {
   Truck,
   RefreshCcw,
   Calendar,
+  Clock,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSubscriptionContext, type Subscription } from '@/context/SubscriptionContext';
@@ -112,7 +113,6 @@ async function loadOrder(
       if (customer && !order.shippingAddress.email) {
         // Fall through to sync to trigger the patch logic
       } else {
-        console.log('[success] ✅ Order found via GET (webhook was faster)');
         return order;
       }
     }
@@ -127,7 +127,6 @@ async function loadOrder(
     });
     const data = await res.json();
     if (data.success && data.data) {
-      console.log('[success] ✅ Order obtained via sync');
       return data.data as OrderData;
     }
   } catch { /* fall through */ }
@@ -138,7 +137,6 @@ async function loadOrder(
     const res  = await fetch(`${apiBase}/orders/payment-intent/${paymentIntentId}`);
     const data = await res.json();
     if (data.success && data.data) {
-      console.log('[success] ✅ Order found on final retry');
       return data.data as OrderData;
     }
   } catch { /* give up */ }
@@ -149,8 +147,11 @@ async function loadOrder(
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CheckoutSuccessPage() {
-  const searchParams  = useSearchParams();
-  const paymentIntent = searchParams.get('payment_intent');
+  const searchParams     = useSearchParams();
+  const router           = useRouter();
+  const paymentIntent    = searchParams.get('payment_intent');
+  const piClientSecret   = searchParams.get('payment_intent_client_secret');
+  const redirectStatus   = searchParams.get('redirect_status');
   const { clearCart } = useCart();
   const { addSubscription } = useSubscriptionContext();
 
@@ -158,16 +159,29 @@ export default function CheckoutSuccessPage() {
   const [loading,     setLoading]     = useState(true);
   const [createdSubs, setCreatedSubs] = useState<Subscription[]>([]);
 
-  // Capture subscription cart items BEFORE clearing, then clear
+  // Redirect to failed page immediately when redirect_status=failed
   useEffect(() => {
-    const piKey = paymentIntent || 'unknown';
+    if (redirectStatus === 'failed' && paymentIntent) {
+      const params = new URLSearchParams({ payment_intent: paymentIntent });
+      if (piClientSecret) params.set('payment_intent_client_secret', piClientSecret);
+      router.replace(`/checkout/failed?${params.toString()}`);
+    }
+  }, [redirectStatus, paymentIntent, piClientSecret, router]);
+
+  // Capture subscription cart items BEFORE clearing, then clear.
+  // Only run when a valid payment_intent is present — prevents clearing cart
+  // if user navigates to this page directly without completing payment.
+  useEffect(() => {
+    if (!paymentIntent) return;
+    const piKey = paymentIntent;
     if (!sessionStorage.getItem(`hyk_sub_created_${piKey}`)) {
       try {
         const raw = localStorage.getItem('highland-dogchew-cart');
         if (raw) {
           const cartItems = JSON.parse(raw);
           const subItems = cartItems.filter(
-            (i: any) => i.isSubscription && i.subscriptionInterval
+            (i: { isSubscription?: boolean; subscriptionInterval?: string }) =>
+              i.isSubscription && i.subscriptionInterval
           );
           if (subItems.length > 0) {
             sessionStorage.setItem(
@@ -179,7 +193,7 @@ export default function CheckoutSuccessPage() {
       } catch { /* ignore */ }
     }
     clearCart();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paymentIntent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!paymentIntent) { setLoading(false); return; }
@@ -218,6 +232,46 @@ export default function CheckoutSuccessPage() {
       }
     } catch { /* ignore */ }
   }, [order, paymentIntent, addSubscription]);
+
+  // ─── Redirecting to failed page ────────────────────────────────────────────
+
+  if (redirectStatus === 'failed') {
+    return (
+      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-[#2f1e14] dark:text-[#f5e9dc]" />
+      </div>
+    );
+  }
+
+  // ─── Processing state (e.g. bank transfer, delayed methods) ───────────────
+
+  if (redirectStatus === 'processing') {
+    return (
+      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300">
+        <div className="text-center max-w-md px-6">
+          <div className="mx-auto mb-6 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center" style={{ width: 72, height: 72 }}>
+            <Clock className="w-9 h-9 text-amber-500 dark:text-amber-400" />
+          </div>
+          <h1 className="text-2xl font-semibold text-[#2f1e14] dark:text-[#f5e9dc] mb-3 tracking-tight">
+            Payment Processing
+          </h1>
+          <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed mb-2">
+            Your payment is being processed. This can take a moment depending on your payment method.
+          </p>
+          <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed mb-8">
+            You will receive an email confirmation once your order is confirmed. No further action is needed.
+          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 bg-[#2f1e14] dark:bg-amber-600 text-white text-sm font-medium py-3 px-8 rounded hover:opacity-90 transition-opacity"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Continue shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Loading ──────────────────────────────────────────────────────────────
 
@@ -292,7 +346,7 @@ export default function CheckoutSuccessPage() {
                 className="text-[2rem] font-extralight tracking-[0.18em] text-[#2f1e14] dark:text-[#f5e9dc] lowercase leading-none select-none"
                 style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif', fontWeight: 200 }}
               >
-                Highland Yakchew
+                Highland Yak Chew
               </span>
             </Link>
           </div>
@@ -554,7 +608,7 @@ export default function CheckoutSuccessPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px', paddingBottom: '20px', borderBottom: '1px solid #ccc' }}>
           <p style={{ margin: '0 0 2px', fontFamily: 'system-ui, sans-serif', fontWeight: 200, letterSpacing: '0.18em', fontSize: '20px', textTransform: 'lowercase' }}>
-            Highland Yakchew
+            Highland Yak Chew
           </p>
           <p style={{ margin: 0, fontSize: '11px', color: '#888', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             Order Receipt

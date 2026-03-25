@@ -10,12 +10,10 @@
  * attaches the saved payment method, and creates Subscription records.
  */
 
-import Stripe from 'stripe';
+import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ─── POST /api/webhook/stripe ─────────────────────────────────────────────────
 export const handleProductWebhook = async (req, res) => {
@@ -23,7 +21,7 @@ export const handleProductWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       req.body,
       sig,
       process.env.PRODUCT_WEBHOOK_SECRET
@@ -54,6 +52,9 @@ export const handleProductWebhook = async (req, res) => {
         }
       } catch (err) {
         console.error('[webhook] ❌ Error processing payment_intent.succeeded:', err.message);
+        // H-6 fix: return 500 so Stripe retries (up to ~3 days with exponential back-off).
+        // createOrderFromPI is idempotent via unique index — safe to retry.
+        return res.status(500).json({ error: 'Processing failed — will retry' });
       }
       break;
     }
@@ -64,6 +65,19 @@ export const handleProductWebhook = async (req, res) => {
       if (pi.metadata?.type !== 'product-purchase') break;
       const reason = pi.last_payment_error?.message || 'unknown reason';
       console.log(`[webhook] ⚠️  Payment failed for PI ${pi.id}: ${reason}`);
+      break;
+    }
+
+    // ── payment_intent.canceled (L-1 fix) ────────────────────────────────────
+    case 'payment_intent.canceled': {
+      const pi = event.data.object;
+      if (pi.metadata?.type !== 'product-purchase') break;
+      // Mark any partially-created order as cancelled (guard: only if not already paid)
+      await OrderModel.findOneAndUpdate(
+        { paymentIntentId: pi.id, paymentStatus: { $ne: 'paid' } },
+        { paymentStatus: 'failed', orderStatus: 'cancelled' }
+      ).catch((err) => console.error('[webhook] Cancel update failed:', err.message));
+      console.log(`[webhook] 🚫 PI ${pi.id} cancelled`);
       break;
     }
 

@@ -42,6 +42,7 @@ interface TrackResult {
   grandTotal: number;
   shippingAddress: {
     fullName?: string;
+    email?: string;
     addressLine1?: string;
     city?: string;
     postcode?: string;

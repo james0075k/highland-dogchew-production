@@ -13,7 +13,7 @@ const ChatbotWidget = () => {
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const instantAnswers = [
     { id: 1, question: 'Track my order', answer: 'To track your order, please provide your order number and we will check the status for you.' },

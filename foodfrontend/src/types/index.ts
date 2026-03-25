@@ -1,6 +1,6 @@
 // Core Entity Interfaces
 export interface Destination {
-  _id: any;
+  _id: string;
   title: string;
   description?: string;
   slug: string;
@@ -10,7 +10,7 @@ export interface Destination {
 }
 
 export interface TourPackage {
-  duration: any;
+  duration: string | number;
   _id: string;
   title: string;
   description: string;

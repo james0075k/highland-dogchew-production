@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Search, X, ChevronLeft, ChevronRight, ImageOff,
   ZoomIn, Camera,
@@ -204,16 +205,16 @@ const GalleryPage: React.FC = () => {
                     className={`group relative overflow-hidden rounded-2xl border border-amber-100 dark:border-[#3a2c23] bg-white dark:bg-[#1e1510] shadow-sm hover:shadow-xl hover:shadow-amber-900/10 hover:-translate-y-1.5 transition-all duration-500 cursor-pointer ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                   >
                     {/* Image */}
-                    <div className="aspect-[4/3] overflow-hidden bg-amber-50 dark:bg-[#2a1e16]">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-amber-50 dark:bg-[#2a1e16]">
                       {imgErrors.has(key) ? (
                         <ImageFallback title={item.title} />
                       ) : (
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.title}
-                          loading="lazy"
+                          fill
                           onError={() => handleImgError(key)}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       )}
                     </div>
@@ -331,9 +332,11 @@ const GalleryPage: React.FC = () => {
                   <ImageFallback title={lightboxItem.title} />
                 </div>
               ) : (
-                <img
+                <Image
                   src={lightboxItem.image}
                   alt={lightboxItem.title}
+                  width={1200}
+                  height={800}
                   className="w-full h-auto max-h-[65vh] object-contain"
                   onError={() => handleImgError(itemKey(lightboxItem))}
                 />

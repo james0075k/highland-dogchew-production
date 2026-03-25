@@ -13,7 +13,7 @@
  *   On failure: increment failureCount, set status to payment_failed after 3 attempts
  */
 
-import Stripe from 'stripe';
+import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import SubscriptionModel from '../models/subscriptionModel.js';
 import sendEmail from '../utils/sendEmail.js';
@@ -21,8 +21,6 @@ import {
   subscriptionRenewalEmailHtml,
   subscriptionPaymentFailedEmailHtml,
 } from '../utils/emailTemplates.js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const TAX_RATE        = 0.20;
 const DELIVERY_CHARGE = 2.99;
@@ -78,7 +76,7 @@ async function renewSubscription(sub, now) {
   // ── Charge via Stripe off-session ─────────────────────────────────────────
   let pi;
   try {
-    pi = await stripe.paymentIntents.create({
+    pi = await getStripe().paymentIntents.create({
       amount:               amountPence,
       currency:             'gbp',
       customer:             sub.stripeCustomerId,
@@ -139,7 +137,27 @@ async function renewSubscription(sub, now) {
     });
   } catch (err) {
     console.error(`[cron] Order creation failed for ${sub.subscriptionId}:`, err.message);
-    // Payment went through but order failed — log, don't retry payment
+
+    // C-1 fix: payment already went through — MUST advance nextBillingDate here.
+    // Without this, the cron would re-charge the customer on the next run
+    // because nextBillingDate is still <= now.
+    await SubscriptionModel.findByIdAndUpdate(sub._id, {
+      $set: {
+        nextBillingDate: addWeeks(now, sub.intervalWeeks),
+        lastBilledAt:    now,
+        failureReason:   `order_creation_failed: ${err.message}`,
+      },
+      $push: {
+        billingHistory: {
+          date:            now,
+          amount:          grandTotal,
+          status:          'success',
+          paymentIntentId: pi.id,
+          failureReason:   `order_creation_failed: ${err.message}`,
+        },
+      },
+    }).catch((e) => console.error('[cron] Emergency nextBillingDate update failed:', e.message));
+
     return;
   }
 
@@ -179,7 +197,7 @@ async function renewSubscription(sub, now) {
 // ─── Handle a failed renewal attempt ─────────────────────────────────────────
 
 async function handleRenewalFailure(sub, reason) {
-  const newCount = (sub.failureCount || 0) + 1;
+  const newCount  = (sub.failureCount || 0) + 1;
   const newStatus = newCount >= MAX_FAILURES ? 'payment_failed' : 'active';
 
   await SubscriptionModel.findByIdAndUpdate(sub._id, {

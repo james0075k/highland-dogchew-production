@@ -11,7 +11,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { Loader2, Tag, X, ChevronRight, ChevronLeft, Lock } from 'lucide-react';
+import { Loader2, Tag, X, ChevronRight, ChevronLeft, Lock, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -84,6 +84,7 @@ function CheckoutForm({
   onShippingChange,
   breakdown,
   paymentIntentId,
+  updateToken,
   step,
   onStepChange,
 }: {
@@ -97,6 +98,7 @@ function CheckoutForm({
     grandTotal: number;
   };
   paymentIntentId: string;
+  updateToken: string;
   step: 'information' | 'payment';
   onStepChange: (s: 'information' | 'payment') => void;
 }) {
@@ -110,12 +112,21 @@ function CheckoutForm({
     'w-full bg-white dark:bg-[#2a2a2a] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d0d0d0] dark:border-[#444] rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f1e14]/30 dark:focus:ring-[#f5e9dc]/30 focus:border-[#2f1e14] dark:focus:border-[#f5e9dc] placeholder-[#bbb] dark:placeholder-[#555] transition-colors';
 
   const validateInformation = () => {
-    if (!shipping.email.trim() || !shipping.email.includes('@')) return 'A valid email is required.';
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!shipping.email.trim() || !emailRe.test(shipping.email.trim())) return 'A valid email address is required.';
     if (!shipping.firstName.trim()) return 'First name is required.';
     if (!shipping.lastName.trim()) return 'Last name is required.';
     if (!shipping.address.trim()) return 'Address is required.';
     if (!shipping.city.trim()) return 'City is required.';
     if (!shipping.postcode.trim()) return 'Postcode is required.';
+    const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
+    if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
+      return 'Please enter a valid UK postcode (e.g. SW1A 1AA).';
+    }
+    if (shipping.phone.trim()) {
+      const phoneRe = /^[\+\d\s\(\)\-]{7,20}$/;
+      if (!phoneRe.test(shipping.phone.trim())) return 'Please enter a valid phone number.';
+    }
     return null;
   };
 
@@ -129,6 +140,7 @@ function CheckoutForm({
 
   // Attach customer + shipping to the PaymentIntent metadata so the
   // webhook can create the order after payment — no frontend order creation.
+  // H-1 fix: updateToken is required to prove this client created the PI.
   const attachMetaToPaymentIntent = async (overrideDetails?: Partial<{
     firstName: string; lastName: string; email: string; phone: string;
     address: string; city: string; postcode: string; country: string;
@@ -138,6 +150,7 @@ function CheckoutForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         paymentIntentId,
+        updateToken,
         customer: {
           firstName: overrideDetails?.firstName ?? shipping.firstName,
           lastName:  overrideDetails?.lastName  ?? shipping.lastName,
@@ -203,7 +216,7 @@ function CheckoutForm({
       // ── Attempt to attach to PI metadata (best-effort) ────────────────────
       await attachMetaToPaymentIntent({
         firstName, lastName, email, phone, address: addressLine1, city, postcode, country,
-      }).catch(() => { /* non-fatal — sessionStorage is the fallback */ });
+      }).catch((err: unknown) => { console.error('[checkout] metadata update failed:', err); });
 
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
@@ -243,7 +256,7 @@ function CheckoutForm({
 
       // ── Attempt to attach to PI metadata (best-effort) ────────────────────
       await attachMetaToPaymentIntent().catch(
-        () => { /* non-fatal — sessionStorage is the fallback */ }
+        (err: unknown) => { console.error('[checkout] metadata update failed:', err); }
       );
 
       const { error: stripeError } = await stripe.confirmPayment({
@@ -564,6 +577,7 @@ export default function CheckoutPage() {
   const [shipping, setShipping] = useState<ShippingForm>(initialShipping);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [updateToken, setUpdateToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -609,6 +623,7 @@ export default function CheckoutPage() {
         if (data.success && data.data?.clientSecret) {
           setClientSecret(data.data.clientSecret);
           setPaymentIntentId(data.data.paymentIntentId);
+          setUpdateToken(data.data.updateToken);
           setServerBreakdown(data.data.breakdown);
         } else {
           setError(data.message || 'Failed to initialize payment');
@@ -619,7 +634,8 @@ export default function CheckoutPage() {
         setLoading(false);
       }
     };
-    createIntent();
+    const timer = setTimeout(createIntent, 300);
+    return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartKey, promoKey]);
 
@@ -635,7 +651,13 @@ export default function CheckoutPage() {
     setPromoLoading(false);
   };
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-white dark:bg-[#1a1a1a]">
+        <Loader2 className="w-6 h-6 animate-spin text-[#2f1e14] dark:text-[#f5e9dc]" />
+      </div>
+    );
+  }
 
   const breakdown = serverBreakdown || { subtotal, discount, totalTax, totalDelivery, grandTotal };
   const isDark = mounted && resolvedTheme === 'dark';
@@ -652,7 +674,7 @@ export default function CheckoutPage() {
             <span className="text-[2.6rem] sm:text-[3.2rem] font-extralight tracking-[0.18em] text-[#2f1e14] dark:text-[#f5e9dc] lowercase leading-none select-none"
               style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif', fontWeight: 200 }}
             >
-              Highland Yakchew
+              Highland Yak Chew
             </span>
           </Link>
 
@@ -672,13 +694,14 @@ export default function CheckoutPage() {
               <Loader2 className="w-6 h-6 animate-spin text-[#2f1e14] dark:text-[#f5e9dc]" />
               <span className="text-sm text-[#aaa] dark:text-[#666]">Setting up secure checkout…</span>
             </div>
-          ) : clientSecret && paymentIntentId ? (
+          ) : clientSecret && paymentIntentId && updateToken ? (
             <StripeProvider key={paymentIntentId} clientSecret={clientSecret} theme={isDark ? 'night' : 'stripe'}>
               <CheckoutForm
                 shipping={shipping}
                 onShippingChange={handleShippingChange}
                 breakdown={breakdown}
                 paymentIntentId={paymentIntentId}
+                updateToken={updateToken}
                 step={step}
                 onStepChange={setStep}
               />
@@ -694,7 +717,7 @@ export default function CheckoutPage() {
           {/* Cart items */}
           <div className="space-y-4 mb-6">
             {items.map((item) => (
-              <div key={`${item.productId}-${item.size}`} className="flex items-center gap-4">
+              <div key={`${item.productId}-${item.size}-${item.isSubscription ? 'sub' : 'once'}`} className="flex items-center gap-4">
                 {/* Thumbnail with quantity badge */}
                 <div className="relative w-14 h-14 rounded-md overflow-hidden bg-white dark:bg-[#2a2a2a] border border-[#e0e0e0] dark:border-[#444] shrink-0">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
@@ -705,6 +728,12 @@ export default function CheckoutPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] truncate">{item.name}</p>
                   <p className="text-xs text-[#aaa] dark:text-[#666] mt-0.5">{item.size}</p>
+                  {item.isSubscription && item.subscriptionInterval && (
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1">
+                      <RefreshCcw className="w-2.5 h-2.5 flex-shrink-0" />
+                      {item.subscriptionInterval}
+                    </p>
+                  )}
                 </div>
                 <span className="text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] shrink-0">
                   £{(item.unitPrice * item.quantity).toFixed(2)}

@@ -6,11 +6,10 @@
  * subscriptions are always created regardless of which path runs first.
  */
 
-import Stripe from 'stripe';
+import { randomBytes } from 'crypto';
+import { getStripe } from '../config/stripe.js';
 import SubscriptionModel from '../models/subscriptionModel.js';
-import { safeParse } from './createOrderFromPI.js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { safeParse, unchunkFromMeta } from './createOrderFromPI.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,9 +30,11 @@ function addWeeks(date, weeks) {
   return d;
 }
 
+// M-1 fix: use crypto.randomBytes instead of Math.random
+// 4 random bytes = 8 hex chars = ~4.3 billion combinations (vs ~1.7M before)
 function generateSubId() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const rand = randomBytes(4).toString('hex').toUpperCase();
   return `SUB-${date}-${rand}`;
 }
 
@@ -48,43 +49,53 @@ export async function createSubscriptionsFromPI(pi, order) {
     return;
   }
 
-  const subItems = safeParse(meta.subscriptionItems, []);
+  // H-4 fix: reassemble subscription items from chunked metadata (prefix "si")
+  const subItems = safeParse(unchunkFromMeta(meta, 'si'), []);
   if (!subItems.length) {
     console.warn('[sub] hasSubscription=true but subscriptionItems is empty');
     return;
   }
 
-  const email = meta.c_email || '';
+  const email = (meta.c_email || '').toLowerCase();
 
-  // ── Find or create a Stripe Customer ───────────────────────────────────────
+  // ── M-3 fix: resolve Stripe Customer via our own DB first ───────────────────
+  // Querying our own DB is fast, consistent, and avoids cross-account collisions
+  // that could occur when using stripe.customers.list({ email }).
   let stripeCustomerId;
   try {
-    const existing = await stripe.customers.list({ email, limit: 1 });
-    if (existing.data.length > 0) {
-      stripeCustomerId = existing.data[0].id;
+    const existingSubDoc = await SubscriptionModel.findOne({
+      email,
+      stripeCustomerId: { $exists: true, $ne: '' },
+    }).select('stripeCustomerId').lean();
+
+    if (existingSubDoc?.stripeCustomerId) {
+      stripeCustomerId = existingSubDoc.stripeCustomerId;
+      console.log(`[sub] Reusing existing Stripe Customer ${stripeCustomerId} for ${email}`);
     } else {
-      const customer = await stripe.customers.create({
+      // No prior subscription — create a new Stripe Customer
+      const customer = await getStripe().customers.create({
         email,
         name: `${meta.c_firstName || ''} ${meta.c_lastName || ''}`.trim() || undefined,
         phone: meta.c_phone || undefined,
       });
       stripeCustomerId = customer.id;
+      console.log(`[sub] Created new Stripe Customer ${stripeCustomerId} for ${email}`);
     }
 
     // Attach the payment method to the customer (idempotent if already attached)
-    await stripe.paymentMethods.attach(pi.payment_method, { customer: stripeCustomerId })
+    await getStripe().paymentMethods.attach(pi.payment_method, { customer: stripeCustomerId })
       .catch((err) => {
         // "already attached" is not an error worth stopping for
         if (!err.message?.includes('already been attached')) throw err;
       });
 
     // Set as default for future invoices
-    await stripe.customers.update(stripeCustomerId, {
+    await getStripe().customers.update(stripeCustomerId, {
       invoice_settings: { default_payment_method: pi.payment_method },
     });
   } catch (err) {
     console.error('[sub] Stripe Customer setup failed:', err.message);
-    return; // Don't create subscriptions if Customer setup failed
+    return; // Don't create subscription records if Customer setup failed
   }
 
   // ── Shipping address from order ─────────────────────────────────────────────
@@ -92,14 +103,14 @@ export async function createSubscriptionsFromPI(pi, order) {
 
   // ── Create a SubscriptionModel document per subscription line item ──────────
   for (const item of subItems) {
-    const intervalWeeks = parseIntervalWeeks(item.subscriptionInterval);
+    const intervalWeeks  = parseIntervalWeeks(item.subscriptionInterval);
     const nextBillingDate = addWeeks(new Date(), intervalWeeks);
 
     try {
-      // Idempotency: check if subscription already exists for this PI + productId
+      // Idempotency: check if subscription already exists for this PI + product
       const existingDoc = await SubscriptionModel.findOne({
         'billingHistory.paymentIntentId': pi.id,
-        'product': item.productId || undefined,
+        product: item.productId || undefined,
         productName: item.name,
       });
       if (existingDoc) {
@@ -109,7 +120,7 @@ export async function createSubscriptionsFromPI(pi, order) {
 
       const sub = await SubscriptionModel.create({
         subscriptionId:   generateSubId(),
-        email:            email.toLowerCase(),
+        email,
         stripeCustomerId,
         paymentMethodId:  pi.payment_method,
         product:          item.productId || undefined,

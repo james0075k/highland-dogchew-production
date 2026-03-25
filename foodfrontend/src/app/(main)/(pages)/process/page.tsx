@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Image from "next/image";
 import {
   motion,
   useInView,
@@ -186,10 +187,11 @@ const OurPromiseCards = () => {
           className="absolute inset-0"
           style={{ y: heroY, scale: heroScale }}
         >
-          <img
+          <Image
             src="/images/dog-3.jpeg"
             alt="Dog enjoying Highland Yak Chew"
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
         </motion.div>
 
@@ -282,9 +284,11 @@ const OurPromiseCards = () => {
       <FadeUp delay={0.1}>
         <div className="relative max-w-5xl mx-auto px-6 py-12 md:py-16">
           <div className="relative overflow-hidden rounded-2xl md:rounded-3xl">
-            <img
+            <Image
               src="/images/dog-30.jpeg"
               alt="Happy dogs with Highland Yak Chews"
+              width={1000}
+              height={300}
               className="w-full h-[220px] md:h-[300px] object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#1a1410]/70 via-[#1a1410]/40 to-transparent" />
@@ -377,10 +381,11 @@ function PosterCard({
 
       {/* image */}
       <div className="relative aspect-[16/11] w-full bg-[var(--surface-image-bg)] overflow-hidden">
-        <motion.img
+        <Image
           src={card.image}
           alt={card.title}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[var(--surface-card)] dark:from-[#1f1812] to-transparent transition-colors duration-300" />
 

@@ -53,7 +53,7 @@ interface Subscription {
   lastBilledAt?: string;
   failureCount: number;
   failureReason?: string;
-  firstOrderId?: { orderNumber: string; grandTotal: number; createdAt: string };
+  firstOrderId?: { _id?: string; orderNumber: string; grandTotal: number; createdAt: string };
   billingHistory: BillingEntry[];
   shippingAddress: Address;
   createdAt: string;

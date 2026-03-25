@@ -113,9 +113,15 @@ export function AdminTable<T extends ItemBase>({
   const itemsPerPage = 8;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState<{
+    show: boolean;
+    type: "confirm" | "success" | "error" | "warning";
+    message: string;
+    onConfirm: () => void;
+    onCancel: (() => void) | undefined;
+  }>({
     show: false,
-    type: "confirm" as "confirm" | "success" | "error" | "warning",
+    type: "confirm",
     message: "",
     onConfirm: () => {},
     onCancel: () => {},

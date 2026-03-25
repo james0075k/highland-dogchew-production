@@ -35,7 +35,7 @@ function ThemeToggle({ className = "" }: { className?: string }) {
   );
 }
 
-const throttle = (func: Function, limit: number) => {
+const throttle = (func: (...args: unknown[]) => void, limit: number) => {
   let inThrottle: boolean;
   return function (this: any, ...args: any[]) {
     if (!inThrottle) {

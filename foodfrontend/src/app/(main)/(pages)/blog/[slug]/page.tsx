@@ -43,7 +43,7 @@ function renderMarkdown(md: string) {
   const elements: React.ReactNode[] = [];
   let key = 0;
   let inTable = false;
-  let tableRows: string[][] = [];
+  let tableRows: string[] = [];
 
   const flushTable = () => {
     if (!tableRows.length) return;
@@ -81,7 +81,7 @@ function renderMarkdown(md: string) {
   for (const line of lines) {
     if (line.startsWith('|')) {
       inTable = true;
-      tableRows.push(line.split('|').map((s) => s.trim()).filter(Boolean));
+      tableRows.push(line);
       continue;
     }
     if (inTable) flushTable();

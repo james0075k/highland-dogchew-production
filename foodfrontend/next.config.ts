@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     // Serve Cloudinary images at original quality (Cloudinary handles its own optimisation)
     formats: ['image/avif', 'image/webp'],

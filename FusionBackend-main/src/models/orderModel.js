@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { randomBytes } from 'crypto';
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -123,11 +124,12 @@ const orderSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Auto-generate order number
+// Auto-generate order number using crypto.randomBytes (not Math.random)
+// 3 random bytes = 6 hex chars = ~16.7 million combinations per timestamp bucket
 orderSchema.pre('validate', function (next) {
   if (!this.orderNumber) {
     const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const random = randomBytes(3).toString('hex').toUpperCase();
     this.orderNumber = `HD-${timestamp}-${random}`;
   }
   next();

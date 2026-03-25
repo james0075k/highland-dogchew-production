@@ -3,6 +3,7 @@
 import TextHeader from '@/components/atoms/headings';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import Image from 'next/image';
 
 const HimalayanDelightHero = () => {
   const prefersReduced = useReducedMotion();
@@ -28,10 +29,11 @@ const HimalayanDelightHero = () => {
         }}
         style={{ willChange: 'transform' }}
       >
-        <img
+        <Image
           src="/images/dog-9.jpeg"
           alt="Husky standing on Himalayan mountain rocks"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
       </motion.div>
 
@@ -39,21 +41,21 @@ const HimalayanDelightHero = () => {
       <div className="absolute inset-0 bg-black/50" />
 
       {/* Decorative floating cheese pieces */}
-      <div className="absolute top-8 left-8 md:top-12 md:left-12 w-32 h-32 md:w-40 md:h-40 opacity-90 animate-float">
-        <img src="/images/dog-2.jpeg" alt="Malamute with stick"
-          className="w-full h-full object-cover rounded-lg transform -rotate-12" />
+      <div className="absolute top-8 left-8 md:top-12 md:left-12 w-32 h-32 md:w-40 md:h-40 opacity-90 animate-float relative">
+        <Image src="/images/dog-2.jpeg" alt="Malamute with stick"
+          fill className="object-cover rounded-lg transform -rotate-12" />
       </div>
-      <div className="absolute top-8 right-8 md:top-12 md:right-12 w-32 h-32 md:w-48 md:h-32 opacity-90 animate-float-delayed">
-        <img src="/images/dog-7.jpeg" alt="Husky side profile"
-          className="w-full h-full object-cover rounded-lg transform rotate-6" />
+      <div className="absolute top-8 right-8 md:top-12 md:right-12 w-32 h-32 md:w-48 md:h-32 opacity-90 animate-float-delayed relative">
+        <Image src="/images/dog-7.jpeg" alt="Husky side profile"
+          fill className="object-cover rounded-lg transform rotate-6" />
       </div>
-      <div className="absolute bottom-8 left-4 md:bottom-12 md:left-8 w-28 h-28 md:w-36 md:h-36 opacity-90 animate-float">
-        <img src="/images/dog-19.jpeg" alt="Bernese Mountain Dog"
-          className="w-full h-full object-cover rounded-lg transform rotate-12" />
+      <div className="absolute bottom-8 left-4 md:bottom-12 md:left-8 w-28 h-28 md:w-36 md:h-36 opacity-90 animate-float relative">
+        <Image src="/images/dog-19.jpeg" alt="Bernese Mountain Dog"
+          fill className="object-cover rounded-lg transform rotate-12" />
       </div>
-      <div className="absolute bottom-8 right-4 md:bottom-12 md:right-12 w-36 h-24 md:w-48 md:h-32 opacity-90 animate-float-delayed">
-        <img src="/images/dog-20.jpeg" alt="Rottweiler at sunset"
-          className="w-full h-full object-cover rounded-lg transform -rotate-6" />
+      <div className="absolute bottom-8 right-4 md:bottom-12 md:right-12 w-36 h-24 md:w-48 md:h-32 opacity-90 animate-float-delayed relative">
+        <Image src="/images/dog-20.jpeg" alt="Rottweiler at sunset"
+          fill className="object-cover rounded-lg transform -rotate-6" />
       </div>
 
       {/* Center Content */}

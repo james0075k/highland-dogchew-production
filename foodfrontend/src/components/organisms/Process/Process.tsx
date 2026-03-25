@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 const Process = () => {
   const steps = [
@@ -127,9 +128,11 @@ const Process = () => {
 
                   {/* Image */}
                   <div className="rounded-2xl overflow-hidden shadow-2xl">
-                    <img
+                    <Image
                       src={step.image}
                       alt={step.title}
+                      width={800}
+                      height={400}
                       className="w-full h-[400px] object-cover"
                     />
                   </div>

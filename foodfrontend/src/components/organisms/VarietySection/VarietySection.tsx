@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, ArrowUp } from 'lucide-react';
+import Image from 'next/image';
 
 const VarietySection = () => {
   const [activeTab, setActiveTab] = useState('TURMERIC');
@@ -160,10 +161,11 @@ const VarietySection = () => {
           <div>
             {/* Main Image */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">
-              <img
+              <Image
                 src={currentProduct.images[selectedImage]}
                 alt={`${currentProduct.name} ${selectedImage + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
               
               {/* Navigation Arrows */}
@@ -191,16 +193,17 @@ const VarietySection = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square rounded-xl overflow-hidden border-3 transition-all ${
+                  className={`relative aspect-square rounded-xl overflow-hidden border-3 transition-all ${
                     selectedImage === index
                       ? 'border-cyan-600 ring-4 ring-cyan-200'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <img
+                  <Image
                     src={img}
                     alt={`Thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </button>
               ))}

@@ -309,10 +309,10 @@ export default function OrderDetailPage() {
                 {order.orderNumber}
               </h1>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${paymentBadge[order.paymentStatus] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${paymentBadge[order.paymentStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                   {cap(order.paymentStatus)}
                 </span>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${orderBadge[order.orderStatus] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${orderBadge[order.orderStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                   {cap(order.orderStatus)}
                 </span>
                 <span className="text-blue-200/50 text-xs flex items-center gap-1">
@@ -630,7 +630,7 @@ export default function OrderDetailPage() {
                 {/* Current status display */}
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <div className="text-xs text-gray-400 font-medium">Current status</div>
-                  <span className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full border ${orderBadge[order.orderStatus] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                  <span className={`ml-auto text-xs font-bold px-2.5 py-1 rounded-full border ${orderBadge[order.orderStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                     {cap(order.orderStatus)}
                   </span>
                 </div>

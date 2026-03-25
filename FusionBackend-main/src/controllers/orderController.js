@@ -7,59 +7,61 @@
  *   • Fully idempotent — safe to call multiple times for the same payment
  *
  * GET  /api/orders/payment-intent/:paymentIntentId
- *   • Lightweight read used by the success page to check if order already exists
- *     (avoids a Stripe API call when the webhook already fired)
+ *   • Used by the success page to check if the order already exists
+ *   • Returns a stripped response (no phone/internal fields)
+ *
+ * POST /api/orders/my-orders
+ *   • Returns order history for a given email (rate-limited in route)
+ *
+ * POST /api/orders/track
+ *   • Public parcel tracking — validates email + orderNumber before returning
+ *
+ * NOTE: POST /api/orders/create has been removed.
+ *       Order creation now happens exclusively via the Stripe webhook
+ *       (productWebhookController) or the /sync endpoint below.
+ *       Both paths use createOrderFromPI which is payment-verified and idempotent.
  */
 
-import Stripe from 'stripe';
+import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// ─── POST /api/orders/create (legacy — kept for backwards compat) ─────────────
-export const createOrder = async (req, res, next) => {
-  try {
-    const {
-      items, shippingAddress, subtotal, totalTax,
-      totalDelivery, totalDiscount, grandTotal, paymentIntentId,
-    } = req.body;
-
-    if (paymentIntentId) {
-      const existing = await OrderModel.findOne({ paymentIntentId });
-      if (existing) return handleSuccess(res, 200, 'Order already exists', existing);
-    }
-
-    const order = await OrderModel.create({
-      items, shippingAddress, subtotal, totalTax,
-      totalDelivery, totalDiscount: totalDiscount || 0,
-      grandTotal, paymentIntentId,
-      paymentStatus: 'pending',
-      orderStatus: 'pending',
-    });
-
-    return handleSuccess(res, 201, 'Order created successfully', order);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // ─── GET /api/orders/payment-intent/:paymentIntentId ─────────────────────────
+// Used by the success page to confirm the order exists.
+// Phone is excluded — it is PII that the success page doesn't need.
 export const getOrderByPaymentIntent = async (req, res, next) => {
   try {
     const { paymentIntentId } = req.params;
-    const order = await OrderModel.findOne({ paymentIntentId });
+    const order = await OrderModel.findOne({ paymentIntentId }).lean();
     if (!order) return next(handleError(404, 'Order not found'));
-    return handleSuccess(res, 200, 'Order fetched successfully', order);
+
+    // Strip internal/sensitive fields before returning
+    const { shippingAddress, ...rest } = order;
+    const safeAddress = shippingAddress
+      ? {
+          fullName:     shippingAddress.fullName,
+          addressLine1: shippingAddress.addressLine1,
+          addressLine2: shippingAddress.addressLine2,
+          city:         shippingAddress.city,
+          county:       shippingAddress.county,
+          postcode:     shippingAddress.postcode,
+          country:      shippingAddress.country,
+          // email included so success page can show "confirmation sent to …"
+          email:        shippingAddress.email,
+          // phone omitted — not needed on success page
+        }
+      : {};
+
+    return handleSuccess(res, 200, 'Order fetched successfully', { ...rest, shippingAddress: safeAddress });
   } catch (err) {
     next(err);
   }
 };
 
-// ─── GET /api/orders ──────────────────────────────────────────────────────────
+// ─── GET /api/orders — admin only ────────────────────────────────────────────
 export const getUserOrders = async (req, res, next) => {
   try {
     const orders = await OrderModel.find().sort({ createdAt: -1 }).limit(50);
@@ -71,8 +73,8 @@ export const getUserOrders = async (req, res, next) => {
 
 // ─── POST /api/orders/my-orders — Fetch all orders by email ──────────────────
 // Body: { email }
-// Returns all orders where shippingAddress.email matches (case-insensitive).
-// Only returns safe customer-facing fields.
+// Rate-limited in orderRoute.js (10 req / 15 min per IP).
+// Returns only safe customer-facing fields — no phone, no internal IDs.
 export const getMyOrders = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -105,11 +107,11 @@ export const getMyOrders = async (req, res, next) => {
         unitPrice: i.unitPrice,
       })),
       shippingAddress: {
-        fullName:    o.shippingAddress?.fullName,
+        fullName:     o.shippingAddress?.fullName,
         addressLine1: o.shippingAddress?.addressLine1,
-        city:        o.shippingAddress?.city,
-        postcode:    o.shippingAddress?.postcode,
-        country:     o.shippingAddress?.country,
+        city:         o.shippingAddress?.city,
+        postcode:     o.shippingAddress?.postcode,
+        country:      o.shippingAddress?.country,
       },
     }));
 
@@ -162,11 +164,11 @@ export const trackOrder = async (req, res, next) => {
       totalDelivery: order.totalDelivery,
       grandTotal:    order.grandTotal,
       shippingAddress: {
-        fullName:    order.shippingAddress?.fullName,
+        fullName:     order.shippingAddress?.fullName,
         addressLine1: order.shippingAddress?.addressLine1,
-        city:        order.shippingAddress?.city,
-        postcode:    order.shippingAddress?.postcode,
-        country:     order.shippingAddress?.country,
+        city:         order.shippingAddress?.city,
+        postcode:     order.shippingAddress?.postcode,
+        country:      order.shippingAddress?.country,
       },
     };
 
@@ -202,7 +204,7 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
     // ── Retrieve PI from Stripe to verify payment ─────────────────────────────
     let pi;
     try {
-      pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+      pi = await getStripe().paymentIntents.retrieve(paymentIntentId);
     } catch (stripeErr) {
       return next(handleError(400, `Stripe error: ${stripeErr.message}`));
     }

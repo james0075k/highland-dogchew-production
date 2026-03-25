@@ -6,11 +6,13 @@ import {
   FiPackage, FiStar, FiMail, FiLayers, FiGrid,
   FiArrowRight, FiAlertCircle, FiRefreshCw, FiShoppingBag,
   FiTrendingUp, FiUsers, FiMessageCircle, FiAward,
+  FiCreditCard, FiRepeat, FiCheckCircle, FiClock,
 } from 'react-icons/fi';
 import { GiDogBowl } from 'react-icons/gi';
 
-// ─── Animated counter ────────────────────────────────────────────────────────
-function useCountUp(target: number, duration = 1200) {
+/* ─── Hooks ──────────────────────────────────────────────────────────────── */
+
+function useCountUp(target: number, duration = 1400) {
   const [count, setCount] = useState(0);
   const raf = useRef<number | null>(null);
   useEffect(() => {
@@ -27,7 +29,6 @@ function useCountUp(target: number, duration = 1200) {
   return count;
 }
 
-// ─── Live clock ──────────────────────────────────────────────────────────────
 function useLiveClock() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -39,61 +40,169 @@ function useLiveClock() {
 }
 
 function getGreeting(h: number) {
-  if (h >= 5 && h < 12) return { text: 'Good Morning', emoji: '🌅' };
+  if (h >= 5  && h < 12) return { text: 'Good Morning',   emoji: '🌅' };
   if (h >= 12 && h < 17) return { text: 'Good Afternoon', emoji: '☀️' };
-  if (h >= 17 && h < 21) return { text: 'Good Evening', emoji: '🌆' };
+  if (h >= 17 && h < 21) return { text: 'Good Evening',   emoji: '🌆' };
   return { text: 'Good Night', emoji: '🌙' };
 }
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, accent, iconBg, iconColor }: {
-  icon: React.ElementType; label: string; value: number;
-  accent: string; iconBg: string; iconColor: string;
+/* ─── SVG: Smooth area line chart ────────────────────────────────────────── */
+
+function SmoothLineChart({ data }: {
+  data: { month: string; contacts: number; reviews: number }[];
 }) {
-  const animated = useCountUp(value);
+  const W = 540, H = 180;
+  const PAD = { top: 16, right: 16, bottom: 28, left: 32 };
+  const w = W - PAD.left - PAD.right;
+  const h = H - PAD.top  - PAD.bottom;
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.contacts, d.reviews)), 1);
+  const toX = (i: number) => (data.length < 2 ? w / 2 : (i / (data.length - 1)) * w);
+  const toY = (v: number) => h - (v / maxVal) * h;
+
+  function smoothPath(vals: number[]) {
+    const pts = vals.map((v, i) => ({ x: toX(i), y: toY(v) }));
+    if (pts.length === 0) return '';
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const cx = (pts[i - 1].x + pts[i].x) / 2;
+      d += ` C ${cx} ${pts[i - 1].y} ${cx} ${pts[i].y} ${pts[i].x} ${pts[i].y}`;
+    }
+    return d;
+  }
+
+  function areaPath(vals: number[]) {
+    const line = smoothPath(vals);
+    if (!line) return '';
+    return `${line} L ${toX(vals.length - 1)} ${h} L ${toX(0)} ${h} Z`;
+  }
+
+  const cPath  = smoothPath(data.map(d => d.contacts));
+  const cArea  = areaPath(data.map(d => d.contacts));
+  const rPath  = smoothPath(data.map(d => d.reviews));
+  const rArea  = areaPath(data.map(d => d.reviews));
+  const gridYs = [0, 0.25, 0.5, 0.75, 1].map(p => ({ y: h - p * h, v: Math.round(p * maxVal) }));
+
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
-      <div className={`absolute top-0 left-0 right-0 h-[3px] ${accent} rounded-t-2xl`} />
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 tabular-nums">{animated}</p>
-        </div>
-        <div className={`p-2.5 rounded-xl ${iconBg}`}>
-          <Icon className={iconColor} size={20} />
-        </div>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <defs>
+        <linearGradient id="lc-amber" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#F59E0B" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id="lc-indigo" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#818CF8" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#818CF8" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <g transform={`translate(${PAD.left},${PAD.top})`}>
+        {gridYs.map((g, i) => (
+          <g key={i}>
+            <line x1={0} y1={g.y} x2={w} y2={g.y} stroke="#f1f5f9" strokeWidth={1} />
+            <text x={-6} y={g.y + 4} textAnchor="end" fill="#94a3b8" fontSize={9} fontFamily="DM Sans,sans-serif">{g.v}</text>
+          </g>
+        ))}
+        {rArea  && <path d={rArea}  fill="url(#lc-indigo)" />}
+        {cArea  && <path d={cArea}  fill="url(#lc-amber)" />}
+        {rPath  && <path d={rPath}  fill="none" stroke="#818CF8" strokeWidth={2}   strokeLinecap="round" />}
+        {cPath  && <path d={cPath}  fill="none" stroke="#F59E0B" strokeWidth={2.5} strokeLinecap="round" />}
+        {data.map((d, i) => (
+          <g key={i}>
+            <circle cx={toX(i)} cy={toY(d.contacts)} r={3.5} fill="#F59E0B" stroke="#fff" strokeWidth={1.5} />
+            <circle cx={toX(i)} cy={toY(d.reviews)}  r={3}   fill="#818CF8" stroke="#fff" strokeWidth={1.5} />
+            <text x={toX(i)} y={h + 18} textAnchor="middle" fill="#94a3b8" fontSize={9} fontFamily="DM Sans,sans-serif">{d.month}</text>
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/* ─── SVG: Donut chart ───────────────────────────────────────────────────── */
+
+function DonutChart({ yak, puff, highland }: { yak: number; puff: number; highland: number }) {
+  const total = yak + puff + highland;
+  const r = 44, cx = 60, cy = 60, sw = 16;
+  const C = 2 * Math.PI * r;
+  const segments = [
+    { label: 'Yak Milk',    count: yak,      color: '#F59E0B' },
+    { label: 'Puff Treats', count: puff,     color: '#A78BFA' },
+    { label: 'Highland Mix', count: highland, color: '#2DD4BF' },
+  ];
+  let cum = 0;
+  const slices = segments.map(s => {
+    const pct = total > 0 ? s.count / total : 0;
+    const start = cum;
+    cum += pct;
+    return { ...s, pct, dash: pct * C, gap: C - pct * C, offset: -start * C };
+  });
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+      <svg viewBox="0 0 120 120" style={{ width: 110, height: 110, flexShrink: 0 }}>
+        {total === 0
+          ? <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={sw} />
+          : slices.map((s, i) => (
+              <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+                stroke={s.color} strokeWidth={sw}
+                strokeDasharray={`${s.dash} ${s.gap}`}
+                strokeDashoffset={s.offset}
+                transform={`rotate(-90 ${cx} ${cy})`}
+                style={{ transition: 'stroke-dasharray 1s ease' }} />
+            ))
+        }
+        <text x={cx} y={cy - 7} textAnchor="middle" fill="#111827"
+          fontSize={20} fontWeight="700" fontFamily="DM Sans,sans-serif">{total}</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fill="#9ca3af"
+          fontSize={8} fontFamily="DM Sans,sans-serif">TOTAL</text>
+      </svg>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {slices.map(s => (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: 12, color: '#374151', fontFamily: 'DM Sans,sans-serif' }}>{s.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', fontFamily: 'DM Sans,sans-serif', minWidth: 18, textAlign: 'right' }}>{s.count}</span>
+            <span style={{ fontSize: 10, color: '#9ca3af', fontFamily: 'DM Sans,sans-serif', minWidth: 28, textAlign: 'right' }}>
+              {total > 0 ? Math.round(s.count / total * 100) : 0}%
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// ─── Inventory breakdown bar ──────────────────────────────────────────────────
-function BreakdownBar({ label, count, total, color }: {
-  label: string; count: number; total: number; color: string;
-}) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+/* ─── SVG: Mini sparkline ────────────────────────────────────────────────── */
+
+function MiniSparkline({ vals, color }: { vals: number[]; color: string }) {
+  const W = 64, H = 24;
+  const max = Math.max(...vals, 1);
+  const pts = vals.map((v, i) => ({
+    x: (i / (vals.length - 1)) * W,
+    y: H - (v / max) * H,
+  }));
+  let d = pts.length > 0 ? `M ${pts[0].x} ${pts[0].y}` : '';
+  for (let i = 1; i < pts.length; i++) {
+    const cx = (pts[i - 1].x + pts[i].x) / 2;
+    d += ` C ${cx} ${pts[i - 1].y} ${cx} ${pts[i].y} ${pts[i].x} ${pts[i].y}`;
+  }
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">{count}</span>
-          <span className="text-xs text-gray-400 w-9 text-right">{pct}%</span>
-        </div>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H }}>
+      {d && <path d={d} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" opacity={0.6} />}
+      {pts.length > 0 && (
+        <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={2.5} fill={color} />
+      )}
+    </svg>
   );
 }
 
-// ─── Star display ─────────────────────────────────────────────────────────────
+/* ─── Stars ──────────────────────────────────────────────────────────────── */
+
 function Stars({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div style={{ display: 'flex', gap: 2 }}>
       {[1, 2, 3, 4, 5].map(s => (
-        <svg key={s} width="11" height="11" viewBox="0 0 24 24">
+        <svg key={s} width={11} height={11} viewBox="0 0 24 24">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
             fill={s <= rating ? '#f59e0b' : '#e5e7eb'} />
         </svg>
@@ -102,115 +211,116 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-// ─── Activity Bar Chart ───────────────────────────────────────────────────────
-function ActivityChart({ data }: {
-  data: { month: string; contacts: number; reviews: number }[];
+/* ─── Stat card ──────────────────────────────────────────────────────────── */
+
+function StatCard({ icon: Icon, label, value, accentColor, iconBg, iconColor, sparkVals, sparkColor, sub }: {
+  icon: React.ElementType; label: string; value: number;
+  accentColor: string; iconBg: string; iconColor: string;
+  sparkVals?: number[]; sparkColor?: string; sub?: string;
 }) {
-  const maxVal = Math.max(...data.map(d => d.contacts + d.reviews), 1);
-  const H = 120;
+  const animated = useCountUp(value);
   return (
-    <div>
-      <div className="flex gap-1">
-        {/* Y-axis */}
-        <div className="flex flex-col justify-between items-end pr-2 text-[10px] text-gray-300 select-none font-mono" style={{ height: H }}>
-          <span>{maxVal}</span>
-          <span>{Math.round(maxVal / 2)}</span>
-          <span>0</span>
+    <div style={{
+      background: '#fff',
+      borderRadius: 16,
+      border: '1px solid #f1f5f9',
+      padding: '18px 18px 14px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'box-shadow 0.2s, transform 0.2s',
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.09)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; (e.currentTarget as HTMLDivElement).style.transform = ''; }}
+    >
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accentColor, borderRadius: '16px 16px 0 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontFamily: 'DM Sans,sans-serif' }}>{label}</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', lineHeight: 1, fontFamily: 'DM Sans,sans-serif', fontVariantNumeric: 'tabular-nums' }}>{animated}</p>
+          {sub && <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 4, fontFamily: 'DM Sans,sans-serif' }}>{sub}</p>}
         </div>
-        {/* Bars */}
-        <div className="flex-1 flex items-end gap-2 relative" style={{ height: H }}>
-          {/* Grid lines */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-            <div className="border-t border-dashed border-gray-100" />
-            <div className="border-t border-dashed border-gray-100" />
-            <div className="border-t border-dashed border-gray-100" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <div style={{ padding: '8px', borderRadius: 10, background: iconBg }}>
+            <Icon style={{ color: iconColor }} size={18} />
           </div>
-          {data.map((d, i) => {
-            const total = d.contacts + d.reviews;
-            const barH = Math.max((total / maxVal) * H, total > 0 ? 4 : 0);
-            const cH = total > 0 ? (d.contacts / total) * barH : 0;
-            const rH = barH - cH;
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center group cursor-default relative" style={{ height: H }}>
-                {/* Tooltip */}
-                <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2.5 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-xl pointer-events-none">
-                  <p className="font-bold mb-0.5">{d.month}</p>
-                  <p className="text-amber-300">Inquiries: {d.contacts}</p>
-                  <p className="text-blue-300">Reviews: {d.reviews}</p>
-                </div>
-                <div className="w-full flex flex-col justify-end rounded-t overflow-hidden" style={{ height: H }}>
-                  <div className="w-full bg-blue-300 transition-all duration-700" style={{ height: rH }} />
-                  <div className="w-full bg-amber-400 transition-all duration-700" style={{ height: cH }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* X labels */}
-      <div className="flex gap-2 mt-1 ml-9">
-        {data.map((d, i) => (
-          <div key={i} className="flex-1 text-center">
-            <span className="text-[10px] text-gray-400 font-medium">{d.month}</span>
-          </div>
-        ))}
-      </div>
-      {/* Legend */}
-      <div className="flex items-center gap-5 mt-3 ml-9">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-2 bg-amber-400 rounded-sm" />
-          <span className="text-[11px] text-gray-500 font-medium">Inquiries</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-2 bg-blue-300 rounded-sm" />
-          <span className="text-[11px] text-gray-500 font-medium">Reviews</span>
+          {sparkVals && sparkColor && <MiniSparkline vals={sparkVals} color={sparkColor} />}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+/* ─── Breakdown bar ──────────────────────────────────────────────────────── */
+
+function BreakdownBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: '#374151', fontFamily: 'DM Sans,sans-serif' }}>{label}</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', fontFamily: 'DM Sans,sans-serif' }}>{count}</span>
+          <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'DM Sans,sans-serif', minWidth: 28, textAlign: 'right' }}>{pct}%</span>
+        </div>
+      </div>
+      <div style={{ height: 6, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.8s ease' }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Types ──────────────────────────────────────────────────────────────── */
+
 interface DashboardStats {
   totalProducts: number; yakMilkCount: number; puffTreatCount: number;
   highlandMixCount: number; totalReviews: number; totalContacts: number;
   newContacts: number; pendingReviews: number;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+/* ─── Main component ─────────────────────────────────────────────────────── */
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0, yakMilkCount: 0, puffTreatCount: 0,
     highlandMixCount: 0, totalReviews: 0, totalContacts: 0,
     newContacts: 0, pendingReviews: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [orderStats, setOrderStats]   = useState<any>(null);
+  const [subStats,   setSubStats]     = useState<any>(null);
+  const [loading,    setLoading]      = useState(true);
   const [recentContacts, setRecentContacts] = useState<any[]>([]);
-  const [recentReviews, setRecentReviews] = useState<any[]>([]);
-  const [allProducts, setAllProducts] = useState<any[]>([]);
-  const [allContacts, setAllContacts] = useState<any[]>([]);
-  const [allReviews, setAllReviews] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'messages' | 'reviews'>('messages');
+  const [recentReviews,  setRecentReviews]  = useState<any[]>([]);
+  const [allProducts,  setAllProducts]  = useState<any[]>([]);
+  const [allContacts,  setAllContacts]  = useState<any[]>([]);
+  const [allReviews,   setAllReviews]   = useState<any[]>([]);
+  const [activeTab,    setActiveTab]    = useState<'messages' | 'reviews'>('messages');
   const now = useLiveClock();
   const API = process.env.NEXT_PUBLIC_API_URL;
 
-  useEffect(() => { fetchData(); }, []);
+  const authHeaders = () => {
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('adminToken') || '') : '';
+    return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [productsRes, reviewsRes, contactsRes] = await Promise.allSettled([
+      const [productsRes, reviewsRes, contactsRes, ordersRes, subsRes] = await Promise.allSettled([
         fetch(`${API}/products`).then(r => r.json()),
         fetch(`${API}/reviews`).then(r => r.json()),
         fetch(`${API}/contact`).then(r => r.json()),
+        fetch(`${API}/admin/orders/stats`,        { headers: authHeaders() }).then(r => r.json()),
+        fetch(`${API}/admin/subscriptions/stats`, { headers: authHeaders() }).then(r => r.json()),
       ]);
 
       let totalProducts = 0, yakMilkCount = 0, puffTreatCount = 0, highlandMixCount = 0;
       if (productsRes.status === 'fulfilled' && productsRes.value?.data) {
         const p = Array.isArray(productsRes.value.data) ? productsRes.value.data : [];
         totalProducts = p.length;
-        yakMilkCount = p.filter((x: any) => x.productType === 'yak-milk').length;
-        puffTreatCount = p.filter((x: any) => x.productType === 'puff-treat').length;
+        yakMilkCount    = p.filter((x: any) => x.productType === 'yak-milk').length;
+        puffTreatCount  = p.filter((x: any) => x.productType === 'puff-treat').length;
         highlandMixCount = p.filter((x: any) => x.productType === 'highland-mix').length;
         setAllProducts(p);
       }
@@ -218,22 +328,24 @@ export default function AdminDashboard() {
       let totalReviews = 0, pendingReviews = 0;
       if (reviewsRes.status === 'fulfilled' && reviewsRes.value?.data) {
         const r = Array.isArray(reviewsRes.value.data) ? reviewsRes.value.data : [];
-        totalReviews = r.length;
+        totalReviews   = r.length;
         pendingReviews = r.filter((x: any) => x.status === 'pending').length;
-        setRecentReviews(r.slice(0, 6));
+        setRecentReviews(r.slice(0, 8));
         setAllReviews(r);
       }
 
       let totalContacts = 0, newContacts = 0;
       if (contactsRes.status === 'fulfilled' && contactsRes.value?.data) {
         const c = Array.isArray(contactsRes.value.data)
-          ? contactsRes.value.data
-          : contactsRes.value.data?.items || [];
+          ? contactsRes.value.data : (contactsRes.value.data?.items || []);
         totalContacts = c.length;
-        newContacts = c.filter((x: any) => x.status === 'new').length;
-        setRecentContacts(c.slice(0, 6));
+        newContacts   = c.filter((x: any) => x.status === 'new').length;
+        setRecentContacts(c.slice(0, 8));
         setAllContacts(c);
       }
+
+      if (ordersRes.status === 'fulfilled' && ordersRes.value?.data) setOrderStats(ordersRes.value.data);
+      if (subsRes.status   === 'fulfilled' && subsRes.value?.data)   setSubStats(subsRes.value.data);
 
       setStats({ totalProducts, yakMilkCount, puffTreatCount, highlandMixCount, totalReviews, totalContacts, newContacts, pendingReviews });
     } catch (e) {
@@ -243,499 +355,481 @@ export default function AdminDashboard() {
     }
   };
 
-  const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  useEffect(() => { fetchData(); }, []);
 
-  // ── Computed: Last 6 months activity ──
+  /* ── Derived data ── */
   const monthlyData = useMemo(() => {
-    const result = [];
+    const result: { month: string; contacts: number; reviews: number }[] = [];
     const base = new Date();
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+      const d  = new Date(base.getFullYear(), base.getMonth() - i, 1);
       const yr = d.getFullYear(), mo = d.getMonth();
       const label = d.toLocaleDateString('en-GB', { month: 'short' });
-      const contacts = allContacts.filter(c => {
-        const dt = new Date(c.createdAt);
-        return dt.getFullYear() === yr && dt.getMonth() === mo;
-      }).length;
-      const reviews = allReviews.filter(r => {
-        const dt = new Date(r.createdAt || r.date);
-        return dt.getFullYear() === yr && dt.getMonth() === mo;
-      }).length;
+      const contacts = allContacts.filter(c => { const dt = new Date(c.createdAt); return dt.getFullYear() === yr && dt.getMonth() === mo; }).length;
+      const reviews  = allReviews.filter(r  => { const dt = new Date(r.createdAt || r.date); return dt.getFullYear() === yr && dt.getMonth() === mo; }).length;
       result.push({ month: label, contacts, reviews });
     }
     return result;
   }, [allContacts, allReviews]);
 
-  // ── Computed: Top products by engagement score ──
-  const topProducts = useMemo(() => {
-    return [...allProducts]
-      .sort((a, b) => (b.rating * Math.log(b.reviews + 1)) - (a.rating * Math.log(a.reviews + 1)))
-      .slice(0, 5);
-  }, [allProducts]);
+  const topProducts = useMemo(() =>
+    [...allProducts].sort((a, b) => (b.rating * Math.log(b.reviews + 1)) - (a.rating * Math.log(a.reviews + 1))).slice(0, 5),
+    [allProducts]);
 
-  // ── Computed: Engagement summary metrics ──
   const engagementMetrics = useMemo(() => {
-    const totalActivity = allContacts.length + allReviews.length;
-    const replyRate = allContacts.length > 0
-      ? Math.round((allContacts.filter(c => c.status === 'replied').length / allContacts.length) * 100)
-      : 0;
-    const avgRating = allReviews.length > 0
-      ? (allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / allReviews.length).toFixed(1)
-      : '—';
-    const approvedReviews = allReviews.filter(r => r.status === 'approved').length;
-    const approvalRate = allReviews.length > 0
-      ? Math.round((approvedReviews / allReviews.length) * 100)
-      : 0;
-    return { totalActivity, replyRate, avgRating, approvalRate };
+    const replyRate   = allContacts.length > 0 ? Math.round((allContacts.filter(c => c.status === 'replied').length / allContacts.length) * 100) : 0;
+    const avgRating   = allReviews.length > 0 ? (allReviews.reduce((s, r) => s + (r.rating || 0), 0) / allReviews.length).toFixed(1) : '—';
+    const approvalRate = allReviews.length > 0 ? Math.round((allReviews.filter(r => r.status === 'approved').length / allReviews.length) * 100) : 0;
+    return { replyRate, avgRating, approvalRate };
   }, [allContacts, allReviews]);
 
+  const contactSparkline = monthlyData.map(d => d.contacts);
+  const reviewSparkline  = monthlyData.map(d => d.reviews);
+
   const greeting = now ? getGreeting(now.getHours()) : { text: 'Welcome', emoji: '👋' };
-  const timeStr = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '--:--:--';
-  const dateStr = now ? now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
-  const timezone = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' ') : '';
+  const timeStr  = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '--:--:--';
+  const dateStr  = now ? now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const fmtDate  = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
-  const productTypeLabel = (t: string) =>
-    t === 'yak-milk' ? { label: 'Yak Milk', cls: 'bg-amber-100 text-amber-700' }
-    : t === 'puff-treat' ? { label: 'Puff Treat', cls: 'bg-purple-100 text-purple-700' }
-    : { label: 'Highland Mix', cls: 'bg-teal-100 text-teal-700' };
+  const pTypeBadge = (t: string) =>
+    t === 'yak-milk'    ? { label: 'Yak Milk',    cls: 'bg-amber-100 text-amber-700' }
+    : t === 'puff-treat'  ? { label: 'Puff',        cls: 'bg-purple-100 text-purple-700' }
+    : { label: 'Highland', cls: 'bg-teal-100 text-teal-700' };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f7fa]">
-        <div className="text-center">
-          <div className="w-14 h-14 border-[3px] border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading dashboard...</p>
-        </div>
+  /* ── Loading screen ── */
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f5f8' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #F59E0B', borderTopColor: 'transparent', animation: 'spin 0.9s linear infinite', margin: '0 auto 16px' }} />
+        <p style={{ color: '#64748b', fontFamily: 'DM Sans,sans-serif', fontSize: 14 }}>Loading dashboard…</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
-    );
-  }
+    </div>
+  );
+
+  /* ── Shared card style ── */
+  const card: React.CSSProperties = {
+    background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pb-16">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
+        .db-root { font-family: 'DM Sans', sans-serif; }
+        .db-serif { font-family: 'Playfair Display', serif; }
+        @keyframes db-spin { to { transform: rotate(360deg); } }
+        @keyframes db-fade-up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes db-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        .db-card-hover { transition: box-shadow 0.2s, transform 0.2s; }
+        .db-card-hover:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important; transform: translateY(-2px); }
+        .db-tab-btn { background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; padding:12px 16px; display:flex; align-items:center; gap:6px; border-bottom:2px solid transparent; transition:all 0.2s; }
+        .db-tab-btn.active-msg  { color:#e11d48; border-bottom-color:#e11d48; background:rgba(225,29,72,0.04); }
+        .db-tab-btn.active-rev  { color:#d97706; border-bottom-color:#d97706; background:rgba(217,119,6,0.04); }
+        .db-tab-btn:not(.active-msg):not(.active-rev) { color:#94a3b8; }
+        .db-tab-btn:not(.active-msg):not(.active-rev):hover { color:#475569; background:#f8fafc; }
+        .db-feed-row { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid #f8fafc; transition:background 0.15s; }
+        .db-feed-row:hover { background:#fafafa; }
+        .db-quick-link { display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:14px; border:1px solid; text-decoration:none; transition:all 0.2s; }
+        .db-quick-link:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+        @media (max-width: 639px) {
+          .db-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .db-two-col   { grid-template-columns: 1fr !important; }
+          .db-three-col { grid-template-columns: 1fr !important; }
+          .db-hero-row  { flex-direction: column !important; }
+          .db-hero-time { display: none !important; }
+          .db-analytics-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (min-width: 640px) and (max-width: 1023px) {
+          .db-stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .db-two-col   { grid-template-columns: 1fr !important; }
+          .db-three-col { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
 
-      {/* ─────────────────────────── HERO ─────────────────────────── */}
-      <div className="bg-gradient-to-br from-[#0b1d31] via-[#112d4a] to-[#0a1f37] px-6 md:px-10 pt-8 pb-24 relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full bg-amber-500/5 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-blue-500/5 blur-3xl" />
-        <div className="max-w-7xl mx-auto relative">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-400/20 rounded-full px-3 py-1 mb-4">
-                <span className="text-base leading-none">{greeting.emoji}</span>
-                <span className="text-amber-300/80 text-xs font-semibold uppercase tracking-widest">{greeting.text}</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight leading-none">Admin</h1>
-              <p className="text-blue-200/50 text-sm max-w-sm leading-relaxed">
-                Here&apos;s what&apos;s happening with your{' '}
-                <span className="text-amber-400/80 font-semibold">Highland Yak Chew</span> store today.
-              </p>
-            </div>
-            <div className="flex flex-row lg:flex-col items-start lg:items-end gap-3 flex-wrap">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-4">
-                <p className="text-white font-mono text-3xl font-bold tracking-widest tabular-nums">{timeStr}</p>
-                <p className="text-blue-200/60 text-xs mt-1 font-medium">{dateStr}</p>
-                {timezone && <p className="text-blue-200/30 text-[10px] mt-0.5 uppercase tracking-widest">{timezone}</p>}
-              </div>
-              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/20 rounded-xl px-4 py-2.5">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0" />
-                <span className="text-emerald-300 text-sm font-semibold">Store Online</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="db-root" style={{ minHeight: '100vh', background: '#f4f5f8', paddingBottom: 64 }}>
 
-      {/* ─────────────────────────── STAT CARDS ─────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 -mt-16 relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <StatCard icon={FiPackage}  label="All Products" value={stats.totalProducts}    accent="bg-blue-500"   iconBg="bg-blue-50"   iconColor="text-blue-600" />
-          <StatCard icon={GiDogBowl} label="Yak Milk"     value={stats.yakMilkCount}     accent="bg-amber-500"  iconBg="bg-amber-50"  iconColor="text-amber-600" />
-          <StatCard icon={FiGrid}    label="Puff Treats"  value={stats.puffTreatCount}   accent="bg-purple-500" iconBg="bg-purple-50" iconColor="text-purple-600" />
-          <StatCard icon={FiLayers}  label="Highland Mix" value={stats.highlandMixCount} accent="bg-teal-500"   iconBg="bg-teal-50"   iconColor="text-teal-600" />
-          <StatCard icon={FiStar}    label="Reviews"      value={stats.totalReviews}     accent="bg-yellow-500" iconBg="bg-yellow-50" iconColor="text-yellow-600" />
-          <StatCard icon={FiMail}    label="Messages"     value={stats.totalContacts}    accent="bg-rose-500"   iconBg="bg-rose-50"   iconColor="text-rose-600" />
-        </div>
-      </div>
+        {/* ══════════ HERO ══════════ */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0b1d31 0%, #112d4a 50%, #0a1f37 100%)',
+          padding: 'clamp(28px,4vw,44px) clamp(16px,4vw,40px)',
+          paddingBottom: 80,
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Ambient glows */}
+          <div style={{ position:'absolute', top:'-20%', right:'-5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', bottom:'-10%', left:'25%', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)', pointerEvents:'none' }} />
 
-      {/* ─────────────────────────── ALERT BANNERS ─────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 space-y-3">
-        {stats.newContacts > 0 && (
-          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3.5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <FiAlertCircle className="text-blue-500 flex-shrink-0" size={17} />
-              <p className="text-blue-800 text-sm font-medium">
-                You have <span className="font-bold text-blue-900">{stats.newContacts}</span> unread {stats.newContacts === 1 ? 'message' : 'messages'} awaiting your reply.
-              </p>
-            </div>
-            <Link href="/dashboard/contact" className="text-blue-600 hover:text-blue-900 text-sm font-bold flex items-center gap-1.5 ml-4 whitespace-nowrap transition-colors">
-              View inbox <FiArrowRight size={14} />
-            </Link>
-          </div>
-        )}
-        {stats.pendingReviews > 0 && (
-          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <FiStar className="text-amber-500 flex-shrink-0" size={17} />
-              <p className="text-amber-800 text-sm font-medium">
-                <span className="font-bold text-amber-900">{stats.pendingReviews}</span> {stats.pendingReviews === 1 ? 'review needs' : 'reviews need'} your approval before going live.
-              </p>
-            </div>
-            <Link href="/dashboard/reviews" className="text-amber-700 hover:text-amber-900 text-sm font-bold flex items-center gap-1.5 ml-4 whitespace-nowrap transition-colors">
-              Approve <FiArrowRight size={14} />
-            </Link>
-          </div>
-        )}
-      </div>
+          <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative' }}>
+            <div className="db-hero-row" style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20 }}>
 
-      {/* ─────────────────────────── CONTENT GRID ─────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
-        {/* Product Inventory */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-50 rounded-xl"><FiShoppingBag className="text-amber-600" size={18} /></div>
+              {/* Left: greeting */}
               <div>
-                <h3 className="font-bold text-gray-900 text-sm">Product Inventory</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{stats.totalProducts} products total</p>
-              </div>
-            </div>
-            <Link href="/dashboard/products" className="text-amber-600 hover:text-amber-700 text-xs font-bold flex items-center gap-1 transition-colors">
-              Manage <FiArrowRight size={12} />
-            </Link>
-          </div>
-          <div className="space-y-4 flex-1">
-            <BreakdownBar label="🐮  Yak Milk Chews"  count={stats.yakMilkCount}    total={stats.totalProducts} color="bg-amber-500" />
-            <BreakdownBar label="✨  Puff Treats"      count={stats.puffTreatCount}  total={stats.totalProducts} color="bg-purple-500" />
-            <BreakdownBar label="🏔️  Highland Mix"    count={stats.highlandMixCount} total={stats.totalProducts} color="bg-teal-500" />
-          </div>
-          <div className="mt-5 pt-5 border-t border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Add Product</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: 'Yak Milk', href: '/dashboard/products', cls: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-100' },
-                { label: 'Puff Treat', href: '/dashboard/puff-treats', cls: 'bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-100' },
-                { label: 'Highland', href: '/dashboard/highland-mix', cls: 'bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-100' },
-              ].map(b => (
-                <Link key={b.label} href={b.href} className={`text-center text-xs font-bold py-2 px-1 rounded-lg border transition-colors ${b.cls}`}>+ {b.label}</Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Feed */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex border-b border-gray-100">
-            <button onClick={() => setActiveTab('messages')} className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${activeTab === 'messages' ? 'text-rose-600 border-b-2 border-rose-500 bg-rose-50/40' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}>
-              <FiMail size={15} /> Messages
-              {stats.newContacts > 0 && <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">{stats.newContacts}</span>}
-            </button>
-            <button onClick={() => setActiveTab('reviews')} className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${activeTab === 'reviews' ? 'text-amber-600 border-b-2 border-amber-500 bg-amber-50/40' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}>
-              <FiStar size={15} /> Reviews
-              {stats.pendingReviews > 0 && <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">{stats.pendingReviews}</span>}
-            </button>
-          </div>
-          <div className="flex-1 divide-y divide-gray-50 overflow-y-auto">
-            {activeTab === 'messages' ? (
-              recentContacts.length === 0
-                ? <div className="py-16 text-center text-gray-400 text-sm"><FiMail size={32} className="mx-auto mb-3 opacity-20" />No messages yet</div>
-                : recentContacts.map((c: any) => (
-                  <div key={c._id} className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50/60 transition-colors">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">{(c.name || 'A')[0].toUpperCase()}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-gray-900 text-sm truncate">{c.name}</p>
-                        <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${c.status === 'new' ? 'bg-blue-100 text-blue-700' : c.status === 'read' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{c.status}</span>
-                      </div>
-                      <p className="text-gray-400 text-xs truncate">{c.subject || c.message}</p>
-                    </div>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">{fmtDate(c.createdAt)}</span>
-                  </div>
-                ))
-            ) : (
-              recentReviews.length === 0
-                ? <div className="py-16 text-center text-gray-400 text-sm"><FiStar size={32} className="mx-auto mb-3 opacity-20" />No reviews yet</div>
-                : recentReviews.map((r: any) => (
-                  <div key={r._id} className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50/60 transition-colors">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">{(r.guestInfo?.name || 'A')[0].toUpperCase()}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-gray-900 text-sm truncate">{r.guestInfo?.name || 'Anonymous'}</p>
-                        <Stars rating={r.rating} />
-                      </div>
-                      <p className="text-gray-400 text-xs truncate">{r.comment || 'No comment'}</p>
-                    </div>
-                    <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : r.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{r.status}</span>
-                  </div>
-                ))
-            )}
-          </div>
-          <div className="px-5 py-3.5 border-t border-gray-100 bg-gray-50/50">
-            <Link href={activeTab === 'messages' ? '/dashboard/contact' : '/dashboard/reviews'} className="text-sm text-gray-500 hover:text-gray-900 font-semibold flex items-center gap-1.5 transition-colors">
-              View all {activeTab === 'messages' ? 'messages' : 'reviews'} <FiArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ─────────────────────────── QUICK ACTIONS ─────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest">Quick Actions</h3>
-          <button onClick={fetchData} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors font-medium py-1.5 px-3 rounded-lg hover:bg-white border border-transparent hover:border-gray-200">
-            <FiRefreshCw size={12} /> Refresh
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Add Yak Milk', sub: 'Yak milk chew products', href: '/dashboard/products', icon: GiDogBowl, card: 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100 hover:border-amber-300', iw: 'bg-amber-100', ic: 'text-amber-600', tc: 'text-amber-800', sc: 'text-amber-600/70' },
-            { label: 'Add Puff Treat', sub: 'Puffed dog treat products', href: '/dashboard/puff-treats', icon: FiGrid, card: 'bg-gradient-to-br from-purple-50 to-violet-50 border-purple-100 hover:border-purple-300', iw: 'bg-purple-100', ic: 'text-purple-600', tc: 'text-purple-800', sc: 'text-purple-600/70' },
-            { label: 'Highland Mix', sub: 'Mix chew variety products', href: '/dashboard/highland-mix', icon: FiLayers, card: 'bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-100 hover:border-teal-300', iw: 'bg-teal-100', ic: 'text-teal-600', tc: 'text-teal-800', sc: 'text-teal-600/70' },
-            { label: 'Inbox', sub: `${stats.newContacts} new message${stats.newContacts !== 1 ? 's' : ''}`, href: '/dashboard/contact', icon: FiMail, card: 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-100 hover:border-rose-300', iw: 'bg-rose-100', ic: 'text-rose-600', tc: 'text-rose-800', sc: 'text-rose-600/70' },
-          ].map(a => (
-            <Link key={a.label} href={a.href} className={`group flex items-center gap-3 p-4 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 ${a.card}`}>
-              <div className={`p-2.5 rounded-xl ${a.iw} flex-shrink-0 shadow-sm`}><a.icon className={a.ic} size={20} /></div>
-              <div className="min-w-0 flex-1">
-                <p className={`font-bold text-sm ${a.tc}`}>{a.label}</p>
-                <p className={`text-xs truncate mt-0.5 ${a.sc}`}>{a.sub}</p>
-              </div>
-              <FiArrowRight className={`flex-shrink-0 opacity-30 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all ${a.ic}`} size={15} />
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          ─────────────── ANALYTICS SECTION (NEW) ──────────────────
-          ══════════════════════════════════════════════════════════ */}
-
-      {/* ─── Section divider ─── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-10">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 h-px bg-gray-200" />
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            <FiTrendingUp size={13} />
-            Analytics &amp; Insights
-          </div>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-      </div>
-
-      {/* ─── Engagement Metrics Row ─── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: FiUsers, label: 'Total Customers', value: String(allContacts.length), sub: 'Unique inquiries', color: 'text-blue-600', bg: 'bg-blue-50', accent: 'bg-blue-500' },
-          { icon: FiMessageCircle, label: 'Reply Rate', value: `${engagementMetrics.replyRate}%`, sub: 'Messages replied', color: 'text-emerald-600', bg: 'bg-emerald-50', accent: 'bg-emerald-500' },
-          { icon: FiStar, label: 'Avg Rating', value: String(engagementMetrics.avgRating), sub: `From ${allReviews.length} reviews`, color: 'text-amber-600', bg: 'bg-amber-50', accent: 'bg-amber-500' },
-          { icon: FiAward, label: 'Approval Rate', value: `${engagementMetrics.approvalRate}%`, sub: 'Reviews approved', color: 'text-purple-600', bg: 'bg-purple-50', accent: 'bg-purple-500' },
-        ].map(m => (
-          <div key={m.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 relative overflow-hidden">
-            <div className={`absolute top-0 left-0 right-0 h-[3px] ${m.accent} rounded-t-2xl`} />
-            <div className="flex items-start justify-between mb-3">
-              <div className={`p-2 rounded-xl ${m.bg}`}><m.icon className={m.color} size={18} /></div>
-            </div>
-            <p className="text-2xl font-extrabold text-gray-900 tabular-nums">{m.value}</p>
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mt-0.5">{m.label}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{m.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── Customer Activity Chart + Top Products ─── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-
-        {/* Activity Chart */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-bold text-gray-900">Customer Activity</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Inquiries &amp; reviews — last 6 months</p>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
-              <FiTrendingUp size={13} className="text-gray-400" />
-              <span className="text-xs font-semibold text-gray-500">
-                {monthlyData.reduce((s, d) => s + d.contacts + d.reviews, 0)} total
-              </span>
-            </div>
-          </div>
-          <ActivityChart data={monthlyData} />
-        </div>
-
-        {/* Top Products */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-50 rounded-xl"><FiAward className="text-amber-600" size={16} /></div>
-              <div>
-                <h3 className="font-bold text-gray-900 text-sm">Top Products</h3>
-                <p className="text-xs text-gray-400">By engagement score</p>
-              </div>
-            </div>
-            <Link href="/dashboard/products" className="text-amber-600 hover:text-amber-700 text-xs font-bold flex items-center gap-1 transition-colors">
-              All <FiArrowRight size={12} />
-            </Link>
-          </div>
-
-          {topProducts.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm">
-              <FiPackage size={28} className="mx-auto mb-2 opacity-20" />
-              No products yet
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {topProducts.map((p: any, i: number) => {
-                const badge = productTypeLabel(p.productType);
-                const score = ((p.rating || 0) * Math.log((p.reviews || 0) + 1)).toFixed(1);
-                return (
-                  <div key={p._id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
-                    {/* Rank */}
-                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-extrabold flex-shrink-0
-                      ${i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-gray-100 text-gray-600' : i === 2 ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-400'}`}>
-                      {i + 1}
-                    </span>
-                    {/* Product image or avatar */}
-                    {p.image ? (
-                      <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-gray-100" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                        <GiDogBowl className="text-amber-500" size={16} />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{p.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Stars rating={p.rating || 0} />
-                        <span className="text-[10px] text-gray-400">({p.reviews || 0})</span>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                      </div>
-                    </div>
-                    {/* Engagement score */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-xs font-bold text-gray-900 tabular-nums">{score}</p>
-                      <p className="text-[10px] text-gray-400">score</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ─── Revenue Placeholder + Customer Arrivals ─── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Revenue Insights */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-400 to-teal-500 rounded-t-2xl" />
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-50 rounded-xl">
-                <FiTrendingUp className="text-emerald-600" size={18} />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Revenue Insights</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Sales performance overview</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Revenue chart placeholder — Stripe connect CTA */}
-          <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 p-6 text-center">
-            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <p className="text-sm font-bold text-gray-900 mb-1">Connect Stripe Dashboard</p>
-            <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed mb-4">
-              Link your Stripe account to view real-time revenue, order totals, average order value and payment analytics.
-            </p>
-            <a
-              href="https://dashboard.stripe.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#635bff] hover:bg-[#5851ea] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
-            >
-              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
-              </svg>
-              Open Stripe Dashboard
-            </a>
-          </div>
-
-          {/* Simulated sparkline bars */}
-          <div className="mt-4">
-            <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest mb-2">Sample chart preview</p>
-            <div className="flex items-end gap-1 h-12 opacity-20">
-              {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 88].map((h, i) => (
-                <div key={i} className="flex-1 bg-gradient-to-t from-emerald-400 to-teal-300 rounded-t" style={{ height: `${h}%` }} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Customer Arrivals */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-400 to-indigo-500 rounded-t-2xl" />
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-50 rounded-xl">
-                <FiUsers className="text-blue-600" size={18} />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Customer Arrivals</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Inquiries &amp; engagement by source</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Arrival breakdown */}
-          <div className="space-y-3 mb-5">
-            {[
-              { label: 'Contact Inquiries', count: allContacts.length, icon: '📩', color: 'bg-blue-500', pct: allContacts.length + allReviews.length > 0 ? Math.round((allContacts.length / (allContacts.length + allReviews.length)) * 100) : 0 },
-              { label: 'Product Reviews', count: allReviews.length, icon: '⭐', color: 'bg-amber-500', pct: allContacts.length + allReviews.length > 0 ? Math.round((allReviews.length / (allContacts.length + allReviews.length)) * 100) : 0 },
-              { label: 'New This Week', count: allContacts.filter(c => { const d = new Date(c.createdAt); const now = new Date(); const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24); return diff <= 7; }).length, icon: '🆕', color: 'bg-emerald-500', pct: null },
-            ].map(item => (
-              <div key={item.label} className="flex items-center gap-3">
-                <span className="text-base w-7 text-center flex-shrink-0">{item.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-600">{item.label}</span>
-                    <span className="text-xs font-bold text-gray-900 tabular-nums">
-                      {item.count}{item.pct !== null ? ` (${item.pct}%)` : ''}
-                    </span>
-                  </div>
-                  {item.pct !== null && (
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${item.pct}%` }} />
+                <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(245,158,11,0.12)', border:'1px solid rgba(245,158,11,0.25)', borderRadius:99, padding:'5px 14px', marginBottom:14 }}>
+                  <span>{greeting.emoji}</span>
+                  <span style={{ color:'rgba(245,158,11,0.9)', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em' }}>{greeting.text}</span>
+                </div>
+                <h1 className="db-serif" style={{ color:'#fff', fontSize:'clamp(28px,4vw,42px)', fontWeight:700, lineHeight:1.15, marginBottom:8 }}>
+                  Highland Yak Chew
+                </h1>
+                <p style={{ color:'rgba(148,163,184,0.8)', fontSize:14, maxWidth:360, lineHeight:1.6 }}>
+                  Here's your store overview for today.
+                </p>
+                {/* Live order + sub badges */}
+                <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:18 }}>
+                  {orderStats && (
+                    <div style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
+                      <FiShoppingBag size={13} style={{ color:'#67e8f9' }} />
+                      <span style={{ color:'#e2e8f0', fontSize:12, fontWeight:600 }}>
+                        {orderStats.totalOrders ?? 0} orders
+                      </span>
                     </div>
                   )}
+                  {subStats && (
+                    <div style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
+                      <FiRepeat size={13} style={{ color:'#86efac' }} />
+                      <span style={{ color:'#e2e8f0', fontSize:12, fontWeight:600 }}>
+                        {subStats.activeSubscriptions ?? 0} active subs
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ background:'rgba(52,211,153,0.12)', border:'1px solid rgba(52,211,153,0.25)', borderRadius:10, padding:'8px 14px', display:'flex', alignItems:'center', gap:7 }}>
+                    <span style={{ width:7, height:7, borderRadius:'50%', background:'#34d399', animation:'db-pulse 2s ease-in-out infinite', flexShrink:0 } as React.CSSProperties} />
+                    <span style={{ color:'#6ee7b7', fontSize:12, fontWeight:600 }}>Store Online</span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Right: live clock */}
+              <div className="db-hero-time" style={{ background:'rgba(255,255,255,0.06)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:16, padding:'16px 24px', textAlign:'right', flexShrink:0 }}>
+                <p style={{ color:'#fff', fontFamily:'monospace', fontSize:'clamp(24px,3vw,32px)', fontWeight:700, letterSpacing:'0.08em', marginBottom:4 }}>{timeStr}</p>
+                <p style={{ color:'rgba(148,163,184,0.7)', fontSize:11 }}>{dateStr}</p>
+                <button onClick={fetchData} style={{ marginTop:10, background:'rgba(245,158,11,0.15)', border:'1px solid rgba(245,158,11,0.3)', borderRadius:8, padding:'5px 12px', color:'rgba(245,158,11,0.9)', fontSize:11, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:5, marginLeft:'auto', fontFamily:'DM Sans,sans-serif' }}>
+                  <FiRefreshCw size={11} /> Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(12px,3vw,40px)' }}>
+
+          {/* ══════════ STAT CARDS ══════════ */}
+          <div className="db-stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:14, marginTop:-52, position:'relative', zIndex:10 }}>
+            <StatCard icon={FiPackage}  label="Products"    value={stats.totalProducts}    accentColor="linear-gradient(90deg,#3b82f6,#6366f1)" iconBg="#eff6ff" iconColor="#3b82f6" sparkVals={[2,4,3,5,4,stats.totalProducts]} sparkColor="#3b82f6" />
+            <StatCard icon={GiDogBowl} label="Yak Milk"    value={stats.yakMilkCount}     accentColor="linear-gradient(90deg,#f59e0b,#ea580c)" iconBg="#fffbeb" iconColor="#d97706" sparkVals={[1,2,2,3,stats.yakMilkCount,stats.yakMilkCount]} sparkColor="#f59e0b" />
+            <StatCard icon={FiGrid}    label="Puff Treats"  value={stats.puffTreatCount}   accentColor="linear-gradient(90deg,#a78bfa,#7c3aed)" iconBg="#f5f3ff" iconColor="#7c3aed" sparkVals={[1,1,2,2,stats.puffTreatCount,stats.puffTreatCount]} sparkColor="#a78bfa" />
+            <StatCard icon={FiLayers}  label="Highland Mix" value={stats.highlandMixCount} accentColor="linear-gradient(90deg,#14b8a6,#0891b2)" iconBg="#f0fdfa" iconColor="#0d9488" sparkVals={[0,1,1,2,stats.highlandMixCount,stats.highlandMixCount]} sparkColor="#2dd4bf" />
+            <StatCard icon={FiStar}    label="Reviews"      value={stats.totalReviews}     accentColor="linear-gradient(90deg,#eab308,#f59e0b)" iconBg="#fefce8" iconColor="#ca8a04" sparkVals={reviewSparkline.length ? reviewSparkline : [0,0,0,0,0,stats.totalReviews]} sparkColor="#eab308" />
+            <StatCard icon={FiMail}    label="Messages"     value={stats.totalContacts}    accentColor="linear-gradient(90deg,#f43f5e,#e11d48)" iconBg="#fff1f2" iconColor="#e11d48" sparkVals={contactSparkline.length ? contactSparkline : [0,0,0,0,0,stats.totalContacts]} sparkColor="#f43f5e" sub={stats.newContacts > 0 ? `${stats.newContacts} unread` : undefined} />
+          </div>
+
+          {/* ══════════ ALERTS ══════════ */}
+          {(stats.newContacts > 0 || stats.pendingReviews > 0) && (
+            <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:8 }}>
+              {stats.newContacts > 0 && (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:12, padding:'12px 18px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <FiAlertCircle size={16} style={{ color:'#3b82f6', flexShrink:0 }} />
+                    <p style={{ color:'#1e40af', fontSize:13, fontWeight:500 }}>
+                      <strong>{stats.newContacts}</strong> unread {stats.newContacts === 1 ? 'message' : 'messages'} awaiting reply.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/contact" style={{ color:'#1d4ed8', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4, textDecoration:'none' }}>View inbox <FiArrowRight size={12} /></Link>
+                </div>
+              )}
+              {stats.pendingReviews > 0 && (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#fffbeb', border:'1px solid #fde68a', borderRadius:12, padding:'12px 18px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <FiStar size={16} style={{ color:'#d97706', flexShrink:0 }} />
+                    <p style={{ color:'#92400e', fontSize:13, fontWeight:500 }}>
+                      <strong>{stats.pendingReviews}</strong> {stats.pendingReviews === 1 ? 'review needs' : 'reviews need'} approval.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/reviews" style={{ color:'#b45309', fontSize:12, fontWeight:700, display:'flex', alignItems:'center', gap:4, textDecoration:'none' }}>Approve <FiArrowRight size={12} /></Link>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════ ROW 1: Orders + Subs | Activity Feed ══════════ */}
+          <div className="db-two-col" style={{ display:'grid', gridTemplateColumns:'340px 1fr', gap:16, marginTop:16 }}>
+
+            {/* Left col: Orders + Subscriptions stacked */}
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+
+              {/* Orders card */}
+              <div style={card} className="db-card-hover">
+                <div style={{ padding:'18px 20px 14px', borderBottom:'1px solid #f8fafc', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ padding:8, background:'#f0fdf4', borderRadius:10 }}><FiShoppingBag size={16} style={{ color:'#16a34a' }} /></div>
+                    <div>
+                      <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Orders</p>
+                      <p style={{ fontSize:11, color:'#94a3b8', marginTop:1 }}>All time</p>
+                    </div>
+                  </div>
+                  <Link href="/dashboard/orders" style={{ color:'#16a34a', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:3, textDecoration:'none' }}>View all <FiArrowRight size={11} /></Link>
+                </div>
+                <div style={{ padding:'14px 20px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  {[
+                    { label:'Total',     value: orderStats?.totalOrders     ?? '—', color:'#0f172a', bg:'#f8fafc' },
+                    { label:'Pending',   value: orderStats?.pendingOrders   ?? '—', color:'#d97706', bg:'#fffbeb' },
+                    { label:'Confirmed', value: orderStats?.confirmedOrders ?? '—', color:'#2563eb', bg:'#eff6ff' },
+                    { label:'Shipped',   value: orderStats?.shippedOrders   ?? '—', color:'#16a34a', bg:'#f0fdf4' },
+                  ].map(s => (
+                    <div key={s.label} style={{ background:s.bg, borderRadius:10, padding:'10px 12px' }}>
+                      <p style={{ fontSize:18, fontWeight:800, color:s.color, fontVariantNumeric:'tabular-nums' }}>{s.value}</p>
+                      <p style={{ fontSize:10, color:'#94a3b8', marginTop:2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                {orderStats?.grandTotal != null && (
+                  <div style={{ margin:'0 20px 16px', background:'linear-gradient(135deg,#f0fdf4,#dcfce7)', borderRadius:10, padding:'10px 14px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:12, color:'#166534', fontWeight:600 }}>Total Revenue</span>
+                    <span style={{ fontSize:16, fontWeight:800, color:'#15803d' }}>£{Number(orderStats.grandTotal).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Subscriptions card */}
+              <div style={card} className="db-card-hover">
+                <div style={{ padding:'18px 20px 14px', borderBottom:'1px solid #f8fafc', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ padding:8, background:'#faf5ff', borderRadius:10 }}><FiRepeat size={16} style={{ color:'#7c3aed' }} /></div>
+                    <div>
+                      <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Subscriptions</p>
+                      <p style={{ fontSize:11, color:'#94a3b8', marginTop:1 }}>Recurring billing</p>
+                    </div>
+                  </div>
+                  <Link href="/dashboard/subscriptions" style={{ color:'#7c3aed', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:3, textDecoration:'none' }}>View all <FiArrowRight size={11} /></Link>
+                </div>
+                <div style={{ padding:'14px 20px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  {[
+                    { label:'Active',       value: subStats?.activeSubscriptions ?? '—', color:'#7c3aed', bg:'#faf5ff', icon: FiCheckCircle },
+                    { label:'Total',        value: subStats?.totalSubscriptions  ?? '—', color:'#0f172a', bg:'#f8fafc',  icon: FiRepeat },
+                    { label:'Failed',       value: subStats?.failedSubscriptions ?? '—', color:'#dc2626', bg:'#fef2f2',  icon: FiAlertCircle },
+                    { label:'This Month',   value: subStats?.newThisMonth        ?? '—', color:'#0284c7', bg:'#f0f9ff',  icon: FiClock },
+                  ].map(s => (
+                    <div key={s.label} style={{ background:s.bg, borderRadius:10, padding:'10px 12px' }}>
+                      <p style={{ fontSize:18, fontWeight:800, color:s.color, fontVariantNumeric:'tabular-nums' }}>{s.value}</p>
+                      <p style={{ fontSize:10, color:'#94a3b8', marginTop:2, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Product inventory */}
+              <div style={{ ...card, padding:'18px 20px 20px' }} className="db-card-hover">
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                  <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Product Inventory</p>
+                  <Link href="/dashboard/products" style={{ color:'#d97706', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:3, textDecoration:'none' }}>Manage <FiArrowRight size={11} /></Link>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                  <BreakdownBar label="🐮 Yak Milk Chews"  count={stats.yakMilkCount}    total={stats.totalProducts} color="linear-gradient(90deg,#f59e0b,#ea580c)" />
+                  <BreakdownBar label="✨ Puff Treats"       count={stats.puffTreatCount}  total={stats.totalProducts} color="linear-gradient(90deg,#a78bfa,#7c3aed)" />
+                  <BreakdownBar label="🏔️ Highland Mix"    count={stats.highlandMixCount} total={stats.totalProducts} color="linear-gradient(90deg,#2dd4bf,#0891b2)" />
+                </div>
+              </div>
+            </div>
+
+            {/* Right col: Activity feed */}
+            <div style={{ ...card, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+              <div style={{ display:'flex', borderBottom:'1px solid #f1f5f9' }}>
+                <button className={`db-tab-btn ${activeTab === 'messages' ? 'active-msg' : ''}`} onClick={() => setActiveTab('messages')}>
+                  <FiMail size={14} /> Messages
+                  {stats.newContacts > 0 && <span style={{ background:'#e11d48', color:'#fff', fontSize:9, fontWeight:800, padding:'1px 6px', borderRadius:99, minWidth:16, textAlign:'center' }}>{stats.newContacts}</span>}
+                </button>
+                <button className={`db-tab-btn ${activeTab === 'reviews' ? 'active-rev' : ''}`} onClick={() => setActiveTab('reviews')}>
+                  <FiStar size={14} /> Reviews
+                  {stats.pendingReviews > 0 && <span style={{ background:'#d97706', color:'#fff', fontSize:9, fontWeight:800, padding:'1px 6px', borderRadius:99, minWidth:16, textAlign:'center' }}>{stats.pendingReviews}</span>}
+                </button>
+              </div>
+              <div style={{ flex:1, overflowY:'auto' }}>
+                {activeTab === 'messages' ? (
+                  recentContacts.length === 0
+                    ? <div style={{ padding:48, textAlign:'center', color:'#94a3b8', fontSize:13 }}><FiMail size={28} style={{ opacity:0.2, margin:'0 auto 12px', display:'block' }} />No messages yet</div>
+                    : recentContacts.map((c: any) => (
+                        <div key={c._id} className="db-feed-row">
+                          <div style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#60a5fa,#6366f1)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:13, fontWeight:700, flexShrink:0 }}>{(c.name || 'A')[0].toUpperCase()}</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
+                              <p style={{ fontWeight:600, color:'#0f172a', fontSize:13, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</p>
+                              <span style={{ flexShrink:0, fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:99, background: c.status === 'new' ? '#dbeafe' : c.status === 'read' ? '#fef3c7' : '#d1fae5', color: c.status === 'new' ? '#1e40af' : c.status === 'read' ? '#92400e' : '#065f46' }}>{c.status}</span>
+                            </div>
+                            <p style={{ color:'#94a3b8', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.subject || c.message}</p>
+                          </div>
+                          <span style={{ fontSize:11, color:'#cbd5e1', flexShrink:0 }}>{fmtDate(c.createdAt)}</span>
+                        </div>
+                      ))
+                ) : (
+                  recentReviews.length === 0
+                    ? <div style={{ padding:48, textAlign:'center', color:'#94a3b8', fontSize:13 }}><FiStar size={28} style={{ opacity:0.2, margin:'0 auto 12px', display:'block' }} />No reviews yet</div>
+                    : recentReviews.map((r: any) => (
+                        <div key={r._id} className="db-feed-row">
+                          <div style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#fbbf24,#ea580c)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:13, fontWeight:700, flexShrink:0 }}>{(r.guestInfo?.name || 'A')[0].toUpperCase()}</div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                              <p style={{ fontWeight:600, color:'#0f172a', fontSize:13, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.guestInfo?.name || 'Anonymous'}</p>
+                              <Stars rating={r.rating} />
+                            </div>
+                            <p style={{ color:'#94a3b8', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.comment || 'No comment'}</p>
+                          </div>
+                          <span style={{ fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:99, flexShrink:0, background: r.status === 'approved' ? '#d1fae5' : r.status === 'rejected' ? '#fee2e2' : '#fef3c7', color: r.status === 'approved' ? '#065f46' : r.status === 'rejected' ? '#991b1b' : '#92400e' }}>{r.status}</span>
+                        </div>
+                      ))
+                )}
+              </div>
+              <div style={{ padding:'12px 20px', borderTop:'1px solid #f1f5f9', background:'#fafafa' }}>
+                <Link href={activeTab === 'messages' ? '/dashboard/contact' : '/dashboard/reviews'} style={{ fontSize:12, color:'#64748b', fontWeight:600, display:'flex', alignItems:'center', gap:5, textDecoration:'none' }}>
+                  View all {activeTab === 'messages' ? 'messages' : 'reviews'} <FiArrowRight size={12} />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════ ANALYTICS HEADER ══════════ */}
+          <div style={{ display:'flex', alignItems:'center', gap:16, margin:'28px 0 16px' }}>
+            <div style={{ flex:1, height:1, background:'#e2e8f0' }} />
+            <div style={{ display:'flex', alignItems:'center', gap:7, color:'#94a3b8', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em' }}>
+              <FiTrendingUp size={12} /> Analytics &amp; Insights
+            </div>
+            <div style={{ flex:1, height:1, background:'#e2e8f0' }} />
+          </div>
+
+          {/* ══════════ ANALYTICS METRIC PILLS ══════════ */}
+          <div className="db-three-col" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+            {[
+              { icon:FiUsers,          label:'Total Customers',  value:String(allContacts.length),             sub:'Unique inquiries',   color:'#2563eb', bg:'#eff6ff', accent:'linear-gradient(90deg,#3b82f6,#6366f1)' },
+              { icon:FiMessageCircle,  label:'Reply Rate',       value:`${engagementMetrics.replyRate}%`,       sub:'Messages replied',   color:'#16a34a', bg:'#f0fdf4', accent:'linear-gradient(90deg,#22c55e,#16a34a)' },
+              { icon:FiStar,           label:'Avg Rating',       value:String(engagementMetrics.avgRating),    sub:`${allReviews.length} reviews`, color:'#d97706', bg:'#fffbeb', accent:'linear-gradient(90deg,#f59e0b,#d97706)' },
+              { icon:FiAward,          label:'Approval Rate',    value:`${engagementMetrics.approvalRate}%`,   sub:'Reviews approved',   color:'#7c3aed', bg:'#faf5ff', accent:'linear-gradient(90deg,#a78bfa,#7c3aed)' },
+            ].map(m => (
+              <div key={m.label} style={{ ...card, padding:'16px 18px', position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:m.accent, borderRadius:'16px 16px 0 0' }} />
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
+                  <div style={{ padding:7, background:m.bg, borderRadius:9 }}><m.icon size={16} style={{ color:m.color }} /></div>
+                </div>
+                <p style={{ fontSize:24, fontWeight:800, color:'#0f172a', fontVariantNumeric:'tabular-nums', lineHeight:1 }}>{m.value}</p>
+                <p style={{ fontSize:10, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.08em', marginTop:5 }}>{m.label}</p>
+                <p style={{ fontSize:11, color:'#cbd5e1', marginTop:3 }}>{m.sub}</p>
               </div>
             ))}
           </div>
 
-          {/* Google Analytics CTA */}
-          <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/50 p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-                <rect x="3" y="12" width="4" height="9" rx="1" fill="#F9AB00" />
-                <rect x="10" y="6" width="4" height="15" rx="1" fill="#E37400" />
-                <rect x="17" y="2" width="4" height="19" rx="1" fill="#34A853" />
-              </svg>
+          {/* ══════════ ROW 2: Line chart + Donut ══════════ */}
+          <div className="db-analytics-grid" style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:16, marginBottom:16 }}>
+
+            {/* Line chart */}
+            <div style={{ ...card, padding:'20px 22px 16px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+                <div>
+                  <h3 style={{ fontSize:14, fontWeight:700, color:'#0f172a' }}>Customer Activity</h3>
+                  <p style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>Inquiries &amp; reviews — last 6 months</p>
+                </div>
+                <div style={{ display:'flex', gap:14 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <div style={{ width:10, height:3, background:'#F59E0B', borderRadius:99 }} />
+                    <span style={{ fontSize:11, color:'#64748b', fontWeight:600 }}>Inquiries</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <div style={{ width:10, height:3, background:'#818CF8', borderRadius:99 }} />
+                    <span style={{ fontSize:11, color:'#64748b', fontWeight:600 }}>Reviews</span>
+                  </div>
+                </div>
+              </div>
+              <SmoothLineChart data={monthlyData} />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-gray-900">Connect Google Analytics</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">View real visitor traffic, session data, bounce rate &amp; conversion funnels.</p>
+
+            {/* Donut chart */}
+            <div style={{ ...card, padding:'20px 22px' }}>
+              <div style={{ marginBottom:18 }}>
+                <h3 style={{ fontSize:14, fontWeight:700, color:'#0f172a' }}>Product Mix</h3>
+                <p style={{ fontSize:11, color:'#94a3b8', marginTop:2 }}>Distribution by type</p>
+              </div>
+              <DonutChart yak={stats.yakMilkCount} puff={stats.puffTreatCount} highland={stats.highlandMixCount} />
+              <div style={{ marginTop:18, borderTop:'1px solid #f1f5f9', paddingTop:14, display:'flex', justifyContent:'space-between' }}>
+                {[
+                  { label:'Add Yak',     href:'/dashboard/products',    color:'#F59E0B' },
+                  { label:'Add Puff',    href:'/dashboard/puff-treats', color:'#A78BFA' },
+                  { label:'Add Highland', href:'/dashboard/highland-mix', color:'#2DD4BF' },
+                ].map(b => (
+                  <Link key={b.label} href={b.href} style={{ fontSize:11, fontWeight:700, color:b.color, textDecoration:'none', padding:'5px 8px', borderRadius:7, background:`${b.color}12`, border:`1px solid ${b.color}33` }}>+ {b.label}</Link>
+                ))}
+              </div>
             </div>
-            <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer"
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap flex items-center gap-1">
-              Setup <FiArrowRight size={11} />
-            </a>
           </div>
-        </div>
+
+          {/* ══════════ ROW 3: Top Products + Quick Actions ══════════ */}
+          <div className="db-analytics-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+
+            {/* Top products */}
+            <div style={{ ...card, overflow:'hidden' }}>
+              <div style={{ padding:'16px 20px', borderBottom:'1px solid #f1f5f9', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <div style={{ padding:7, background:'#fffbeb', borderRadius:9 }}><FiAward size={15} style={{ color:'#d97706' }} /></div>
+                  <div>
+                    <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Top Products</p>
+                    <p style={{ fontSize:11, color:'#94a3b8' }}>By engagement score</p>
+                  </div>
+                </div>
+                <Link href="/dashboard/products" style={{ color:'#d97706', fontSize:11, fontWeight:700, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>All <FiArrowRight size={11} /></Link>
+              </div>
+              {topProducts.length === 0
+                ? <div style={{ padding:40, textAlign:'center', color:'#94a3b8', fontSize:13 }}>No products yet</div>
+                : topProducts.map((p: any, i: number) => {
+                    const badge = pTypeBadge(p.productType);
+                    const score = ((p.rating || 0) * Math.log((p.reviews || 0) + 1)).toFixed(1);
+                    return (
+                      <div key={p._id} className="db-feed-row">
+                        <span style={{ width:22, height:22, borderRadius:'50%', background: i===0?'#fef3c7':i===1?'#f1f5f9':i===2?'#fff7ed':'#f8fafc', color:i===0?'#d97706':i===1?'#475569':i===2?'#c2410c':'#94a3b8', fontSize:10, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</span>
+                        {p.image
+                          ? <img src={p.image} alt={p.name} style={{ width:34, height:34, borderRadius:8, objectFit:'cover', flexShrink:0, border:'1px solid #f1f5f9' }} />
+                          : <div style={{ width:34, height:34, borderRadius:8, background:'#fffbeb', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><GiDogBowl size={16} style={{ color:'#d97706' }} /></div>
+                        }
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <p style={{ fontSize:13, fontWeight:600, color:'#0f172a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.name}</p>
+                          <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
+                            <Stars rating={p.rating || 0} />
+                            <span style={{ fontSize:10, color:'#94a3b8' }}>({p.reviews||0})</span>
+                            <span style={{ fontSize:9, fontWeight:700, padding:'1px 6px', borderRadius:99 }} className={badge.cls}>{badge.label}</span>
+                          </div>
+                        </div>
+                        <div style={{ textAlign:'right', flexShrink:0 }}>
+                          <p style={{ fontSize:12, fontWeight:700, color:'#0f172a' }}>{score}</p>
+                          <p style={{ fontSize:10, color:'#94a3b8' }}>score</p>
+                        </div>
+                      </div>
+                    );
+                  })
+              }
+            </div>
+
+            {/* Quick actions */}
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>Quick Actions</p>
+              {[
+                { label:'Add Yak Milk Product',   sub:'Yak milk chew range',          href:'/dashboard/products',    iconBg:'#fffbeb', iconColor:'#d97706', border:'#fde68a', bg:'#fffdf5', icon:GiDogBowl },
+                { label:'Add Puff Treat',         sub:'Puffed dog treats',             href:'/dashboard/puff-treats', iconBg:'#f5f3ff', iconColor:'#7c3aed', border:'#ddd6fe', bg:'#fdf8ff', icon:FiGrid },
+                { label:'Manage Highland Mix',    sub:'Highland mix variety',          href:'/dashboard/highland-mix',iconBg:'#f0fdfa', iconColor:'#0d9488', border:'#99f6e4', bg:'#f5fffd', icon:FiLayers },
+                { label:'View Orders',            sub:`${orderStats?.pendingOrders ?? 0} pending`, href:'/dashboard/orders',  iconBg:'#f0fdf4', iconColor:'#16a34a', border:'#bbf7d0', bg:'#f8fff8', icon:FiShoppingBag },
+                { label:'Subscriptions',          sub:`${subStats?.activeSubscriptions ?? 0} active`, href:'/dashboard/subscriptions', iconBg:'#faf5ff', iconColor:'#7c3aed', border:'#ddd6fe', bg:'#fdf8ff', icon:FiRepeat },
+                { label:'Inbox',                  sub:`${stats.newContacts} unread`,   href:'/dashboard/contact',     iconBg:'#fff1f2', iconColor:'#e11d48', border:'#fecdd3', bg:'#fff8f8', icon:FiMail },
+              ].map(a => (
+                <Link key={a.label} href={a.href} className="db-quick-link" style={{ background:a.bg, borderColor:a.border }}>
+                  <div style={{ padding:8, background:a.iconBg, borderRadius:9, flexShrink:0 }}><a.icon size={16} style={{ color:a.iconColor }} /></div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>{a.label}</p>
+                    <p style={{ fontSize:11, color:'#94a3b8', marginTop:1 }}>{a.sub}</p>
+                  </div>
+                  <FiArrowRight size={13} style={{ color:'#cbd5e1', flexShrink:0 }} />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+        </div>{/* /max-w container */}
       </div>
-    </div>
+    </>
   );
 }

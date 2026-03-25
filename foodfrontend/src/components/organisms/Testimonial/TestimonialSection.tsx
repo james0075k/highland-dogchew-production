@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Star, BadgeCheck, Leaf, Award, MapPin, Stethoscope, Timer } from 'lucide-react';
 import {
   motion,
@@ -451,11 +452,12 @@ const TestimonialSection = () => {
                         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                       />
                       {t.profileImage ? (
-                        <img
+                        <Image
                           src={t.profileImage}
                           alt={t.name}
-                          className="relative w-18 h-18 rounded-full object-cover border-3 border-white dark:border-[#2a1f18] shadow-lg"
-                          style={{ width: 72, height: 72 }}
+                          width={72}
+                          height={72}
+                          className="relative rounded-full object-cover border-3 border-white dark:border-[#2a1f18] shadow-lg"
                         />
                       ) : (
                         <div

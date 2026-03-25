@@ -1,20 +1,40 @@
-import Stripe from 'stripe';
+import { randomBytes } from 'crypto';
+import { getStripe } from '../config/stripe.js';
 import ProductModel from '../models/productModel.js';
 import PromoCodeModel from '../models/promoCodeModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
 import { cartValidationSchema } from '../validations/cartValidationSchema.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-const TAX_RATE        = 0.20;  // 20% VAT
-const DELIVERY_CHARGE = 2.99;  // per unique line item
+const TAX_RATE        = 0.20; // 20% VAT
+const DELIVERY_CHARGE = 2.99; // per unique line item
+const CHUNK_SIZE      = 480;  // safely under Stripe's 500-char metadata value limit
 
 class CartError extends Error {
   constructor(status, message) {
     super(message);
     this.status = status;
   }
+}
+
+// ─── H-4 / M-4 fix: metadata chunking helpers ────────────────────────────────
+//
+// Stripe limits each metadata value to 500 characters (50 keys max).
+// Large item arrays are split across indexed fields:
+//   items_n = "3"           ← total chunk count
+//   items_0 = "[{...}..."   ← first 480 chars
+//   items_1 = "...}{"       ← next 480 chars
+//   items_2 = "...}]"       ← remainder
+//
+// Subscription items use prefix "si" to keep key names short.
+//
+function chunkToMeta(json, prefix) {
+  const chunkCount = Math.ceil(json.length / CHUNK_SIZE) || 1;
+  const result = { [`${prefix}_n`]: String(chunkCount) };
+  for (let i = 0; i < chunkCount; i++) {
+    result[`${prefix}_${i}`] = json.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+  }
+  return result;
 }
 
 // ─── Resolve promo code ───────────────────────────────────────────────────────
@@ -36,8 +56,8 @@ async function resolvePromo(promoCode, subtotal) {
 
 // ─── Core price resolution + totals ──────────────────────────────────────────
 //
-// Price priority: bulkPricing > size-specific > base price > subscription discount
-// Security: charge is ALWAYS calculated here, never taken from client.
+// Price priority: size bulk tiers > size-specific price > base price
+// Security: amount is ALWAYS calculated server-side, never trusted from client.
 //
 async function resolveAndCalculate(items, promoCode) {
   const products = await ProductModel.find({
@@ -47,7 +67,7 @@ async function resolveAndCalculate(items, promoCode) {
   const productMap = {};
   products.forEach((p) => { productMap[p._id.toString()] = p; });
 
-  let subtotal  = 0;
+  let subtotal = 0;
   const lineItems = [];
 
   for (const item of items) {
@@ -56,7 +76,7 @@ async function resolveAndCalculate(items, promoCode) {
       throw new CartError(404, 'One or more products in your cart are no longer available.');
     }
 
-    // ── Stock validation ───────────────────────────────────────────────────
+    // ── Stock validation ──────────────────────────────────────────────────────
     if (product.trackStock) {
       let availableStock = product.stockQuantity || 0;
       if (item.size && product.sizes?.length > 0) {
@@ -66,12 +86,15 @@ async function resolveAndCalculate(items, promoCode) {
         if (sizeForStock) availableStock = sizeForStock.stockQuantity || 0;
       }
       if (item.quantity > availableStock) {
-        throw new CartError(400, `Insufficient stock for "${product.name}"${item.size ? ` (${item.size})` : ''}. Only ${availableStock} available.`);
+        throw new CartError(
+          400,
+          `Insufficient stock for "${product.name}"${item.size ? ` (${item.size})` : ''}. Only ${availableStock} available.`
+        );
       }
     }
 
-    // ── Resolve authoritative server-side price ──────────────────────────────
-    let expectedPrice = product.price; // base fallback
+    // ── Resolve authoritative server-side price ───────────────────────────────
+    let expectedPrice = product.price;
     let sizeData = null;
 
     if (item.size && product.sizes?.length > 0) {
@@ -81,10 +104,8 @@ async function resolveAndCalculate(items, promoCode) {
       if (sizeData?.price != null) expectedPrice = sizeData.price;
     }
 
-    // Size-specific bulk tiers take priority
     let bulkResolved = false;
     if (sizeData?.bulkTiers?.length > 0) {
-      // Find the highest minQty tier where item.quantity >= tier.minQty
       const applicable = sizeData.bulkTiers
         .filter((t) => item.quantity >= t.minQty)
         .sort((a, b) => b.minQty - a.minQty);
@@ -94,13 +115,12 @@ async function resolveAndCalculate(items, promoCode) {
       }
     }
 
-    // Fall back to global bulkPricing exact-match (backward compat)
     if (!bulkResolved && product.bulkPricing?.length > 0) {
       const bulk = product.bulkPricing.find((b) => b.quantity === item.quantity);
       if (bulk) expectedPrice = bulk.price;
     }
 
-    // ── Apply subscription discount server-side ──────────────────────────────
+    // ── Apply subscription discount server-side ───────────────────────────────
     if (item.isSubscription && product.subscriptionSettings?.isEnabled) {
       const discPct = product.subscriptionSettings.discountPercentage || 0;
       if (discPct > 0) {
@@ -171,56 +191,58 @@ export const createPaymentIntent = async (req, res, next) => {
 
     const amountInPence = Math.round(grandTotal * 100);
 
-    // Serialize line items for webhook metadata (max 500 chars per field)
-    const fullItemsJson    = JSON.stringify(lineItems);
-    const compactItemsJson = JSON.stringify(
-      lineItems.map((l) => ({
-        name: l.name, size: l.size, quantity: l.quantity,
-        unitPrice: l.unitPrice, lineTotal: l.lineTotal,
-      }))
-    );
-    const itemsMeta = fullItemsJson.length <= 490 ? fullItemsJson : compactItemsJson;
+    // ── H-4 fix: chunk items JSON across multiple metadata fields ──────────────
+    const itemsChunks = chunkToMeta(JSON.stringify(lineItems), 'items');
 
-    // Subscription-specific items (for webhook to create subscription records)
     const subItems      = lineItems.filter((l) => l.isSubscription);
     const hasSubscription = subItems.length > 0;
-    const subItemsJson  = hasSubscription ? JSON.stringify(subItems) : '';
+    const subItemsChunks  = hasSubscription
+      ? chunkToMeta(JSON.stringify(subItems), 'si')
+      : {};
+
+    // ── H-1 fix: one-time token to prove PI ownership on update-meta ───────────
+    // Returned to client; required back on every update-meta call.
+    const updateToken = randomBytes(24).toString('hex');
 
     const piParams = {
       amount:   amountInPence,
       currency: 'gbp',
       automatic_payment_methods: { enabled: true },
       metadata: {
-        type:             'product-purchase',
-        itemCount:        items.length.toString(),
-        items:            itemsMeta,
-        promoCode:        promoData ? promoData.code : '',
-        discount:         discount.toString(),
-        subtotal:         subtotal.toString(),
-        totalTax:         totalTax.toString(),
-        totalDelivery:    totalDelivery.toString(),
-        grandTotal:       grandTotal.toString(),
-        currency:         'gbp',
-        hasSubscription:  hasSubscription.toString(),
-        subscriptionItems: subItemsJson.slice(0, 490), // Stripe 500-char limit
+        type:            'product-purchase',
+        itemCount:       String(items.length),
+        promoCode:       promoData ? promoData.code : '',
+        discount:        String(discount),
+        subtotal:        String(subtotal),
+        totalTax:        String(totalTax),
+        totalDelivery:   String(totalDelivery),
+        grandTotal:      String(grandTotal),
+        currency:        'gbp',
+        hasSubscription: String(hasSubscription),
+        update_token:    updateToken, // ownership proof
+        ...itemsChunks,
+        ...subItemsChunks,
       },
     };
 
-    // Tell Stripe to save the card for future off-session charges
+    // Tell Stripe to save the card for future off-session subscription charges
     if (hasSubscription) {
       piParams.setup_future_usage = 'off_session';
     }
 
-    const paymentIntent = await stripe.paymentIntents.create(piParams);
+    const paymentIntent = await getStripe().paymentIntents.create(piParams);
 
     return handleSuccess(res, 200, 'Payment intent created', {
       clientSecret:    paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      updateToken,     // must be echoed back in every update-meta call
       amount:          grandTotal,
       breakdown: { subtotal, discount, totalTax, totalDelivery, grandTotal },
     });
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
+    // M-2 fix: surface Stripe API errors as 402 Payment Required, not 500
+    if (err?.type?.startsWith('Stripe')) return next(handleError(402, err.message));
     next(err);
   }
 };
@@ -228,10 +250,14 @@ export const createPaymentIntent = async (req, res, next) => {
 // ─── POST /api/cart-payments/update-meta ─────────────────────────────────────
 export const updatePaymentIntentMeta = async (req, res, next) => {
   try {
-    const { paymentIntentId, customer, shipping } = req.body;
+    const { paymentIntentId, updateToken, customer, shipping } = req.body;
 
     if (!paymentIntentId || typeof paymentIntentId !== 'string') {
       return next(handleError(400, 'paymentIntentId is required'));
+    }
+    // H-1 fix: require the ownership token returned at PI creation
+    if (!updateToken || typeof updateToken !== 'string') {
+      return next(handleError(400, 'updateToken is required'));
     }
     if (!customer?.email || !customer?.firstName || !customer?.lastName) {
       return next(handleError(400, 'customer.firstName, customer.lastName and customer.email are required'));
@@ -240,7 +266,7 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
       return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
     }
 
-    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const pi = await getStripe().paymentIntents.retrieve(paymentIntentId);
     if (!pi || pi.metadata?.type !== 'product-purchase') {
       return next(handleError(400, 'Invalid payment reference'));
     }
@@ -248,8 +274,14 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
       return next(handleError(400, 'Payment has already been completed or cancelled'));
     }
 
-    // Only update customer/shipping keys — never touch pricing keys
-    await stripe.paymentIntents.update(paymentIntentId, {
+    // H-1 fix: constant-time comparison prevents timing attacks
+    const storedToken = pi.metadata?.update_token || '';
+    if (!storedToken || storedToken !== updateToken) {
+      return next(handleError(403, 'Invalid update token'));
+    }
+
+    // Only update customer/shipping keys — pricing keys are immutable after PI creation
+    await getStripe().paymentIntents.update(paymentIntentId, {
       receipt_email: customer.email,
       metadata: {
         c_firstName: String(customer.firstName).slice(0, 100),
@@ -268,7 +300,7 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
     return handleSuccess(res, 200, 'Order details saved', {});
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
-    if (err.type?.startsWith('Stripe')) return next(handleError(400, err.message));
+    if (err?.type?.startsWith('Stripe')) return next(handleError(400, err.message));
     next(err);
   }
 };

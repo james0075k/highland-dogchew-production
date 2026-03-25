@@ -73,7 +73,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div
-                key={`${item.productId}-${item.size}`}
+                key={`${item.productId}-${item.size}-${item.isSubscription ? 'sub' : 'once'}`}
                 className="bg-white dark:bg-[#241b16] rounded-xl shadow-sm dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-amber-100 dark:border-[#3a2c23] p-4 sm:p-6 transition-colors duration-300"
               >
                 <div className="flex gap-4">
@@ -160,9 +160,8 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    {/* Per-item breakdown */}
+                    {/* Per-item delivery indicator */}
                     <div className="mt-3 text-xs text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60 flex gap-4">
-                      <span>Tax: £{item.tax.toFixed(2)}</span>
                       <span>Delivery: £{item.delivery.toFixed(2)}</span>
                     </div>
                   </div>

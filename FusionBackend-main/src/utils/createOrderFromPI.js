@@ -22,6 +22,24 @@ export function safeParse(str, fallback = []) {
   try { return JSON.parse(str || '[]'); } catch { return fallback; }
 }
 
+// H-4 fix: reassemble chunked metadata values written by chunkToMeta()
+//
+// New format:  items_n="3", items_0="...", items_1="...", items_2="..."
+// Legacy format: items="[{...}]"   (single field, kept for backward compat)
+//
+export function unchunkFromMeta(meta, prefix) {
+  const n = parseInt(meta[`${prefix}_n`] || '0', 10);
+  if (n > 0) {
+    let result = '';
+    for (let i = 0; i < n; i++) {
+      result += meta[`${prefix}_${i}`] || '';
+    }
+    return result;
+  }
+  // Backward compat: old single-field format
+  return meta[prefix] || '[]';
+}
+
 export function buildOrderItems(lineItems) {
   return lineItems.map((item) => ({
     ...(item.productId ? { product: item.productId } : {}),
@@ -70,16 +88,16 @@ export async function createOrderFromPI(pi, customerOverride = null) {
           'shippingAddress.fullName':
             `${customerOverride.firstName || ''} ${customerOverride.lastName || ''}`.trim()
             || existing.shippingAddress.fullName,
-          'shippingAddress.firstName':   customerOverride.firstName   || existing.shippingAddress.firstName,
-          'shippingAddress.lastName':    customerOverride.lastName    || existing.shippingAddress.lastName,
-          'shippingAddress.email':       customerOverride.email       || existing.shippingAddress.email,
-          'shippingAddress.phone':       customerOverride.phone       || existing.shippingAddress.phone,
+          'shippingAddress.firstName':    customerOverride.firstName    || existing.shippingAddress.firstName,
+          'shippingAddress.lastName':     customerOverride.lastName     || existing.shippingAddress.lastName,
+          'shippingAddress.email':        customerOverride.email        || existing.shippingAddress.email,
+          'shippingAddress.phone':        customerOverride.phone        || existing.shippingAddress.phone,
           'shippingAddress.addressLine1': customerOverride.addressLine1 || existing.shippingAddress.addressLine1,
           'shippingAddress.addressLine2': customerOverride.addressLine2 || existing.shippingAddress.addressLine2,
-          'shippingAddress.city':        customerOverride.city        || existing.shippingAddress.city,
-          'shippingAddress.county':      customerOverride.county      || existing.shippingAddress.county,
-          'shippingAddress.postcode':    customerOverride.postcode    || existing.shippingAddress.postcode,
-          'shippingAddress.country':     customerOverride.country     || existing.shippingAddress.country,
+          'shippingAddress.city':         customerOverride.city         || existing.shippingAddress.city,
+          'shippingAddress.county':       customerOverride.county       || existing.shippingAddress.county,
+          'shippingAddress.postcode':     customerOverride.postcode     || existing.shippingAddress.postcode,
+          'shippingAddress.country':      customerOverride.country      || existing.shippingAddress.country,
         },
         { new: true }
       );
@@ -98,11 +116,14 @@ export async function createOrderFromPI(pi, customerOverride = null) {
   const email     = meta.c_email     || c.email       || '';
   const phone     = meta.c_phone     || c.phone       || '';
 
+  // H-4 fix: reconstruct items from chunked metadata fields
+  const lineItems = safeParse(unchunkFromMeta(meta, 'items'));
+
   // ── Create the order ──────────────────────────────────────────────────────────
   let order;
   try {
     order = await OrderModel.create({
-      items: buildOrderItems(safeParse(meta.items)),
+      items: buildOrderItems(lineItems),
       shippingAddress: {
         fullName,
         firstName,
@@ -138,25 +159,32 @@ export async function createOrderFromPI(pi, customerOverride = null) {
 
   // ── Stock decrement (fire-and-forget — never blocks order creation) ───────────
   try {
-    const lineItems = safeParse(meta.items);
     for (const item of lineItems) {
       if (!item.productId) continue;
       const qty = Number(item.quantity) || 1;
+
       if (item.size && item.size !== 'Default') {
-        // Per-size stock decrement
+        // H-5 fix: single $elemMatch query — prevents double-decrement when
+        // a size's value and label are identical strings.
+        // Floor guard: stockQuantity: { $gte: qty } prevents stock going negative
+        // under concurrent orders (atomic — only one winner when stock is 1).
         await ProductModel.updateOne(
-          { _id: item.productId, 'sizes.value': item.size, trackStock: true },
-          { $inc: { 'sizes.$.stockQuantity': -qty } }
-        ).catch(() => {});
-        // Also try matching by label
-        await ProductModel.updateOne(
-          { _id: item.productId, 'sizes.label': item.size, trackStock: true },
+          {
+            _id: item.productId,
+            trackStock: true,
+            sizes: {
+              $elemMatch: {
+                $or: [{ value: item.size }, { label: item.size }],
+                stockQuantity: { $gte: qty },
+              },
+            },
+          },
           { $inc: { 'sizes.$.stockQuantity': -qty } }
         ).catch(() => {});
       } else {
-        // Global stock decrement
+        // Global stock decrement — floor guard prevents going negative
         await ProductModel.updateOne(
-          { _id: item.productId, trackStock: true },
+          { _id: item.productId, trackStock: true, stockQuantity: { $gte: qty } },
           { $inc: { stockQuantity: -qty } }
         ).catch(() => {});
       }

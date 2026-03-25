@@ -52,23 +52,43 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   const [weekInput, setWeekInput] = useState('');
   const [monthInput, setMonthInput] = useState('');
 
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  interface ProductItem {
+    _id: string;
+    name: string;
+    category: string;
+    image: string;
+    description: string;
+    productType: string;
+    variety?: { name?: string; category?: string } | string;
+    price: string | number;
+    originalPrice: string | number;
+    [key: string]: unknown;
+  }
+
+  interface VarietyItem {
+    _id: string;
+    name: string;
+    category: string;
+    [key: string]: unknown;
+  }
+
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   // Products sidebar state
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
+  const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
 
   // Varieties state
-  const [varieties, setVarieties] = useState([]);
+  const [varieties, setVarieties] = useState<VarietyItem[]>([]);
   const [loadingVarieties, setLoadingVarieties] = useState(true);
 
   // Collapsible sizes state
@@ -141,7 +161,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   };
 
   const handleGalleryChange = (e) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
       setGalleryImages((prev) => [...prev, ...files]);
       const newPreviews = files.map((file) => URL.createObjectURL(file));
@@ -1353,7 +1373,7 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                           )}
                           {product.variety && (
                             <span className="text-xs text-purple-600 font-medium">
-                              {product.variety.name || product.variety.category}
+                              {typeof product.variety === 'object' ? (product.variety.name || product.variety.category) : product.variety}
                             </span>
                           )}
                         </div>

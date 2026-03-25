@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
+import Image from 'next/image';
 
 /* ── Paw Chat Icon ─────────────────────────────────────────────────── */
 function PawChatIcon({ className }: { className?: string }) {
@@ -75,9 +76,11 @@ const WhatsappWidget = () => {
           <div className="bg-[#2E1F14] dark:bg-[#2a1f15] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <img
+                <Image
                   src={avatar}
                   alt={businessName}
+                  width={40}
+                  height={40}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-amber-400/40 object-cover"
                 />
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 rounded-full border-2 border-[#2E1F14]" />

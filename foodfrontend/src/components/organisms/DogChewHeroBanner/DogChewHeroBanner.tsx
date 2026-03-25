@@ -1,24 +1,29 @@
 'use client'
 import TextHeader from '@/components/atoms/headings';
 import React from 'react';
+import Image from 'next/image';
 
 const DogChewHeroBanner = () => {
   return (
     <section className="relative w-full min-h-[400px] md:min-h-[500px] overflow-hidden bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-50">
       {/* Decorative Dog Items - Top Left */}
       <div className="absolute top-8 left-8 md:top-12 md:left-16 animate-float">
-        <img
+        <Image
           src="/images/dog-12.jpeg"
           alt="Golden Retriever Puppy"
+          width={112}
+          height={112}
           className="w-20 h-20 md:w-28 md:h-28 object-cover rounded-full shadow-lg transform -rotate-12"
         />
       </div>
 
       {/* Dog Bone - Left Side */}
       <div className="absolute bottom-16 left-8 md:bottom-24 md:left-12 animate-float-delayed">
-        <img
+        <Image
           src="/images/dog-22.jpeg"
           alt="Happy Husky on Beach"
+          width={128}
+          height={80}
           className="w-24 h-16 md:w-32 md:h-20 object-cover rounded-lg shadow-lg transform rotate-12"
         />
       </div>
@@ -26,9 +31,11 @@ const DogChewHeroBanner = () => {
       {/* Dog Food Bowl - Top Right */}
       <div className="absolute top-8 right-8 md:top-12 md:right-16 animate-float">
         <div className="relative">
-          <img
+          <Image
             src="/images/dog-32.jpeg"
             alt="Golden Retriever Portrait"
+            width={160}
+            height={160}
             className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-full shadow-2xl"
           />
           {/* Scattered food pieces */}
@@ -40,9 +47,11 @@ const DogChewHeroBanner = () => {
 
       {/* Dog Toy - Bottom Right */}
       <div className="absolute bottom-16 right-8 md:bottom-24 md:right-16 animate-float-delayed">
-        <img
+        <Image
           src="/images/dog-24.jpeg"
           alt="Jack Russell Running"
+          width={96}
+          height={96}
           className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-full shadow-lg"
         />
       </div>

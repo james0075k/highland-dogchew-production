@@ -227,6 +227,7 @@ export const useImageCropper = ({
   const handleCropComplete = useCallback(async () => {
     try {
       const result = await generateCroppedImage();
+      if (!result) return;
       onCropComplete?.(result.file, result.cropData);
       closeCropper();
     } catch (error) {

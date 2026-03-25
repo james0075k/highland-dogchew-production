@@ -26,21 +26,38 @@ const VarietyDashboard = () => {
     displayOrder: '0',
   });
 
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  interface VarietyItem {
+    _id: string;
+    name: string;
+    category: string;
+    description?: string;
+    image?: string;
+    displayOrder?: number;
+    isActive?: boolean;
+    [key: string]: unknown;
+  }
+
+  interface CategoryItem {
+    _id: string;
+    name: string;
+    [key: string]: unknown;
+  }
+
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   // Varieties sidebar state
-  const [varieties, setVarieties] = useState([]);
+  const [varieties, setVarieties] = useState<VarietyItem[]>([]);
   const [loadingVarieties, setLoadingVarieties] = useState(true);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [editingVariety, setEditingVariety] = useState(null);
+  const [editingVariety, setEditingVariety] = useState<VarietyItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [varietyToDelete, setVarietyToDelete] = useState(null);
+  const [varietyToDelete, setVarietyToDelete] = useState<VarietyItem | null>(null);
 
   // Categories state
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');

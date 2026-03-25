@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ButtonProps<T = unknown> {
   text: string;
@@ -69,7 +70,7 @@ const Button = <T,>({
       {leftIcon && (
         <span className="mr-2 flex items-center">
           {typeof leftIcon === 'string' ? (
-            <img src={leftIcon} alt="left-icon" className="w-5 h-5" />
+            <Image src={leftIcon} alt="left-icon" width={20} height={20} className="w-5 h-5" />
           ) : (
             leftIcon
           )}
@@ -79,7 +80,7 @@ const Button = <T,>({
       {rightIcon && (
         <span className="ml-2 flex items-center">
           {typeof rightIcon === 'string' ? (
-            <img src={rightIcon} alt="right-icon" className="w-5 h-5" />
+            <Image src={rightIcon} alt="right-icon" width={20} height={20} className="w-5 h-5" />
           ) : (
             rightIcon
           )}

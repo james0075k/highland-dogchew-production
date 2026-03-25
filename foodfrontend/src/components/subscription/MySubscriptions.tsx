@@ -46,7 +46,7 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 function getUpcomingDates(nextBillingDate: string, intervalWeeks: number, count = 3): Date[] {
   const dates: Date[] = [];
-  let d = new Date(nextBillingDate);
+  const d = new Date(nextBillingDate);
   for (let i = 0; i < count; i++) {
     dates.push(new Date(d));
     d.setDate(d.getDate() + intervalWeeks * 7);
@@ -83,7 +83,7 @@ const BAR_COLOR: Record<string, string> = {
 
 function CancelModal({
   sub,
-  email,
+  email: _email,
   onConfirm,
   onAbort,
   loading,
@@ -191,7 +191,7 @@ function CancelModal({
 
 function SubscriptionCard({
   sub,
-  email,
+  email: _email,
   onStatusChange,
   onCancelRequest,
 }: {

@@ -13,6 +13,7 @@ type Variety = {
   isActive: boolean;
   category: string;
   description?: string;
+  displayOrder?: number;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
@@ -177,7 +178,7 @@ function MobileVarietyCard({ variety, onClick }: { variety: Variety; onClick: ()
 
   return (
     <div onClick={onClick} className="relative overflow-hidden rounded-2xl shadow-md cursor-pointer" style={{ aspectRatio: '3 / 4' }}>
-      <img src={variety.image || '/placeholder.jpg'} alt={variety.name} className="absolute inset-0 w-full h-full object-cover" />
+      <Image src={variety.image || '/placeholder.jpg'} alt={variety.name} fill className="object-cover" />
       <div className={`absolute inset-0 bg-gradient-to-b ${accent.gradient} opacity-65`} />
 
       <StitchCorner pos="tl" />
@@ -241,7 +242,7 @@ const VarietiesSection = () => {
           setVarieties(
             (result.data || [])
               .filter((v: Variety) => v.isActive)
-              .sort((a: any, b: any) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+              .sort((a: Variety, b: Variety) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
           );
         }
       } catch (err) {
@@ -301,7 +302,7 @@ const VarietiesSection = () => {
       {/* ═══════ HERO ═══════ */}
       <div ref={heroRef} className="relative w-full h-[50vh] md:h-[62vh] overflow-hidden mt-16">
         <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
-          <img src="/images/dog-11.jpeg" alt="Dogs enjoying Highland Yak Chew varieties" className="h-full w-full object-cover" />
+          <Image src="/images/dog-11.jpeg" alt="Dogs enjoying Highland Yak Chew varieties" fill className="object-cover" />
         </motion.div>
         <motion.div className="absolute inset-0 bg-[#1a1410]" style={{ opacity: overlayFade }} />
 
@@ -440,7 +441,7 @@ const VarietiesSection = () => {
         <div className="grid grid-cols-3 gap-3 md:gap-5">
           {['/images/dog-9.jpeg', '/images/dog-20.jpeg', '/images/dog-31.jpeg'].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0, scale: 0.92 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: i * 0.1 }} className="relative aspect-[4/3] rounded-2xl overflow-hidden group">
-              <img src={src} alt="Dog enjoying flavoured yak chew" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src={src} alt="Dog enjoying flavoured yak chew" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a1410]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-25 transition-opacity duration-500">
                 <PawSvg className="w-7 h-7 text-white" />
