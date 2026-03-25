@@ -38,6 +38,11 @@ function chunkToMeta(json, prefix) {
 }
 
 // ─── Resolve promo code ───────────────────────────────────────────────────────
+//
+// Validates against our DB (always) and Stripe PromotionCode API (if synced).
+// Per Stripe docs, for PaymentIntent-based checkout the discount amount is
+// calculated server-side and applied by reducing the PaymentIntent amount.
+//
 async function resolvePromo(promoCode, subtotal) {
   if (!promoCode) return { discount: 0, promoData: null };
 
@@ -46,6 +51,17 @@ async function resolvePromo(promoCode, subtotal) {
   if (promo.expiryDate && new Date() > promo.expiryDate)                return { discount: 0, promoData: null };
   if (promo.usageLimit !== null && promo.usageCount >= promo.usageLimit) return { discount: 0, promoData: null };
   if (subtotal < promo.minOrderAmount)                                   return { discount: 0, promoData: null };
+
+  // Stripe-level active check — catches codes deactivated via Stripe Dashboard
+  if (promo.stripePromotionCodeId) {
+    try {
+      const sp = await getStripe().promotionCodes.retrieve(promo.stripePromotionCodeId);
+      if (!sp.active) return { discount: 0, promoData: null };
+      if (sp.expires_at && sp.expires_at < Math.floor(Date.now() / 1000)) return { discount: 0, promoData: null };
+    } catch {
+      // Stripe unreachable — DB already passed, continue
+    }
+  }
 
   const discount = promo.discountType === 'percentage'
     ? +(subtotal * (promo.discountValue / 100)).toFixed(2)
@@ -212,6 +228,7 @@ export const createPaymentIntent = async (req, res, next) => {
         type:            'product-purchase',
         itemCount:       String(items.length),
         promoCode:       promoData ? promoData.code : '',
+        stripePromoId:   promoData?.stripePromotionCodeId || '',
         discount:        String(discount),
         subtotal:        String(subtotal),
         totalTax:        String(totalTax),

@@ -38,6 +38,15 @@ const promoCodeSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  // Stripe Coupon/PromotionCode IDs — populated when admin creates the code
+  stripeCouponId: {
+    type: String,
+    default: null,
+  },
+  stripePromotionCodeId: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
 const PromoCodeModel = mongoose.model('PromoCode', promoCodeSchema);
