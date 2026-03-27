@@ -13,6 +13,17 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface LinkedSubscription {
+  _id: string;
+  subscriptionId: string;
+  productName: string;
+  size: string;
+  quantity: number;
+  intervalLabel: string;
+  status: 'active' | 'paused' | 'payment_failed' | 'cancelled';
+  nextBillingDate: string;
+}
+
 interface OrderItem {
   _id?: string;
   name: string;
@@ -152,8 +163,9 @@ export default function OrderDetailPage() {
   const [updating, setUpdating]           = useState(false);
   const [updateMsg, setUpdateMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [copied, setCopied]               = useState(false);
-  const [linkedSubs, setLinkedSubs]       = useState<any[]>([]);
+  const [linkedSubs, setLinkedSubs]       = useState<LinkedSubscription[]>([]);
   const [subsLoading, setSubsLoading]     = useState(false);
+  const [subsError,   setSubsError]       = useState(false);
 
   // ── Fetch order ──────────────────────────────────────────────────────────
   const fetchOrder = useCallback(async () => {
@@ -161,6 +173,7 @@ export default function OrderDetailPage() {
       setLoading(true);
       setError(null);
       const token = Cookies.get('token');
+      if (!token) { setError('Not authenticated. Please log in again.'); return; }
       const res   = await fetch(`${API}/admin/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -183,14 +196,18 @@ export default function OrderDetailPage() {
   const fetchLinkedSubscriptions = useCallback(async (email: string) => {
     if (!email) return;
     setSubsLoading(true);
+    setSubsError(false);
     try {
       const token = Cookies.get('token');
+      if (!token) { setSubsError(true); return; }
       const res = await fetch(`${API}/admin/subscriptions?search=${encodeURIComponent(email)}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) { setSubsError(true); return; }
       const data = await res.json();
       if (data.success) setLinkedSubs(data.data.subscriptions || []);
-    } catch { /* silent */ }
+      else setSubsError(true);
+    } catch { setSubsError(true); }
     finally { setSubsLoading(false); }
   }, [API]);
 
@@ -209,6 +226,7 @@ export default function OrderDetailPage() {
       setUpdating(true);
       setUpdateMsg(null);
       const token = Cookies.get('token');
+      if (!token) { setUpdateMsg({ type: 'error', text: 'Not authenticated. Please log in again.' }); return; }
       const body: Record<string, string> = { orderStatus: newStatus };
       if (newStatus === 'shipped' && trackingInput.trim()) {
         body.trackingNumber = trackingInput.trim();
@@ -426,7 +444,7 @@ export default function OrderDetailPage() {
             </SectionCard>
 
             {/* ── Shipping & Tracking ─────────────────────────────────── */}
-            {order.orderStatus === 'shipped' && order.trackingNumber && (
+            {(['shipped', 'delivered'] as string[]).includes(order.orderStatus ?? '') && order.trackingNumber && (
               <SectionCard title="Shipping & Tracking" icon={FiTruck} barColor={sectionBar.tracking}>
                 <div className="space-y-3">
                   <div className="flex gap-4 py-2.5 border-b border-gray-50">
@@ -564,6 +582,16 @@ export default function OrderDetailPage() {
                 <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
                   <FiRefreshCw className="animate-spin" size={14} /> Loading subscriptions…
                 </div>
+              ) : subsError ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-red-500 mb-2">Failed to load subscriptions.</p>
+                  <button
+                    onClick={() => addr.email && fetchLinkedSubscriptions(addr.email)}
+                    className="text-xs text-indigo-600 hover:underline"
+                  >
+                    Retry
+                  </button>
+                </div>
               ) : linkedSubs.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-sm text-gray-400">No subscriptions linked to this order&apos;s email.</p>
@@ -578,7 +606,7 @@ export default function OrderDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {linkedSubs.map((sub: any) => {
+                  {linkedSubs.map((sub) => {
                     const statusColors: Record<string, string> = {
                       active:         'bg-emerald-100 text-emerald-700 border-emerald-200',
                       paused:         'bg-amber-100 text-amber-700 border-amber-200',
@@ -599,8 +627,8 @@ export default function OrderDetailPage() {
                           <p className="text-[10px] font-mono text-gray-400 mt-0.5">{sub.subscriptionId}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[sub.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                            {statusLabels[sub.status] || sub.status}
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[sub.status] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                            {statusLabels[sub.status] ?? sub.status}
                           </span>
                           <Link
                             href={`/dashboard/subscriptions/${sub._id}`}

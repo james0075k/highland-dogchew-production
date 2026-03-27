@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   FiRefreshCw, FiSearch, FiEye,
   FiTrendingUp, FiCheckCircle, FiPauseCircle, FiAlertCircle, FiXCircle,
@@ -66,40 +67,54 @@ function fmt(d: string) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function AdminSubscriptionsPage() {
+function AdminSubscriptionsContent() {
+  const searchParams = useSearchParams();
+
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 20, pages: 1 });
   const [status, setStatus] = useState<string>('all');
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [loading, setLoading]       = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
-  const token = Cookies.get('token');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   const base = process.env.NEXT_PUBLIC_API_URL;
 
   const fetchStats = useCallback(async () => {
-    const res = await fetch(`${base}/admin/subscriptions/stats`, { headers });
-    const data = await res.json();
-    if (data.success) setStats(data.data);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    try {
+      const token = Cookies.get('token');
+      if (!token) return;
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const res = await fetch(`${base}/admin/subscriptions/stats`, { headers });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success) setStats(data.data);
+    } catch { /* stats failure is non-critical */ }
   }, [base]);
 
   const fetchSubs = useCallback(async (page = 1) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: '20' });
-    if (status !== 'all') params.set('status', status);
-    if (search) params.set('search', search);
+    setFetchError(false);
+    try {
+      const token = Cookies.get('token');
+      if (!token) { setFetchError(true); return; }
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const params = new URLSearchParams({ page: String(page), limit: '20' });
+      if (status !== 'all') params.set('status', status);
+      if (search) params.set('search', search);
 
-    const res = await fetch(`${base}/admin/subscriptions?${params}`, { headers });
-    const data = await res.json();
-    if (data.success) {
-      setSubscriptions(data.data.subscriptions);
-      setPagination(data.data.pagination);
-    }
-    setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      const res = await fetch(`${base}/admin/subscriptions?${params}`, { headers });
+      if (!res.ok) { setFetchError(true); return; }
+      const data = await res.json();
+      if (data.success) {
+        setSubscriptions(data.data.subscriptions);
+        setPagination(data.data.pagination);
+      } else {
+        setFetchError(true);
+      }
+    } catch { setFetchError(true); }
+    finally { setLoading(false); }
   }, [base, status, search]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
@@ -196,6 +211,17 @@ export default function AdminSubscriptionsPage() {
             <div className="flex items-center justify-center py-20 text-slate-400">
               <FiRefreshCw className="animate-spin mr-2" /> Loading…
             </div>
+          ) : fetchError ? (
+            <div className="text-center py-20">
+              <p className="text-red-500 font-semibold mb-2">Failed to load subscriptions</p>
+              <p className="text-slate-400 text-sm mb-4">Check your connection and try again.</p>
+              <button
+                onClick={() => fetchSubs(pagination.page)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm hover:bg-slate-700 transition-colors"
+              >
+                <FiRefreshCw size={13} /> Retry
+              </button>
+            </div>
           ) : subscriptions.length === 0 ? (
             <div className="text-center py-20 text-slate-400">No subscriptions found</div>
           ) : (
@@ -271,5 +297,17 @@ export default function AdminSubscriptionsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminSubscriptionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen text-slate-400">
+        <FiRefreshCw className="animate-spin mr-2" /> Loading…
+      </div>
+    }>
+      <AdminSubscriptionsContent />
+    </Suspense>
   );
 }

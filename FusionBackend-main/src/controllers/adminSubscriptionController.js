@@ -15,6 +15,11 @@ import {
   subscriptionResumedEmailHtml,
 } from '../utils/emailTemplates.js';
 
+// Escape regex special characters to prevent ReDoS attacks
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ─── GET /api/admin/subscriptions/stats ──────────────────────────────────────
 export const getSubscriptionStats = async (req, res, next) => {
   try {
@@ -26,10 +31,24 @@ export const getSubscriptionStats = async (req, res, next) => {
       SubscriptionModel.countDocuments({ status: 'cancelled' }),
     ]);
 
-    // Monthly recurring revenue: sum of (unitPrice * quantity) for all active subs
+    // MRR = sum of (unitPrice × qty × 1.20 VAT + £2.99 delivery) for all active subs
+    const TAX_RATE = 0.20;
+    const DELIVERY = 2.99;
     const mrrResult = await SubscriptionModel.aggregate([
       { $match: { status: 'active' } },
-      { $group: { _id: null, mrr: { $sum: { $multiply: ['$unitPrice', '$quantity'] } } } },
+      {
+        $group: {
+          _id: null,
+          mrr: {
+            $sum: {
+              $add: [
+                { $multiply: [{ $multiply: ['$unitPrice', '$quantity'] }, 1 + TAX_RATE] },
+                DELIVERY,
+              ],
+            },
+          },
+        },
+      },
     ]);
     const mrr = mrrResult[0]?.mrr || 0;
 
@@ -45,12 +64,18 @@ export const getSubscriptionStats = async (req, res, next) => {
 // ─── GET /api/admin/subscriptions ────────────────────────────────────────────
 export const getAllSubscriptions = async (req, res, next) => {
   try {
-    const { status, search, page = 1, limit = 20 } = req.query;
+    const { status, search } = req.query;
+
+    // Validate and clamp page/limit to prevent undefined-behaviour with 0 or negative values
+    const pageNum  = Math.max(1, parseInt(req.query.page,  10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
 
     const filter = {};
     if (status && status !== 'all') filter.status = status;
     if (search) {
-      const re = new RegExp(search.trim(), 'i');
+      // Escape special regex chars to prevent ReDoS
+      const escaped = escapeRegex(search.trim());
+      const re = new RegExp(escaped, 'i');
       filter.$or = [
         { email: re },
         { productName: re },
@@ -58,12 +83,12 @@ export const getAllSubscriptions = async (req, res, next) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (pageNum - 1) * limitNum;
     const [subscriptions, total] = await Promise.all([
       SubscriptionModel.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit))
+        .limit(limitNum)
         .select('-billingHistory -shippingAddress')
         .lean(),
       SubscriptionModel.countDocuments(filter),
@@ -73,9 +98,9 @@ export const getAllSubscriptions = async (req, res, next) => {
       subscriptions,
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
+        page:  pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
       },
     });
   } catch (err) {

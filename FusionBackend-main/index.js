@@ -39,6 +39,7 @@ import instagramPostRoute from './src/routes/instagramPostRoute.js';
 import instagramRoute from './src/routes/instagramRoute.js';
 import galleryItemRoute from './src/routes/galleryItemRoute.js';
 import categoryRoute from './src/routes/categoryRoute.js';
+import customerSubscriptionRoute from './src/routes/customerSubscriptionRoute.js';
 
 // ─── Validate required environment variables at startup ──────────────────────
 // NOTE: dotenv.config() is called in entry.js BEFORE this module loads.
@@ -131,6 +132,7 @@ app.use(`/${api}/instagram-posts`, instagramPostRoute);
 app.use(`/${api}/instagram`, instagramRoute);
 app.use(`/${api}/gallery`, galleryItemRoute);
 app.use(`/${api}/categories`, categoryRoute);
+app.use(`/${api}/customer/subscriptions`, customerSubscriptionRoute);
 
 // 404 handler for unknown API routes
 app.use((req, res, next) => {

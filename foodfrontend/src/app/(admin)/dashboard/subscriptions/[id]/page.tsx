@@ -15,7 +15,7 @@ interface BillingEntry {
   date: string;
   amount: number;
   status: 'success' | 'failed';
-  orderId?: { orderNumber: string };
+  orderId?: { _id: string; orderNumber: string } | string;
   paymentIntentId?: string;
   failureReason?: string;
 }
@@ -85,40 +85,60 @@ function fmtDateTime(d?: string) {
 export default function SubscriptionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [sub, setSub] = useState<Subscription | null>(null);
+  const [sub, setSub]         = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState('');
 
-  const token = Cookies.get('token');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   const base = process.env.NEXT_PUBLIC_API_URL;
 
   const fetchSub = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`${base}/admin/subscriptions/${id}`, { headers });
-    const data = await res.json();
-    if (data.success) {
-      setSub(data.data.subscription);
-      setNewStatus(data.data.subscription.status);
+    setFetchError(null);
+    try {
+      const token = Cookies.get('token');
+      const headers = { Authorization: `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' };
+      const res  = await fetch(`${base}/admin/subscriptions/${id}`, { headers });
+      if (!res.ok) { setFetchError(`Server error (${res.status}). Please try again.`); return; }
+      const data = await res.json();
+      if (data.success && data.data?.subscription) {
+        setSub(data.data.subscription);
+        setNewStatus(data.data.subscription.status);
+      } else {
+        setFetchError(data.message || 'Subscription not found.');
+      }
+    } catch {
+      setFetchError('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, base]);
 
   useEffect(() => { fetchSub(); }, [fetchSub]);
 
   const handleStatusUpdate = async () => {
-    if (!sub || newStatus === sub.status) return;
+    if (!sub || !newStatus || newStatus === sub.status) return;
     setUpdating(true);
-    const res = await fetch(`${base}/admin/subscriptions/${id}/status`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ status: newStatus }),
-    });
-    const data = await res.json();
-    if (data.success) fetchSub();
-    setUpdating(false);
+    setUpdateError(null);
+    try {
+      const token = Cookies.get('token');
+      const headers = { Authorization: `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' };
+      const res  = await fetch(`${base}/admin/subscriptions/${id}/status`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) { setUpdateError(`Server error (${res.status}). Please try again.`); return; }
+      const data = await res.json();
+      if (data.success) { fetchSub(); }
+      else { setUpdateError(data.message || 'Update failed.'); }
+    } catch {
+      setUpdateError('Network error. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   if (loading) {
@@ -132,7 +152,7 @@ export default function SubscriptionDetailPage() {
   if (!sub) {
     return (
       <div className="p-8 text-center text-slate-500">
-        Subscription not found.{' '}
+        {fetchError || 'Subscription not found.'}{' '}
         <button onClick={() => router.back()} className="text-slate-900 underline">Go back</button>
       </div>
     );
@@ -230,17 +250,18 @@ export default function SubscriptionDetailPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-slate-600">
-                          {entry.orderId ? (
-                            <Link
-                              href={`/dashboard/orders/${entry.orderId}`}
-                              className="text-blue-600 hover:underline font-mono text-xs"
-                            >
-                              {typeof entry.orderId === 'object' ? entry.orderId.orderNumber : '—'}
-                            </Link>
-                          ) : '—'}
+                          {entry.orderId ? (() => {
+                            const id   = typeof entry.orderId === 'object' ? entry.orderId._id   : entry.orderId;
+                            const num  = typeof entry.orderId === 'object' ? entry.orderId.orderNumber : entry.orderId;
+                            return id ? (
+                              <Link href={`/dashboard/orders/${id}`} className="text-blue-600 hover:underline font-mono text-xs">
+                                {num}
+                              </Link>
+                            ) : <span className="font-mono text-xs">{num}</span>;
+                          })() : '—'}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-slate-400">
-                          {entry.paymentIntentId ? entry.paymentIntentId.slice(0, 20) + '…' : '—'}
+                          {entry.paymentIntentId ? entry.paymentIntentId.slice(0, 27) + '…' : '—'}
                         </td>
                       </tr>
                     ))}
@@ -273,11 +294,14 @@ export default function SubscriptionDetailPage() {
               </select>
               <button
                 onClick={handleStatusUpdate}
-                disabled={updating || newStatus === sub.status}
+                disabled={updating || !newStatus || newStatus === sub.status}
                 className="w-full bg-slate-900 hover:bg-slate-700 disabled:opacity-40 text-white font-semibold py-2 rounded-lg text-sm transition-colors"
               >
                 {updating ? 'Updating…' : 'Update Status'}
               </button>
+              {updateError && (
+                <p className="text-xs text-red-500 mt-2">{updateError}</p>
+              )}
             </div>
 
             {/* Customer */}

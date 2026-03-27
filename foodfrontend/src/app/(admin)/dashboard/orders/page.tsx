@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   FiShoppingBag, FiRefreshCw, FiSearch, FiEye,
   FiTrendingUp, FiClock, FiTruck, FiDollarSign,
-  FiChevronLeft, FiChevronRight, FiFilter,
+  FiChevronLeft, FiChevronRight, FiFilter, FiRepeat,
 } from 'react-icons/fi';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -123,6 +123,7 @@ export default function AdminOrdersPage() {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 20, pages: 1 });
   const [loading, setLoading]       = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -132,6 +133,7 @@ export default function AdminOrdersPage() {
     try {
       setStatsLoading(true);
       const token = Cookies.get('token');
+      if (!token) return;
       const res = await fetch(`${API}/admin/orders/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -148,7 +150,9 @@ export default function AdminOrdersPage() {
   const fetchOrders = useCallback(async (page = 1) => {
     try {
       setLoading(true);
+      setFetchError(false);
       const token = Cookies.get('token');
+      if (!token) { setFetchError(true); return; }
 
       const params = new URLSearchParams({ page: page.toString(), limit: '20' });
       if (filterStatus !== 'all') params.set('orderStatus', filterStatus);
@@ -157,13 +161,16 @@ export default function AdminOrdersPage() {
       const res = await fetch(`${API}/admin/orders?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) { setFetchError(true); return; }
       const data = await res.json();
       if (data.success) {
         setOrders(data.data.orders ?? []);
         setPagination(data.data.pagination ?? { total: 0, page: 1, limit: 20, pages: 1 });
+      } else {
+        setFetchError(true);
       }
-    } catch (err) {
-      console.error('Orders fetch error:', err);
+    } catch {
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -256,6 +263,7 @@ export default function AdminOrdersPage() {
               <input
                 type="text"
                 placeholder="Search by email or name…"
+                aria-label="Search orders by email or name"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -278,6 +286,18 @@ export default function AdminOrdersPage() {
               <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-gray-400">Loading orders…</p>
             </div>
+          ) : fetchError ? (
+            <div className="text-center py-20 text-gray-400">
+              <FiShoppingBag className="mx-auto mb-3 opacity-30" size={48} />
+              <p className="font-semibold text-base text-red-500">Failed to load orders</p>
+              <p className="text-sm mt-1 mb-4">Check your connection and try again.</p>
+              <button
+                onClick={handleRefresh}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
+              >
+                <FiRefreshCw size={14} /> Retry
+              </button>
+            </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <FiShoppingBag className="mx-auto mb-3 opacity-30" size={48} />
@@ -293,7 +313,7 @@ export default function AdminOrdersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    {['Order', 'Customer', 'Email', 'Items', 'Total', 'Payment', 'Status', 'Date', ''].map((h) => (
+                    {['Order', 'Customer', 'Email', 'Items', 'Total', 'Payment', 'Status', 'Date', 'Actions'].map((h) => (
                       <th key={h} className="px-5 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
@@ -332,9 +352,10 @@ export default function AdminOrdersPage() {
 
                       {/* Items count */}
                       <td className="px-5 py-4">
-                        <span className="text-sm text-gray-500">
-                          {(order.items ?? []).reduce((s, i) => s + i.quantity, 0)} item{(order.items ?? []).reduce((s, i) => s + i.quantity, 0) !== 1 ? 's' : ''}
-                        </span>
+                        {(() => {
+                          const qty = (order.items ?? []).reduce((s, i) => s + i.quantity, 0);
+                          return <span className="text-sm text-gray-500">{qty} item{qty !== 1 ? 's' : ''}</span>;
+                        })()}
                       </td>
 
                       {/* Total */}
@@ -363,15 +384,27 @@ export default function AdminOrdersPage() {
                         {order.createdAt ? fmtDate(order.createdAt) : '—'}
                       </td>
 
-                      {/* View */}
+                      {/* Actions */}
                       <td className="px-5 py-4">
-                        <Link
-                          href={`/dashboard/orders/${order._id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
-                        >
-                          <FiEye size={13} />
-                          View
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/orders/${order._id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
+                          >
+                            <FiEye size={13} />
+                            View
+                          </Link>
+                          {order.shippingAddress?.email && (
+                            <Link
+                              href={`/dashboard/subscriptions?search=${encodeURIComponent(order.shippingAddress.email)}`}
+                              title={`Subscriptions for ${order.shippingAddress.email}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
+                            >
+                              <FiRepeat size={12} />
+                              Subs
+                            </Link>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -397,6 +430,7 @@ export default function AdminOrdersPage() {
               <button
                 onClick={() => fetchOrders(pagination.page - 1)}
                 disabled={pagination.page <= 1}
+                aria-label="Previous page"
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <FiChevronLeft size={16} />
@@ -408,6 +442,8 @@ export default function AdminOrdersPage() {
                   <button
                     key={p}
                     onClick={() => fetchOrders(p)}
+                    aria-label={`Page ${p}`}
+                    aria-current={pagination.page === p ? 'page' : undefined}
                     className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors
                       ${pagination.page === p
                         ? 'bg-[#0c1e35] text-white'
@@ -422,6 +458,7 @@ export default function AdminOrdersPage() {
               <button
                 onClick={() => fetchOrders(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pages}
+                aria-label="Next page"
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <FiChevronRight size={16} />
