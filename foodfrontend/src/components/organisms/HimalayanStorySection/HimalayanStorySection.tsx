@@ -61,7 +61,7 @@ function ParallaxImage({
   return (
     <motion.div
       ref={containerRef}
-      className="relative group cursor-pointer"
+      className="relative cursor-pointer group"
       initial={prefersReduced ? {} : { opacity: 0, x: direction === 'left' ? -60 : 60 }}
       animate={isInView ? { opacity: 1, x: 0 } : {}}
       transition={{ duration: 1.2, ease: EASE_EXPO }}
@@ -86,7 +86,7 @@ function ParallaxImage({
       />
 
       {/* Image container */}
-      <div className="relative rounded-2xl overflow-hidden" style={{ isolation: 'isolate' }}>
+      <div className="relative overflow-hidden rounded-2xl" style={{ isolation: 'isolate' }}>
         {/* Parallax + zoom image */}
         <motion.div style={prefersReduced ? {} : { y, scale }}>
           <motion.img
@@ -203,7 +203,7 @@ function ParallaxVideo({ src }: { src: string }) {
         }}
       />
 
-      <div className="relative rounded-2xl overflow-hidden" style={{ isolation: 'isolate' }}>
+      <div className="relative overflow-hidden rounded-2xl">
         <motion.div style={prefersReduced ? {} : { y, scale }}>
           <video
             ref={videoRef}
@@ -212,7 +212,7 @@ function ParallaxVideo({ src }: { src: string }) {
             loop
             muted
             playsInline
-            preload="metadata"
+            preload="auto"
             className="w-full aspect-[4/3] object-cover"
             style={{ display: 'block' }}
           />
@@ -234,7 +234,7 @@ function ParallaxVideo({ src }: { src: string }) {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 1, ease: EASE_EXPO }}
         >
-          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+          <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
           <span className="text-[11px] font-medium text-white/90 tracking-wider uppercase">Playing</span>
         </motion.div>
 
@@ -364,7 +364,7 @@ export default function HimalayanStorySection() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-16 md:py-28 overflow-hidden transition-colors duration-300"
+      className="relative py-16 overflow-hidden transition-colors duration-300 md:py-28"
       style={{ background: 'var(--surface-page)' }}
     >
       {/* ── Floating decorative paw prints (scroll-driven) ── */}
@@ -396,12 +396,12 @@ export default function HimalayanStorySection() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-5 md:px-8">
+      <div className="relative px-5 mx-auto max-w-7xl md:px-8">
 
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            SECTION 1 — Handmade By The Himalayan Farmers
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center mb-24 md:mb-36">
+        <div className="grid items-center grid-cols-1 gap-10 mb-24 lg:grid-cols-12 lg:gap-16 md:mb-36">
 
           {/* Image — takes 7 columns for dramatic width */}
           <div className="order-2 lg:order-1 lg:col-span-7">
@@ -462,7 +462,7 @@ export default function HimalayanStorySection() {
 
             {/* Stats row */}
             <motion.div
-              className="grid grid-cols-3 gap-4 mt-8 pt-6"
+              className="grid grid-cols-3 gap-4 pt-6 mt-8"
               style={{ borderTop: '1px solid var(--border-base)' }}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -483,7 +483,7 @@ export default function HimalayanStorySection() {
                   transition={{ duration: 0.5, delay: 0.8 + i * 0.1, ease: EASE_EXPO }}
                 >
                   <p
-                    className="text-2xl md:text-3xl font-bold"
+                    className="text-2xl font-bold md:text-3xl"
                     style={{
                       fontFamily: 'var(--font-antique-serif), DM Serif Display, serif',
                       color: 'var(--color-gold)',
@@ -491,7 +491,7 @@ export default function HimalayanStorySection() {
                   >
                     {stat.value}
                   </p>
-                  <p className="text-xs mt-1 tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
+                  <p className="mt-1 text-xs tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
                     {stat.label}
                   </p>
                 </motion.div>
@@ -503,7 +503,7 @@ export default function HimalayanStorySection() {
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            SECTION 2 — What To Do With End Pieces?
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+        <div className="grid items-center grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
 
           {/* Content — 5 columns */}
           <div className="lg:col-span-5">
@@ -576,7 +576,7 @@ export default function HimalayanStorySection() {
                 >
                   {/* Step number */}
                   <motion.div
-                    className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white"
+                    className="flex items-center justify-center flex-shrink-0 text-sm font-bold text-white rounded-full w-9 h-9"
                     style={{ background: 'linear-gradient(135deg, #B8976A, #9A7B52)' }}
                     initial={{ scale: 0, rotate: -90 }}
                     whileInView={{ scale: 1, rotate: 0 }}
@@ -590,7 +590,7 @@ export default function HimalayanStorySection() {
                     {i + 1}
                   </motion.div>
                   <div className="pt-0.5">
-                    <p className="font-semibold text-sm md:text-base" style={{ color: 'var(--text-primary)' }}>
+                    <p className="text-sm font-semibold md:text-base" style={{ color: 'var(--text-primary)' }}>
                       {step.label}
                     </p>
                     <p className="text-xs md:text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
@@ -604,7 +604,7 @@ export default function HimalayanStorySection() {
 
           {/* Video — 7 columns */}
           <div className="lg:col-span-7">
-            <ParallaxVideo src="/videos/video4.mp4" />
+            <ParallaxVideo src="/videos/video4new.mp4" />
           </div>
         </div>
 

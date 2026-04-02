@@ -13,6 +13,150 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'signs-your-dog-loves-highland-yak-chews',
+    title: '5 Signs Your Dog Is Absolutely Loving Their Highland Yak Chew',
+    excerpt:
+      'Dogs cannot talk, but they communicate their joy loudly. Here are five unmistakable signs that your dog has found their favourite treat — and why yak chews create such a deep, lasting bond between dogs and their natural chews.',
+    category: 'Dog Health',
+    date: '2026-03-25',
+    readTime: '5 min read',
+    image: '/images/dog-34.jpeg',
+    imageAlt: 'Happy dog enjoying a natural yak milk chew with total contentment',
+    author: 'Highland Yakchew Team',
+    content: `
+## 5 Signs Your Dog Is Absolutely Loving Their Highland Yak Chew
+
+Every dog owner knows that moment — the second your dog locks eyes on their yak chew and the world around them simply disappears. But beyond that first excited reaction, there are deeper, more meaningful signs that your dog has truly found something special. Here are five of them.
+
+### 1. They Guard It Like a Treasure
+
+When a dog loves a chew, they do not just eat it — they *protect* it. You will notice them carrying it to their favourite spot, positioning themselves with their back to the wall, and shooting suspicious glances at anyone who gets too close. This is a deeply instinctive behaviour rooted in the ancestral need to protect valuable food sources.
+
+With a Highland Yak Chew, this guarding instinct kicks in because the chew is genuinely *worth* guarding. Its long-lasting density means your dog knows this is not just a five-minute treat — it is an investment in hours of pleasure.
+
+**What this tells you**: Your dog recognises the yak chew as high value. That is exactly what it is.
+
+### 2. They Settle Into a Calm, Deep Focus
+
+Watch your dog's body language once they settle in with their chew. The shoulders drop. The breathing slows. The frantic energy of an excited dog transforms into something quieter and more purposeful — a focused, meditative calm that behaviourists call *contrafreeloading*, where animals prefer to work for food rather than receive it freely.
+
+Chewing activates the parasympathetic nervous system — the same system responsible for rest and recovery. A dog deep in a chew session is not just enjoying a snack; they are experiencing a genuine neurological shift towards calm and contentment.
+
+### 3. Their Coat and Condition Visibly Improve
+
+This one takes a few weeks to notice, but it is one of the most rewarding signs. Because Highland Yak Chews are over 55% crude protein with a complete amino acid profile, regular chewing contributes directly to muscle maintenance, coat condition, and overall vitality.
+
+Dog owners who make yak chews a consistent part of their pet's routine frequently report:
+
+- Shinier, denser coats after 4–6 weeks
+- Improved muscle tone in working and active breeds
+- Better digestion due to the high protein, low fat profile
+- Reduced shedding in some breeds, linked to improved nutritional intake
+
+If your dog already looks great, yak chews help them stay that way. If they were lacking in coat condition or muscle tone, the change can be remarkable.
+
+### 4. They Bring You the Stump
+
+Here is one that never gets old. When a yak chew gets down to a small, hard stump — too small to chew safely — most dogs do something endearing and completely counter-intuitive: they bring it to you.
+
+They are not giving it back. They are asking you to do something with it.
+
+This behaviour tells you two things: your dog trusts you completely, and they remember that you are the one who creates the magic. Because once you microwave that stump for 45 seconds, it transforms into a puffy, crunchy, airy treat that your dog will crunch through with pure, unfiltered joy.
+
+That moment — stump dropped at your feet, expectant eyes looking up — is one of the most quietly perfect parts of owning a dog.
+
+### 5. They Return to the Same Spot
+
+Dogs are creatures of habit, and they associate locations with experiences. If your dog consistently retreats to the same corner, rug, or bed with their yak chew, it means they have created a *chewing ritual* — a deliberate, repeated behaviour that they derive genuine comfort from.
+
+This kind of ritual formation is a sign of psychological wellbeing. A dog who has a trusted, beloved chew and a chosen spot for it is a dog who feels safe, settled, and satisfied.
+
+---
+
+### Why Yak Chews Create This Response
+
+Not every treat inspires this depth of engagement. The reason yak chews do comes down to four things:
+
+- **Duration**: A single chew provides hours of engagement, not minutes
+- **Flavour depth**: The subtle smokiness from traditional Himalayan processing develops as the dog works through the chew
+- **Nutrition**: With over 55% protein and natural calcium, the body recognises and responds to genuinely nourishing food
+- **Texture**: The progressive softening as the dog chews creates a continuously changing sensory experience
+
+If you are seeing these signs in your dog, you have found something genuinely worth keeping in the regular rotation. [Shop our full range](/products/yak-chews) to find the perfect size for your dog.
+    `.trim(),
+  },
+  {
+    slug: 'how-yak-chews-transform-your-dogs-daily-routine',
+    title: 'A Calmer, Happier Dog: How Highland Yak Chews Transform the Daily Routine',
+    excerpt:
+      'One simple addition to your dog\'s day — a natural, long-lasting Highland Yak Chew — can reshape their energy, behaviour, and emotional state in ways that go far deeper than you might expect. Here is why it works.',
+    category: 'Our Story',
+    date: '2026-03-18',
+    readTime: '6 min read',
+    image: '/images/dog-35.jpeg',
+    imageAlt: 'Contented dog relaxing after enjoying a natural Highland Yak Chew',
+    author: 'Highland Yakchew Team',
+    content: `
+## A Calmer, Happier Dog: How Highland Yak Chews Transform the Daily Routine
+
+We started Highland Yakchew because we believed the best things for dogs are almost always the simplest. No artificial additives, no complicated formulas, no ingredients you cannot pronounce. Just a centuries-old Himalayan recipe made from three natural ingredients — yak milk, cow milk, lime juice — that has been trusted by mountain communities for generations.
+
+What we did not fully anticipate when we launched was how many dog owners would tell us the same thing, unprompted, in messages and reviews:
+
+*"My dog is so much calmer."*
+*"He actually settles now."*
+*"I don't know what changed, but she seems happier."*
+
+The change they are describing is real. And it is worth understanding why it happens.
+
+### The Science of Chewing
+
+Chewing is not just something dogs do when they are bored. It is a primal, deeply wired behaviour that serves multiple neurological and physiological functions.
+
+When a dog chews rhythmically and with sustained effort — exactly what a yak chew demands — the following happens:
+
+- **Serotonin release**: Repetitive chewing stimulates serotonin production, the same neurotransmitter associated with calm, stable mood in humans
+- **Cortisol reduction**: A 2016 study published in the *Journal of Veterinary Behaviour* found that dogs given long-lasting chews showed measurable reductions in salivary cortisol (the stress hormone) within 15 minutes of beginning to chew
+- **Physical fatigue**: The sustained jaw effort of working through a dense yak chew creates genuine physical tiredness — the kind that leads to deep, restful sleep
+- **Mental satiation**: Working for food engages the prefrontal cortex, the brain region associated with problem-solving and focus, leaving dogs mentally satisfied rather than alert and seeking stimulation
+
+### What Changes in the Day
+
+For most dogs, the shift happens within the first week of adding a regular yak chew session to their routine. Typical owner observations include:
+
+**Morning:** Dogs who previously struggled to settle after breakfast now have an anchor — the anticipation of their chew creates a calming ritual rather than a frantic energy burst.
+
+**Afternoon:** The mid-afternoon restlessness that leads to barking, pacing, or destructive behaviour is replaced by a focused chewing session that leaves dogs calm and sleepy for hours afterward.
+
+**Evening:** Dogs who chewed in the afternoon fall into deeper, more settled sleep in the evening. Owners report fewer incidents of whining, attention-seeking, or midnight wandering.
+
+### A Routine That Works for Both of You
+
+One of the most underrated benefits of a yak chew is what it gives the human, not just the dog. A settled dog is a gift to everyone around them. When your dog is calmly working through their chew, you can take a meeting, make a phone call, cook dinner, or simply sit and read without the persistent nudging, barking, or anxious pacing that an under-stimulated dog brings.
+
+This is especially significant for:
+
+- **Work-from-home owners** who need reliable settled periods during the day
+- **Dog owners with young children** who need their dog calm during nap times and bedtimes
+- **Owners of high-energy breeds** like Border Collies, Huskies, and working dogs who need more sustained mental stimulation than walks alone provide
+- **Dogs with anxiety** who benefit from the serotonin boost and cortisol reduction that sustained chewing provides
+
+### The Ritual of Trust
+
+There is something else that happens over time — something harder to measure but easy to feel. Your dog begins to associate you with this experience of deep pleasure and calm. The moment you reach for the yak chew, they know what is coming. The anticipation itself becomes calming.
+
+This association builds trust. It builds routine. It builds the small, repeated moments of joy that form the foundation of a truly good relationship between a dog and their owner.
+
+That is what we set out to create at Highland Yakchew. Not just a treat, but a ritual. Not just a product, but a daily moment of genuine connection.
+
+---
+
+We source every chew directly from Himalayan farming cooperatives, ensuring fair wages and traditional methods are preserved. When you choose Highland Yakchew, you are supporting a centuries-old craft and giving your dog the most honest, natural treat available in the UK.
+
+[Explore our full range](/products/yak-chews) and find the size that is right for your dog.
+    `.trim(),
+  },
+  {
     slug: 'are-yak-chews-safe-for-dogs',
     title: 'Are Yak Chews Safe for Dogs? Everything You Need to Know',
     excerpt:

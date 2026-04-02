@@ -232,6 +232,7 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem("contactInfoUpdatedAt", String(Date.now()));
         showAlert("success", "Contact details saved");
       } else if (res.status === 401 || res.status === 403) {
         clearToken();

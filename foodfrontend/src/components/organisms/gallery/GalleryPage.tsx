@@ -19,6 +19,24 @@ interface GalleryItem {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
+// Static dog spotlight items — always shown regardless of API state
+const STATIC_ITEMS: GalleryItem[] = [
+  {
+    id: 9001,
+    image: '/images/dog-34.jpeg',
+    title: 'Happy Chewer — Blissful Moments',
+    category: 'GALLERY',
+    description: 'Pure joy captured — one of our Highland Yak Chew fans in a moment of total contentment.',
+  },
+  {
+    id: 9002,
+    image: '/images/dog-35.jpeg',
+    title: 'Highland Spirit — Natural & Free',
+    category: 'GALLERY',
+    description: 'A spirited dog living their best life, fuelled by the natural goodness of Highland Yak Chews.',
+  },
+];
+
 const ALL_CATEGORIES = [
   'ALL', 'GALLERY', 'HONEY', 'PUMPKIN', 'STRAWBERRY',
   'BLUEBERRY', 'COCONUT', 'PEANUT', 'MINT', 'TURMERIC', 'FLAXSEED',
@@ -57,14 +75,17 @@ const GalleryPage: React.FC = () => {
   const [items, setItems]                   = useState<GalleryItem[]>([]);
   const [fetching, setFetching]             = useState(true);
 
-  // Fetch gallery from API
+  // Fetch gallery from API and merge with static items
   useEffect(() => {
     fetch(`${API_BASE}/gallery`)
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data.data)) setItems(data.data);
+        const apiItems = Array.isArray(data.data) ? data.data : [];
+        setItems([...STATIC_ITEMS, ...apiItems]);
       })
-      .catch(() => {})
+      .catch(() => {
+        setItems(STATIC_ITEMS);
+      })
       .finally(() => {
         setFetching(false);
         setTimeout(() => setLoaded(true), 50);

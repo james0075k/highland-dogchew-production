@@ -204,6 +204,7 @@ export default function ContactPage() {
   const [msg, setMsg] = useState('');
   const [info, setInfo] = useState<ContactInfo | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const contactInfoUpdateKey = 'contactInfoUpdatedAt';
 
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 100]);
@@ -211,13 +212,39 @@ export default function ContactPage() {
   const overlayFade = useTransform(scrollYProgress, [0, 0.7], [0.35, 0.65]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/info`)
-      .then((r) => r.json())
-      .then((d) => { if (d.success && d.data) setInfo(d.data); })
-      .catch(() => {});
-  }, []);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) return;
+
+    const loadContactInfo = () => {
+      fetch(`${apiUrl}/info?t=${Date.now()}`, { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => { if (d.success && d.data) setInfo(d.data); })
+        .catch(() => {});
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') loadContactInfo();
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === contactInfoUpdateKey) loadContactInfo();
+    };
+
+    loadContactInfo();
+    window.addEventListener('focus', loadContactInfo);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('focus', loadContactInfo);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [contactInfoUpdateKey]);
 
   const phone = info?.phone || info?.phones?.[0] || '';
+  const contactAddress = info?.address?.trim() || 'College House, 17 King Edwards Rd, Ruislip HA4 7AE';
+  const mapEmbedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(contactAddress)}&output=embed&z=18`;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -562,13 +589,13 @@ export default function ContactPage() {
           <div className="pointer-events-none absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-[var(--surface-page)] to-transparent z-10" />
           <div className="w-full h-[380px] md:h-[460px] overflow-hidden">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2482.682160402595!2d-0.4483869!3d51.5190469!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48766d8b57bb686f%3A0x9dbdcf7df5a726a9!2sDickens%20Ave%2C%20Uxbridge%2C%20UK!5e0!3m2!1sen!2snp!4v1766241428979!5m2!1sen!2snp"
+              src={mapEmbedSrc}
               className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Highland Yak Chew Location"
+              title={`Highland Yak Chew Location - ${contactAddress}`}
             />
           </div>
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--surface-page)] to-transparent z-10" />
