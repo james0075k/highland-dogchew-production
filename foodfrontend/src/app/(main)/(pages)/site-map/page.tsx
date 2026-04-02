@@ -97,9 +97,9 @@ function useReveal(threshold = 0.07) {
 
 /* ═══ Decorative SVGs ═════════════════════════════════════════════════════ */
 
-function PawPrint({ className }: { className?: string }) {
+function PawPrint({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} fill="currentColor" aria-hidden>
+    <svg viewBox="0 0 100 100" className={className} style={style} fill="currentColor" aria-hidden>
       <ellipse cx="50" cy="70" rx="22" ry="18" />
       <ellipse cx="22" cy="50" rx="10" ry="13" />
       <ellipse cx="78" cy="50" rx="10" ry="13" />
