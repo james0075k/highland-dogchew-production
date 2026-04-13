@@ -24,7 +24,7 @@ interface Order {
   items: { name: string; quantity: number }[];
   grandTotal: number;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  orderStatus: 'pending' | 'confirmed' | 'backordered' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
 }
 
@@ -45,7 +45,7 @@ interface Pagination {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ORDER_STATUSES = ['all', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
+const ORDER_STATUSES = ['all', 'pending', 'confirmed', 'backordered', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 
 const paymentBadge: Record<string, string> = {
   paid:     'bg-emerald-100 text-emerald-700',
@@ -55,12 +55,13 @@ const paymentBadge: Record<string, string> = {
 };
 
 const orderBadge: Record<string, string> = {
-  pending:    'bg-amber-100 text-amber-700',
-  confirmed:  'bg-blue-100 text-blue-700',
-  processing: 'bg-purple-100 text-purple-700',
-  shipped:    'bg-teal-100 text-teal-700',
-  delivered:  'bg-emerald-100 text-emerald-700',
-  cancelled:  'bg-red-100 text-red-700',
+  pending:     'bg-amber-100 text-amber-700',
+  confirmed:   'bg-blue-100 text-blue-700',
+  backordered: 'bg-orange-100 text-orange-700',
+  processing:  'bg-purple-100 text-purple-700',
+  shipped:     'bg-teal-100 text-teal-700',
+  delivered:   'bg-emerald-100 text-emerald-700',
+  cancelled:   'bg-red-100 text-red-700',
 };
 
 const statCards = (s: Stats) => [

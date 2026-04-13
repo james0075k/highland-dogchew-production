@@ -36,8 +36,8 @@ export default function ProductsLandingPage() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16">
-            <span className="inline-block text-amber-600 dark:text-amber-500 text-sm font-semibold tracking-[0.2em] uppercase mb-3">Shop Our Range</span>
-            <h1 className="text-4xl md:text-5xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-4">
+            <span className="inline-block text-amber-600 dark:text-amber-500 text-sm font-bold tracking-[0.22em] uppercase mb-3">Shop Our Range</span>
+            <h1 className="text-4xl md:text-6xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] mb-4">
               Our Products
             </h1>
             <p className="text-lg text-[#7A5C4F] dark:text-[#c8b6a6] max-w-2xl mx-auto">
@@ -68,7 +68,7 @@ export default function ProductsLandingPage() {
 
                 {/* Content */}
                 <div className="p-5 md:p-6">
-                  <h2 className="text-xl md:text-2xl font-bold text-[#2E1F14] dark:text-[#f5e9dc] mb-2 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+                  <h2 className="text-xl md:text-2xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] mb-2 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                     {category.title}
                   </h2>
                   <p className="text-[#7A5C4F] dark:text-[#c8b6a6] mb-4 text-sm leading-relaxed">

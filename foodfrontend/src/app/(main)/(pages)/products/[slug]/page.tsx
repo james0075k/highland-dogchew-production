@@ -360,7 +360,7 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF8F5] dark:bg-[#161210]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--surface-page)]">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-amber-600 animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-400 dark:text-[#c8b6a6]">Loading product…</p>
@@ -371,9 +371,9 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF8F5] dark:bg-[#161210]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--surface-page)]">
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-[#f5e9dc] mb-3">{error || 'Product not found'}</h1>
+          <h1 className="text-xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] mb-3">{error || 'Product not found'}</h1>
           <Link href="/products" className="text-amber-600 hover:text-amber-700 text-sm font-medium">
             ← All Products
           </Link>
@@ -389,7 +389,7 @@ export default function ProductDetailPage() {
   const usePillSizes = hasSizes && product.sizes.length <= 6;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#161210] transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--surface-page)] transition-colors duration-300">
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
@@ -475,7 +475,7 @@ export default function ProductDetailPage() {
             )}
 
             {/* Product name */}
-            <h1 className="text-2xl lg:text-3xl font-bold text-[#1a1a1a] dark:text-[#f5e9dc] leading-tight mb-4">
+            <h1 className="text-3xl lg:text-4xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] leading-tight mb-4">
               {product.name}
             </h1>
 
@@ -505,7 +505,7 @@ export default function ProductDetailPage() {
 
             {/* Price block */}
             <div className="flex items-center gap-3 flex-wrap mb-1">
-              <span className="text-3xl font-bold text-[#1a1a1a] dark:text-[#f5e9dc]">
+              <span className="text-4xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc]">
                 £{displayUnitPrice.toFixed(2)}
               </span>
               {displayOriginalPrice > displayUnitPrice && (
@@ -532,7 +532,7 @@ export default function ProductDetailPage() {
             {hasSizes && (
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">
+                  <p className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">
                     Size: <span className="text-amber-600 dark:text-amber-400">{selectedSizeObj?.label || selectedSize}</span>
                   </p>
                   <a href="#size-guide" className="text-xs text-amber-600 dark:text-amber-400 hover:underline underline-offset-2 font-medium">
@@ -566,7 +566,7 @@ export default function ProductDetailPage() {
                     <select
                       value={selectedSize}
                       onChange={(e) => setSelectedSize(e.target.value)}
-                      className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-[#1e1510] text-[#1a1a1a] dark:text-[#f5e9dc] border-2 border-gray-200 dark:border-[#3a2c23] rounded-xl text-sm font-medium focus:outline-none focus:border-[#2E1F14] dark:focus:border-amber-500 cursor-pointer transition-colors"
+                      className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-[#1e1510] text-[#2E1F14] dark:text-[#f5e9dc] border-2 border-gray-200 dark:border-[#3a2c23] rounded-xl text-sm font-medium focus:outline-none focus:border-[#2E1F14] dark:focus:border-amber-500 cursor-pointer transition-colors"
                     >
                       {product.sizes.map((size: any) => (
                         <option key={size.value} value={size.value}>
@@ -583,7 +583,7 @@ export default function ProductDetailPage() {
             {/* ── Mix & Match / Bulk Pricing ── */}
             {hasBulkPricing && (
               <div className="mb-5">
-                <p className="text-sm font-semibold text-[#1a1a1a] dark:text-[#f5e9dc] mb-1">Mix &amp; Match — Save more</p>
+                <p className="text-sm font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] mb-1">Mix &amp; Match — Save more</p>
                 <p className="text-xs text-gray-400 dark:text-[#7A5C4F] mb-3">The more you buy, the more you save</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   {adjustedBulkPricing.map((tier: any, idx: number) => {
@@ -607,7 +607,7 @@ export default function ProductDetailPage() {
                           </span>
                         )}
                         <span className="text-[11px] text-gray-400 dark:text-[#7A5C4F] mb-0.5">Buy {tier.quantity}</span>
-                        <span className="font-bold text-[#1a1a1a] dark:text-[#f5e9dc] text-base">
+                        <span className="font-bold text-[#2E1F14] dark:text-[#f5e9dc] text-base">
                           £{tierTotal.toFixed(2)}
                         </span>
                         {tierOrigTotal > tierTotal && (
@@ -629,7 +629,7 @@ export default function ProductDetailPage() {
 
             {/* ── Purchase Options ── */}
             <div className="mb-5">
-              <p className="text-sm font-semibold text-[#1a1a1a] dark:text-[#f5e9dc] mb-3">Purchase options</p>
+              <p className="text-sm font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] mb-3">Purchase options</p>
               <div className="space-y-2">
                 {/* One-time */}
                 <button
@@ -651,7 +651,7 @@ export default function ProductDetailPage() {
                     )}
                   </div>
                   <div>
-                    <span className="text-sm font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">One-time purchase</span>
+                    <span className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">One-time purchase</span>
                     <p className="text-xs text-gray-400 dark:text-[#7A5C4F]">Pay once, no commitment</p>
                   </div>
                 </button>
@@ -677,7 +677,7 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">Subscribe &amp; Save</span>
+                      <span className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">Subscribe &amp; Save</span>
                       {subscriptionAvailable && product.subscriptionSettings.discountPercentage > 0 && (
                         <span className="text-[10px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-full">
                           SAVE {product.subscriptionSettings.discountPercentage}%
@@ -697,7 +697,7 @@ export default function ProductDetailPage() {
                     <select
                       value={selectedInterval}
                       onChange={(e) => setSelectedInterval(e.target.value)}
-                      className="w-full appearance-none bg-white dark:bg-[#1e1510] border-2 border-gray-200 dark:border-[#3a2c23] rounded-xl px-3 py-2 pr-8 text-sm text-[#1a1a1a] dark:text-[#f5e9dc] focus:outline-none focus:border-[#2E1F14] dark:focus:border-amber-500 cursor-pointer"
+                      className="w-full appearance-none bg-white dark:bg-[#1e1510] border-2 border-gray-200 dark:border-[#3a2c23] rounded-xl px-3 py-2 pr-8 text-sm text-[#2E1F14] dark:text-[#f5e9dc] focus:outline-none focus:border-[#2E1F14] dark:focus:border-amber-500 cursor-pointer"
                     >
                       {product.subscriptionSettings.weeklyOptions?.map((n: number) => (
                         <option key={`w${n}`} value={`Every ${n} ${n === 1 ? 'week' : 'weeks'}`}>
@@ -741,7 +741,7 @@ export default function ProductDetailPage() {
                       <div className="flex gap-3">
                         <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">1</div>
                         <div>
-                          <p className="text-xs font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">Choose your frequency</p>
+                          <p className="text-xs font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">Choose your frequency</p>
                           <p className="text-xs text-gray-500 dark:text-[#c8b6a6] mt-0.5">Pick how often you'd like to receive your order — weekly, fortnightly, or monthly.</p>
                         </div>
                       </div>
@@ -750,7 +750,7 @@ export default function ProductDetailPage() {
                       <div className="flex gap-3">
                         <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">2</div>
                         <div>
-                          <p className="text-xs font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">Pay once — we handle the rest</p>
+                          <p className="text-xs font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">Pay once — we handle the rest</p>
                           <p className="text-xs text-gray-500 dark:text-[#c8b6a6] mt-0.5">Your card is charged automatically on your chosen schedule. No action needed from you.</p>
                         </div>
                       </div>
@@ -760,7 +760,7 @@ export default function ProductDetailPage() {
                         <div className="flex gap-3">
                           <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">3</div>
                           <div>
-                            <p className="text-xs font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">
+                            <p className="text-xs font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">
                               Save {product.subscriptionSettings.discountPercentage}% on every delivery
                             </p>
                             <p className="text-xs text-gray-500 dark:text-[#c8b6a6] mt-0.5">
@@ -778,7 +778,7 @@ export default function ProductDetailPage() {
                       <div className="flex gap-3">
                         <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">{product.subscriptionSettings.discountPercentage > 0 ? '4' : '3'}</div>
                         <div>
-                          <p className="text-xs font-semibold text-[#1a1a1a] dark:text-[#f5e9dc]">Pause, skip or cancel anytime</p>
+                          <p className="text-xs font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">Pause, skip or cancel anytime</p>
                           <p className="text-xs text-gray-500 dark:text-[#c8b6a6] mt-0.5">No lock-in. Manage your subscription from your account — before each delivery.</p>
                         </div>
                       </div>
@@ -870,7 +870,7 @@ export default function ProductDetailPage() {
               onClick={() => setDescriptionOpen(!descriptionOpen)}
               className="w-full flex items-center justify-between py-5 text-left group"
             >
-              <span className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] dark:text-[#c8b6a6] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+              <span className="text-sm font-bold font-heading uppercase tracking-[0.2em] text-[#2E1F14] dark:text-[#c8b6a6] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                 Description
               </span>
               {descriptionOpen
@@ -883,7 +883,7 @@ export default function ProductDetailPage() {
                 {product.description && <p>{product.description}</p>}
                 {product.features?.length > 0 && (
                   <div>
-                    <p className="font-semibold text-[#1a1a1a] dark:text-[#f5e9dc] mb-2">The many benefits include:</p>
+                    <p className="font-semibold text-[#2E1F14] dark:text-[#f5e9dc] mb-2">The many benefits include:</p>
                     <ul className="space-y-1.5">
                       {product.features.map((f: string, i: number) => (
                         <li key={i} className="flex items-start gap-2">
@@ -905,7 +905,7 @@ export default function ProductDetailPage() {
                 onClick={() => setNutritionOpen(!nutritionOpen)}
                 className="w-full flex items-center justify-between py-5 text-left group"
               >
-                <span className="text-sm font-bold uppercase tracking-widest text-[#1a1a1a] dark:text-[#c8b6a6] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+                <span className="text-sm font-bold font-heading uppercase tracking-[0.2em] text-[#2E1F14] dark:text-[#c8b6a6] group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                   Nutrition Facts
                 </span>
                 {nutritionOpen
@@ -968,8 +968,11 @@ export default function ProductDetailPage() {
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-gray-200 dark:border-[#2a2018]">
-          <h2 className="text-xl font-bold text-[#1a1a1a] dark:text-[#f5e9dc] mb-6">You May Also Like</h2>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-[#D8CCBA] dark:border-[#2a2018]">
+          <div className="mb-8">
+            <span className="inline-block text-amber-600 dark:text-amber-500 text-xs font-bold tracking-[0.22em] uppercase mb-2">You May Also Like</span>
+            <h2 className="text-2xl lg:text-3xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc]">Related Products</h2>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {relatedProducts.map((rp, i) => (
               <ProductCard key={rp._id} product={rp} index={i} />
@@ -988,7 +991,7 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="hidden lg:block flex-shrink-0 min-w-0 max-w-[180px]">
-              <p className="font-bold text-[#1a1a1a] dark:text-[#f5e9dc] text-sm line-clamp-1">{product.name}</p>
+              <p className="font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc] text-sm line-clamp-1">{product.name}</p>
               <p className="text-amber-600 dark:text-amber-400 font-semibold text-sm">£{displayUnitPrice.toFixed(2)}</p>
             </div>
 
@@ -997,7 +1000,7 @@ export default function ProductDetailPage() {
                 <select
                   value={selectedSize}
                   onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] rounded-xl pl-3 pr-7 py-2.5 text-sm font-medium text-[#1a1a1a] dark:text-[#f5e9dc] focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+                  className="w-full appearance-none bg-gray-50 dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] rounded-xl pl-3 pr-7 py-2.5 text-sm font-medium text-[#2E1F14] dark:text-[#f5e9dc] focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
                 >
                   {product.sizes.map((size: any) => (
                     <option key={size.value} value={size.value}>{size.label}</option>
@@ -1007,7 +1010,7 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <span className="lg:hidden font-bold text-[#1a1a1a] dark:text-[#f5e9dc] text-sm flex-shrink-0">
+            <span className="lg:hidden font-bold text-[#2E1F14] dark:text-[#f5e9dc] text-sm flex-shrink-0">
               £{displayUnitPrice.toFixed(2)}
             </span>
 

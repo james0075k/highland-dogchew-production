@@ -2,7 +2,7 @@ import OrderModel from '../models/orderModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/sucessHandler.js';
 
-const VALID_ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const VALID_ORDER_STATUSES = ['pending', 'confirmed', 'backordered', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 // ─── GET /api/admin/orders ────────────────────────────────────────────────────
 // Returns all orders, newest first, with full details.

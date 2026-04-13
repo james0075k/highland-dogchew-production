@@ -5,9 +5,16 @@
  * Used by BOTH the webhook handler (primary) and the sync endpoint (fallback).
  *
  * Guarantees:
- *   • Idempotent — returns the existing order if already created (no duplicate)
- *   • Atomic — unique index on paymentIntentId blocks concurrent duplicates at DB level
- *   • Fire-and-forget emails — a failed email never blocks order creation
+ *   • Idempotent  — returns the existing order if already created (no duplicate)
+ *   • Stock-first — stock is decremented BEFORE the order insert.
+ *                   If the insert subsequently fails the decrement is rolled back
+ *                   (compensating-transaction pattern — no MongoDB session required).
+ *   • Oversell    — modifiedCount check at decrement time detects races at webhook
+ *                   level; oversold items cause orderStatus='backordered' so the admin
+ *                   is alerted rather than silently shipping a short order.
+ *   • Promo sync  — usageCount is awaited (not fire-and-forget) so drift is caught
+ *                   and logged immediately.
+ *   • Emails      — fire-and-forget; a failed email never blocks order creation.
  */
 
 import OrderModel from '../models/orderModel.js';
@@ -26,7 +33,6 @@ export function safeParse(str, fallback = []) {
 //
 // New format:  items_n="3", items_0="...", items_1="...", items_2="..."
 // Legacy format: items="[{...}]"   (single field, kept for backward compat)
-//
 export function unchunkFromMeta(meta, prefix) {
   const n = parseInt(meta[`${prefix}_n`] || '0', 10);
   if (n > 0) {
@@ -36,7 +42,6 @@ export function unchunkFromMeta(meta, prefix) {
     }
     return result;
   }
-  // Backward compat: old single-field format
   return meta[prefix] || '[]';
 }
 
@@ -51,24 +56,121 @@ export function buildOrderItems(lineItems) {
   }));
 }
 
+// ─── Stock helpers ────────────────────────────────────────────────────────────
+//
+// decrementStockForItems(lineItems)
+//
+//   Runs an atomic $inc update per line item BEFORE the order is inserted.
+//   Each updateOne uses a $gte floor guard so MongoDB rejects the decrement
+//   when stock is already exhausted — only one concurrent winner can succeed
+//   when the last unit is in play.
+//
+//   Returns:
+//     rollbacks — descriptors for every successful decrement (used to undo on failure)
+//     oversold  — items where stock ran out mid-flight (triggers 'backordered' status)
+//
+async function decrementStockForItems(lineItems) {
+  // Batch-fetch all products upfront to check trackStock without N+1 queries
+  const productIds = lineItems.map((i) => i.productId).filter(Boolean);
+  const products   = await ProductModel
+    .find({ _id: { $in: productIds } })
+    .select('trackStock sizes')
+    .lean();
+  const productMap = {};
+  products.forEach((p) => { productMap[p._id.toString()] = p; });
+
+  const rollbacks = []; // what to undo if the subsequent order insert fails
+  const oversold  = []; // items where stock ran out — order will be 'backordered'
+
+  for (const item of lineItems) {
+    if (!item.productId) continue;
+    const prod = productMap[item.productId];
+    if (!prod?.trackStock) continue; // product not found or opt-out of stock tracking
+
+    const qty = Number(item.quantity) || 1;
+
+    if (item.size && item.size !== 'Default') {
+      // Size-specific decrement — positional $elemMatch keeps it atomic
+      const result = await ProductModel.updateOne(
+        {
+          _id: item.productId,
+          trackStock: true,
+          sizes: {
+            $elemMatch: {
+              $or: [{ value: item.size }, { label: item.size }],
+              stockQuantity: { $gte: qty },
+            },
+          },
+        },
+        { $inc: { 'sizes.$.stockQuantity': -qty } }
+      );
+
+      if (result.modifiedCount > 0) {
+        rollbacks.push({ type: 'size', productId: item.productId, size: item.size, qty });
+      } else {
+        oversold.push({ name: item.name, size: item.size, qty });
+      }
+    } else {
+      // Global stock decrement
+      const result = await ProductModel.updateOne(
+        { _id: item.productId, trackStock: true, stockQuantity: { $gte: qty } },
+        { $inc: { stockQuantity: -qty } }
+      );
+
+      if (result.modifiedCount > 0) {
+        rollbacks.push({ type: 'global', productId: item.productId, qty });
+      } else {
+        oversold.push({ name: item.name, qty });
+      }
+    }
+  }
+
+  return { rollbacks, oversold };
+}
+
+// rollbackStockDecrements(rollbacks)
+//
+//   Compensating transaction: re-increments stock for every item that was
+//   successfully decremented in the same request. Called when the order
+//   insert fails so stock is not permanently consumed without an order.
+//
+async function rollbackStockDecrements(rollbacks) {
+  for (const rb of rollbacks) {
+    try {
+      if (rb.type === 'size') {
+        await ProductModel.updateOne(
+          {
+            _id: rb.productId,
+            sizes: { $elemMatch: { $or: [{ value: rb.size }, { label: rb.size }] } },
+          },
+          { $inc: { 'sizes.$.stockQuantity': rb.qty } }
+        );
+      } else {
+        await ProductModel.updateOne(
+          { _id: rb.productId },
+          { $inc: { stockQuantity: rb.qty } }
+        );
+      }
+    } catch (err) {
+      // This leaves stock under-counted — log prominently for manual correction
+      console.error(
+        `[order] CRITICAL: stock rollback failed for product ${rb.productId} qty ${rb.qty}:`,
+        err.message
+      );
+    }
+  }
+}
+
 // ─── Core ─────────────────────────────────────────────────────────────────────
 //
 // createOrderFromPI(pi, customerOverride?)
 //
 // @param  pi               — Stripe PaymentIntent object (already retrieved)
 // @param  customerOverride — optional customer/shipping data from sessionStorage
-//                           (used when PI metadata is empty because update-meta
-//                            raced with the payment confirmation)
 // @returns  { order: OrderDocument, created: boolean }
-//   created = true  → new order was inserted
-//   created = false → existing order returned (idempotent path)
-//
-// Throws if:
-//   • pi.metadata.type !== 'product-purchase'
-//   • pi.status !== 'succeeded'
 //
 export async function createOrderFromPI(pi, customerOverride = null) {
-  // ── Guard: only handle our own product-purchase intents ──────────────────────
+  // ── Guard ─────────────────────────────────────────────────────────────────────
   if (pi.metadata?.type !== 'product-purchase') {
     throw new Error('Invalid payment type — not a product-purchase intent');
   }
@@ -76,11 +178,10 @@ export async function createOrderFromPI(pi, customerOverride = null) {
     throw new Error(`Payment not completed (Stripe status: ${pi.status})`);
   }
 
-  // ── Idempotency check — DB lookup is cheaper than a Stripe API call ───────────
+  // ── Idempotency check ─────────────────────────────────────────────────────────
+  // Checked BEFORE decrementing stock so a webhook replay never double-decrements.
   const existing = await OrderModel.findOne({ paymentIntentId: pi.id });
   if (existing) {
-    // If the existing order is missing customer details but we have them now,
-    // patch the record before returning it (handles replay via success page).
     if (customerOverride && !existing.shippingAddress.email && customerOverride.email) {
       const patched = await OrderModel.findByIdAndUpdate(
         existing._id,
@@ -107,7 +208,6 @@ export async function createOrderFromPI(pi, customerOverride = null) {
   }
 
   // ── Extract customer & shipping ───────────────────────────────────────────────
-  // Priority: PI metadata > customerOverride (sessionStorage) > empty string
   const meta      = pi.metadata;
   const c         = customerOverride || {};
   const firstName = meta.c_firstName || c.firstName   || '';
@@ -116,10 +216,33 @@ export async function createOrderFromPI(pi, customerOverride = null) {
   const email     = meta.c_email     || c.email       || '';
   const phone     = meta.c_phone     || c.phone       || '';
 
-  // H-4 fix: reconstruct items from chunked metadata fields
   const lineItems = safeParse(unchunkFromMeta(meta, 'items'));
 
-  // ── Create the order ──────────────────────────────────────────────────────────
+  // ── Step 1: Decrement stock BEFORE creating the order ────────────────────────
+  //
+  // Why stock-first?
+  //   If we created the order first and then stock decrement failed, we'd have
+  //   a confirmed order consuming stock that was never actually reserved.
+  //   Doing it first means: on order insert failure → rollback → no phantom consumption.
+  //
+  //   Concurrent duplicate scenario (webhook + sync both fire):
+  //     Both pass the idempotency check above (tiny race window).
+  //     Both decrement stock. Only one wins the unique-index insert.
+  //     The loser catches 11000 → rolls back its stock decrement → returns existing order.
+  //     Net stock change = exactly one order's worth. ✓
+  //
+  const { rollbacks, oversold } = await decrementStockForItems(lineItems);
+
+  if (oversold.length > 0) {
+    console.warn(
+      '[order] ⚠️  Stock exhausted for item(s) at webhook time — order will be backordered:',
+      oversold.map((o) => `${o.name}${o.size ? ` (${o.size})` : ''} ×${o.qty}`).join(', ')
+    );
+  }
+
+  // ── Step 2: Create the order ──────────────────────────────────────────────────
+  const orderStatus = oversold.length > 0 ? 'backordered' : 'confirmed';
+
   let order;
   try {
     order = await OrderModel.create({
@@ -145,63 +268,50 @@ export async function createOrderFromPI(pi, customerOverride = null) {
       grandTotal:    pi.amount_received / 100,
       paymentIntentId: pi.id,
       paymentStatus:   'paid',
-      orderStatus:     'confirmed',
+      orderStatus,
     });
   } catch (err) {
-    // Duplicate key error: another process (webhook or sync) won the race.
-    // Fetch and return the winning record — still idempotent.
+    // Insert failed → undo every stock decrement this request made
+    if (rollbacks.length > 0) {
+      await rollbackStockDecrements(rollbacks);
+    }
+
+    // Duplicate key: another concurrent path (webhook retry or sync endpoint) won the race.
+    // Return their winning record — overall state is consistent.
     if (err.code === 11000) {
       const winner = await OrderModel.findOne({ paymentIntentId: pi.id });
       if (winner) return { order: winner, created: false };
     }
+
     throw err;
   }
 
-  // ── Stock decrement (fire-and-forget — never blocks order creation) ───────────
-  try {
-    for (const item of lineItems) {
-      if (!item.productId) continue;
-      const qty = Number(item.quantity) || 1;
-
-      if (item.size && item.size !== 'Default') {
-        // H-5 fix: single $elemMatch query — prevents double-decrement when
-        // a size's value and label are identical strings.
-        // Floor guard: stockQuantity: { $gte: qty } prevents stock going negative
-        // under concurrent orders (atomic — only one winner when stock is 1).
-        await ProductModel.updateOne(
-          {
-            _id: item.productId,
-            trackStock: true,
-            sizes: {
-              $elemMatch: {
-                $or: [{ value: item.size }, { label: item.size }],
-                stockQuantity: { $gte: qty },
-              },
-            },
-          },
-          { $inc: { 'sizes.$.stockQuantity': -qty } }
-        ).catch(() => {});
-      } else {
-        // Global stock decrement — floor guard prevents going negative
-        await ProductModel.updateOne(
-          { _id: item.productId, trackStock: true, stockQuantity: { $gte: qty } },
-          { $inc: { stockQuantity: -qty } }
-        ).catch(() => {});
-      }
-    }
-  } catch (stockErr) {
-    console.error('[order] Stock decrement failed:', stockErr.message);
-  }
-
-  // ── Promo code usage increment (fire-and-forget) ──────────────────────────────
+  // ── Step 3: Promo code usage increment (awaited — not fire-and-forget) ────────
+  //
+  // Previously this was a detached promise; a DB failure would silently leave
+  // usageCount stale. Now we await and log on error so the admin can reconcile.
+  //
   if (meta.promoCode) {
-    PromoCodeModel.findOneAndUpdate(
-      { code: meta.promoCode.toUpperCase() },
-      { $inc: { usageCount: 1 } }
-    ).catch((err) => console.error('[order] Promo update failed:', err.message));
+    try {
+      const promoResult = await PromoCodeModel.findOneAndUpdate(
+        { code: meta.promoCode.toUpperCase() },
+        { $inc: { usageCount: 1 } }
+      );
+      if (!promoResult) {
+        console.warn(
+          `[order] Promo code "${meta.promoCode}" not found — usageCount not incremented (order ${order.orderNumber})`
+        );
+      }
+    } catch (err) {
+      // Non-fatal but the admin should reconcile manually if this fires repeatedly
+      console.error(
+        `[order] ⚠️  Promo usageCount increment failed for "${meta.promoCode}" on order ${order.orderNumber}:`,
+        err.message
+      );
+    }
   }
 
-  // ── Confirmation emails (fire-and-forget) ─────────────────────────────────────
+  // ── Step 4: Confirmation emails (fire-and-forget) ─────────────────────────────
   if (email) {
     const hasSubscription = meta.hasSubscription === 'true';
     sendEmail({
@@ -215,7 +325,7 @@ export async function createOrderFromPI(pi, customerOverride = null) {
   if (adminEmail) {
     sendEmail({
       to: adminEmail,
-      subject: `New Order Received – ${order.orderNumber} – Action Required`,
+      subject: `New Order Received – ${order.orderNumber}${oversold.length ? ' – ⚠️ BACKORDERED' : ' – Action Required'}`,
       html: adminOrderEmailHtml(order, meta),
     }).catch((err) => console.error('[order] Admin email failed:', err.message));
   }

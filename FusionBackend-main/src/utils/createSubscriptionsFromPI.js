@@ -4,6 +4,14 @@
  * Creates subscription records from a confirmed PaymentIntent.
  * Used by both the Stripe webhook and the sync endpoint so that
  * subscriptions are always created regardless of which path runs first.
+ *
+ * Partial-failure protection:
+ *   Stripe Customer setup (create → attach PM → set default) happens before
+ *   any DB write.  If we created a NEW customer but every subsequent DB write
+ *   fails, we attempt to delete the orphaned Stripe Customer so it does not
+ *   accumulate billing metadata with no matching subscription record.
+ *   If the Stripe cleanup also fails, the customer ID is logged prominently
+ *   for manual recovery via the Stripe Dashboard.
  */
 
 import { randomBytes } from 'crypto';
@@ -31,7 +39,6 @@ function addWeeks(date, weeks) {
 }
 
 // M-1 fix: use crypto.randomBytes instead of Math.random
-// 4 random bytes = 8 hex chars = ~4.3 billion combinations (vs ~1.7M before)
 function generateSubId() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const rand = randomBytes(4).toString('hex').toUpperCase();
@@ -58,11 +65,17 @@ export async function createSubscriptionsFromPI(pi, order) {
 
   const email = (meta.c_email || '').toLowerCase();
 
-  // ── M-3 fix: resolve Stripe Customer via our own DB first ───────────────────
-  // Querying our own DB is fast, consistent, and avoids cross-account collisions
-  // that could occur when using stripe.customers.list({ email }).
+  // ── Resolve or create Stripe Customer ───────────────────────────────────────
+  //
+  // customerWasNewlyCreated tracks whether WE created the customer in this call.
+  // Only a newly-created customer should be cleaned up on total DB failure —
+  // an existing/reused customer belongs to prior subscription records.
+  //
   let stripeCustomerId;
+  let customerWasNewlyCreated = false;
+
   try {
+    // M-3 fix: resolve via our own DB first to avoid cross-account email collisions
     const existingSubDoc = await SubscriptionModel.findOne({
       email,
       stripeCustomerId: { $exists: true, $ne: '' },
@@ -72,42 +85,46 @@ export async function createSubscriptionsFromPI(pi, order) {
       stripeCustomerId = existingSubDoc.stripeCustomerId;
       console.log(`[sub] Reusing existing Stripe Customer ${stripeCustomerId} for ${email}`);
     } else {
-      // No prior subscription — create a new Stripe Customer
       const customer = await getStripe().customers.create({
         email,
         name: `${meta.c_firstName || ''} ${meta.c_lastName || ''}`.trim() || undefined,
         phone: meta.c_phone || undefined,
       });
       stripeCustomerId = customer.id;
+      customerWasNewlyCreated = true;
       console.log(`[sub] Created new Stripe Customer ${stripeCustomerId} for ${email}`);
     }
 
     // Attach the payment method to the customer (idempotent if already attached)
     await getStripe().paymentMethods.attach(pi.payment_method, { customer: stripeCustomerId })
       .catch((err) => {
-        // "already attached" is not an error worth stopping for
         if (!err.message?.includes('already been attached')) throw err;
       });
 
-    // Set as default for future invoices
+    // Set as default for future off-session invoices
     await getStripe().customers.update(stripeCustomerId, {
       invoice_settings: { default_payment_method: pi.payment_method },
     });
   } catch (err) {
     console.error('[sub] Stripe Customer setup failed:', err.message);
-    return; // Don't create subscription records if Customer setup failed
+    return; // Cannot proceed without a valid customer
   }
 
-  // ── Shipping address from order ─────────────────────────────────────────────
-  const addr = order.shippingAddress || {};
-
   // ── Create a SubscriptionModel document per subscription line item ──────────
+  //
+  // anyDbWriteSucceeded — true as soon as one SubscriptionModel.create() or
+  // findOne() returns an existing doc.  Used to decide whether to attempt
+  // Stripe Customer cleanup on total failure.
+  //
+  const addr = order.shippingAddress || {};
+  let anyDbWriteSucceeded = false;
+
   for (const item of subItems) {
-    const intervalWeeks  = parseIntervalWeeks(item.subscriptionInterval);
+    const intervalWeeks   = parseIntervalWeeks(item.subscriptionInterval);
     const nextBillingDate = addWeeks(new Date(), intervalWeeks);
 
     try {
-      // Idempotency: check if subscription already exists for this PI + product
+      // Idempotency: skip if this PI + product already has a subscription
       const existingDoc = await SubscriptionModel.findOne({
         'billingHistory.paymentIntentId': pi.id,
         product: item.productId || undefined,
@@ -115,6 +132,7 @@ export async function createSubscriptionsFromPI(pi, order) {
       });
       if (existingDoc) {
         console.log(`[sub] ⏭️  Subscription already exists for ${item.name} — skipped`);
+        anyDbWriteSucceeded = true; // existing doc counts — customer is legitimately needed
         continue;
       }
 
@@ -158,9 +176,37 @@ export async function createSubscriptionsFromPI(pi, order) {
         },
       });
 
+      anyDbWriteSucceeded = true;
       console.log(`[sub] ✅ Subscription ${sub.subscriptionId} created for ${item.name}`);
     } catch (err) {
       console.error(`[sub] ❌ Failed to create subscription for ${item.name}:`, err.message);
+      // Continue with remaining items — partial success is better than total abort
+    }
+  }
+
+  // ── Orphaned Stripe Customer cleanup ─────────────────────────────────────────
+  //
+  // Only runs when:
+  //   1. We created a NEW customer (not reused) in this call, AND
+  //   2. Every single DB write attempt failed
+  //
+  // If at least one subscription doc was written (or already existed), the customer
+  // is legitimately needed for future billing — do NOT delete it.
+  //
+  if (customerWasNewlyCreated && !anyDbWriteSucceeded) {
+    console.error(
+      `[sub] ⚠️  All DB writes failed after creating Stripe Customer ${stripeCustomerId} — attempting cleanup`
+    );
+    try {
+      await getStripe().customers.del(stripeCustomerId);
+      console.log(`[sub] 🗑️  Orphaned Stripe Customer ${stripeCustomerId} deleted successfully`);
+    } catch (cleanupErr) {
+      // Manual intervention required — this customer has NO subscription records in our DB
+      console.error(
+        `[sub] CRITICAL: Could not delete orphaned Stripe Customer ${stripeCustomerId}.`,
+        `Manual deletion required: https://dashboard.stripe.com/customers/${stripeCustomerId}`,
+        cleanupErr.message
+      );
     }
   }
 }
