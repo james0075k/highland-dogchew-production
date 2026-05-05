@@ -171,16 +171,10 @@ export default function ProductDetailPage() {
     return product?.originalPrice ?? 0;
   }, [product, selectedSizeObj]);
 
-  const priceRatio = useMemo(() => {
-    if (selectedSizeObj?.price > 0 && product?.price > 0) {
-      return effectiveUnitPrice / product.price;
-    }
-    return 1;
-  }, [effectiveUnitPrice, product, selectedSizeObj]);
-
   const adjustedBulkPricing = useMemo(() => {
-    // Size-specific bulk tiers take priority
-    if (selectedSizeObj?.bulkTiers?.length > 0) {
+    // Size selected → use only that size's own saved bulk tiers
+    if (selectedSizeObj) {
+      if (!selectedSizeObj.bulkTiers?.length) return []; // size has no bulk tiers
       return selectedSizeObj.bulkTiers.map((tier: any) => ({
         quantity: tier.minQty,
         price: tier.salePrice,
@@ -188,14 +182,9 @@ export default function ProductDetailPage() {
         discount: tier.discountPercent,
       }));
     }
-    // Fall back to global bulkPricing with priceRatio adjustment
-    if (!product?.bulkPricing) return [];
-    return product.bulkPricing.map((tier: any) => ({
-      ...tier,
-      price: tier.price * priceRatio,
-      originalPrice: tier.originalPrice * priceRatio,
-    }));
-  }, [product, priceRatio, selectedSizeObj]);
+    // No sizes on product → use product-level bulk pricing as-is (no scaling)
+    return product?.bulkPricing ?? [];
+  }, [product, selectedSizeObj]);
 
   // Reset bulk tier selection when size changes
   useEffect(() => {
@@ -260,6 +249,9 @@ export default function ProductDetailPage() {
       setToast({ message: 'Please select a size first', type: 'error' });
       return;
     }
+    const cartUnitPrice = currentTier
+      ? +(displayUnitPrice / (currentTier.quantity || 1)).toFixed(2)
+      : +displayUnitPrice.toFixed(2);
     addToCart({
       productId: product._id,
       name: product.name,
@@ -267,10 +259,11 @@ export default function ProductDetailPage() {
       image: product.gallery?.[0] || product.image,
       size: selectedSizeObj?.label || selectedSize || 'Default',
       quantity: cartQty,
-      unitPrice: +displayUnitPrice.toFixed(2),
+      unitPrice: cartUnitPrice,
       originalPrice: +effectiveOriginalPrice.toFixed(2),
       isSubscription: purchaseOption === 'repeat',
       subscriptionInterval: purchaseOption === 'repeat' ? selectedInterval : undefined,
+      ...(currentTier ? { tierMinQty: currentTier.quantity } : {}),
       ...(product.trackStock && effectiveStock !== null ? { maxStock: effectiveStock } : {}),
     });
     setToast({ message: `${product.name} added to cart!`, type: 'success' });
@@ -394,9 +387,9 @@ export default function ProductDetailPage() {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
 
-      {/* Toast */}
+      {/* Toast — top-40 (160px) keeps it below the fixed navbar (~144px on desktop) */}
       {toast && (
-        <div className={`fixed top-24 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-xl text-white text-sm font-semibold transition-all duration-300 ${
+        <div className={`fixed top-40 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-xl text-white text-sm font-semibold transition-all duration-300 ${
           toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-500'
         }`}>
           {toast.type === 'success' && <Check className="w-4 h-4 flex-shrink-0" />}
@@ -505,7 +498,7 @@ export default function ProductDetailPage() {
 
             {/* Price block */}
             <div className="flex items-center gap-3 flex-wrap mb-1">
-              <span className="text-4xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc]">
+              <span className="text-4xl font-bold text-[#2E1F14] dark:text-[#f5e9dc]">
                 £{displayUnitPrice.toFixed(2)}
               </span>
               {displayOriginalPrice > displayUnitPrice && (
@@ -587,8 +580,8 @@ export default function ProductDetailPage() {
                 <p className="text-xs text-gray-400 dark:text-[#7A5C4F] mb-3">The more you buy, the more you save</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   {adjustedBulkPricing.map((tier: any, idx: number) => {
-                    const tierTotal = tier.price * (tier.quantity || 1);
-                    const tierOrigTotal = tier.originalPrice * (tier.quantity || 1);
+                    const tierTotal = tier.price;
+                    const tierOrigTotal = tier.originalPrice;
                     const isSelected = selectedQtyIdx === idx;
                     return (
                       <button

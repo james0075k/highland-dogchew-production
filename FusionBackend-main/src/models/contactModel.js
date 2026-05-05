@@ -10,6 +10,7 @@ const contactSchema = new mongoose.Schema(
     // optional admin handling
     status: { type: String, enum: ["new", "read", "replied"], default: "new" },
     repliedAt: { type: Date, default: null },
+    isArchived: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

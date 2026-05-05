@@ -13,10 +13,11 @@ export interface CartItem {
   unitPrice: number;
   originalPrice: number;
   tax: number;       // per-item tax
-  delivery: number;  // per-item delivery
+  delivery: number;  // always 0 — delivery is a flat cart-level charge (DELIVERY_FLAT), not per item
   isSubscription?: boolean;
   subscriptionInterval?: string;
   maxStock?: number;
+  tierMinQty?: number; // bulk tier bundle size (step for +/- in cart)
 }
 
 export interface PromoInfo {
@@ -48,17 +49,17 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // --- Constants ---
-const TAX_RATE = 0.20;       // 20% VAT
-const DELIVERY_PER_ITEM = 2.99;
+const TAX_RATE = 0.20;           // 20% VAT
+const DELIVERY_FLAT = 2.99;      // single flat delivery for the entire cart
 const STORAGE_KEY = 'highland-dogchew-cart';
 
-// --- Helper: compute tax & delivery for each item ---
+// --- Helper: enrich each item with its line-level tax (delivery is cart-level, not per-item) ---
 function enrichItem(item: Omit<CartItem, 'tax' | 'delivery'>): CartItem {
   const lineTotal = item.unitPrice * item.quantity;
   return {
     ...item,
     tax: +(lineTotal * TAX_RATE).toFixed(2),
-    delivery: +DELIVERY_PER_ITEM.toFixed(2),
+    delivery: 0, // delivery is charged once at cart level
   };
 }
 
@@ -92,12 +93,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = useCallback((newItem: Omit<CartItem, 'tax' | 'delivery'>) => {
     setItems((prev) => {
-      // Subscription and one-time purchases of the same product are separate line items
+      // Different tiers, subscriptions, and sizes are always separate line items
       const idx = prev.findIndex(
         (i) =>
           i.productId === newItem.productId &&
           i.size === newItem.size &&
-          !!i.isSubscription === !!newItem.isSubscription
+          !!i.isSubscription === !!newItem.isSubscription &&
+          (i.tierMinQty ?? 0) === (newItem.tierMinQty ?? 0)
       );
 
       if (idx >= 0) {
@@ -132,20 +134,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateQuantity = useCallback((productId: string, size: string, quantity: number, isSubscription?: boolean) => {
-    if (quantity < 1) return;
-    setItems((prev) =>
-      prev.map((i) => {
+    setItems((prev) => {
+      const next = prev.map((i) => {
         if (
           i.productId === productId &&
           i.size === size &&
           (isSubscription === undefined || !!i.isSubscription === !!isSubscription)
         ) {
+          const minQty = i.tierMinQty || 1;
+          if (quantity < minQty) return null;
           const cappedQty = i.maxStock != null ? Math.min(quantity, i.maxStock) : quantity;
           return enrichItem({ ...i, quantity: cappedQty });
         }
         return i;
-      })
-    );
+      });
+      return next.filter((i): i is CartItem => i !== null);
+    });
   }, []);
 
   const clearCart = useCallback(() => {
@@ -197,13 +201,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setPromoCode('');
   }, []);
 
-  // Computed totals
+  // Computed totals — mirrors backend resolveAndCalculate exactly
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = +items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0).toFixed(2);
   const discount = promoInfo ? promoInfo.discount : 0;
   const discountedSubtotal = +(subtotal - discount).toFixed(2);
   const totalTax = +(discountedSubtotal * TAX_RATE).toFixed(2);
-  const totalDelivery = +items.reduce((sum, i) => sum + i.delivery, 0).toFixed(2);
+  // Single flat delivery for the whole cart regardless of how many lines there are
+  const totalDelivery = items.length > 0 ? +DELIVERY_FLAT.toFixed(2) : 0;
   const grandTotal = +(discountedSubtotal + totalTax + totalDelivery).toFixed(2);
 
   return (

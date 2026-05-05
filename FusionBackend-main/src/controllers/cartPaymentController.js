@@ -7,7 +7,7 @@ import handleSuccess from '../utils/sucessHandler.js';
 import { cartValidationSchema } from '../validations/cartValidationSchema.js';
 
 const TAX_RATE        = 0.20; // 20% VAT
-const DELIVERY_CHARGE = 2.99; // per unique line item
+const DELIVERY_CHARGE = 2.99; // flat per order (single delivery regardless of item count)
 const CHUNK_SIZE      = 480;  // safely under Stripe's 500-char metadata value limit
 
 class CartError extends Error {
@@ -126,7 +126,9 @@ async function resolveAndCalculate(items, promoCode) {
         .filter((t) => item.quantity >= t.minQty)
         .sort((a, b) => b.minQty - a.minQty);
       if (applicable.length > 0) {
-        expectedPrice = applicable[0].salePrice;
+        // salePrice is the TOTAL for minQty items — convert to per-unit for lineTotal calculation
+        const tier = applicable[0];
+        expectedPrice = +(tier.salePrice / tier.minQty).toFixed(2);
         bulkResolved = true;
       }
     }
@@ -166,7 +168,7 @@ async function resolveAndCalculate(items, promoCode) {
   const { discount, promoData } = await resolvePromo(promoCode, subtotal);
   const discountedSubtotal      = +(subtotal - discount).toFixed(2);
   const totalTax                = +(discountedSubtotal * TAX_RATE).toFixed(2);
-  const totalDelivery           = +(items.length * DELIVERY_CHARGE).toFixed(2);
+  const totalDelivery           = +DELIVERY_CHARGE.toFixed(2); // one flat delivery for the whole cart
   const grandTotal              = +(discountedSubtotal + totalTax + totalDelivery).toFixed(2);
 
   return { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal };

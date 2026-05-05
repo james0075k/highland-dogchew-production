@@ -10,10 +10,18 @@ import {
   getProductsByCategory,
   getProductsByVariety,
   getFeaturedProducts,
-  getProductsByType
+  getProductsByType,
+  archiveProduct,
+  restoreProduct,
+  getArchivedProducts,
 } from '../controllers/productController.js';
 import { singleUpload, arrayUpload, fieldsUpload } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware/authMiddleware.js';
+
+// Admin: archived product management (must be before /:id to avoid route conflict)
+productRoute.get('/archived', authenticate, authorizeRoles('admin'), getArchivedProducts);
+productRoute.patch('/:id/archive', authenticate, authorizeRoles('admin'), archiveProduct);
+productRoute.patch('/:id/restore', authenticate, authorizeRoles('admin'), restoreProduct);
 
 // Public routes
 productRoute.get('/', getAllProducts);
@@ -21,7 +29,7 @@ productRoute.get('/featured', getFeaturedProducts);
 productRoute.get('/type/:type', getProductsByType);
 productRoute.get('/slug/:slug', getProductBySlug);
 productRoute.get('/category/:category', getProductsByCategory);
-productRoute.get('/variety/:varietyId', getProductsByVariety); // NEW: Get products by variety
+productRoute.get('/variety/:varietyId', getProductsByVariety);
 productRoute.get('/:id', getProductById);
 
 // Protected routes (admin only)

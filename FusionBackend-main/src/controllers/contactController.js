@@ -27,7 +27,7 @@ export const getAllContactMessages = async (req, res, next) => {
   try {
     const { status, q, page = 1, limit = 20 } = req.query;
 
-    const filter = {};
+    const filter = { isArchived: { $ne: true } };
     if (status) filter.status = status;
 
     if (q) {
@@ -61,7 +61,7 @@ export const getAllContactMessages = async (req, res, next) => {
 // ✅ GET /contact/:id  (admin)
 export const getContactMessageById = async (req, res, next) => {
   try {
-    const msg = await contactModel.findById(req.params.id);
+    const msg = await contactModel.findOne({ _id: req.params.id, isArchived: { $ne: true } });
     if (!msg) return next(handleError(404, "Message not found"));
 
     return handleSuccess(res, 200, "Contact message fetched", msg);
@@ -94,13 +94,17 @@ export const updateContactStatus = async (req, res, next) => {
   }
 };
 
-// ✅ DELETE /contact/:id  (admin)
+// ✅ DELETE /contact/:id  (admin — soft delete)
 export const deleteContactMessage = async (req, res, next) => {
   try {
-    const deleted = await contactModel.findByIdAndDelete(req.params.id);
-    if (!deleted) return next(handleError(404, "Message not found"));
+    const msg = await contactModel.findByIdAndUpdate(
+      req.params.id,
+      { isArchived: true },
+      { new: true }
+    );
+    if (!msg) return next(handleError(404, "Message not found"));
 
-    return handleSuccess(res, 200, "Contact message deleted successfully", deleted);
+    return handleSuccess(res, 200, "Contact message deleted successfully");
   } catch (err) {
     next(err);
   }

@@ -56,10 +56,10 @@ export default function MixChewDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center pt-40">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading product...</p>
+          <Loader2 className="w-16 h-16 text-amber-500 animate-spin mx-auto mb-4" />
+          <p className="text-[#7A5C4F] dark:text-[#c8b6a6]">Loading product...</p>
         </div>
       </div>
     );
@@ -67,12 +67,12 @@ export default function MixChewDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center pt-40">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Product not found'}</p>
+          <p className="text-red-500 dark:text-red-400 mb-4">{error || 'Product not found'}</p>
           <button
             onClick={() => router.push('/mixchew')}
-            className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+            className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
           >
             Back to Highland Mix Chews
           </button>
@@ -82,19 +82,20 @@ export default function MixChewDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="max-w-7xl mx-auto px-6">
+    /* pt-40 = 160px clears the fixed navbar (~144px) on all screen sizes */
+    <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] pt-40 pb-16 transition-colors duration-300">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-orange-500 hover:text-orange-600 mb-6 transition font-medium"
+          className="flex items-center gap-2 text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-amber-600 dark:hover:text-amber-400 mb-8 transition font-medium text-sm"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
           Back
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
           {/* Image */}
-          <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 border-2 border-gray-100">
+          <div className="aspect-square rounded-2xl overflow-hidden bg-amber-50 dark:bg-[#2d221c] border border-amber-100 dark:border-[#3a2c23]">
             <img
               src={product.image}
               alt={product.name}
@@ -103,53 +104,65 @@ export default function MixChewDetailPage() {
           </div>
 
           {/* Details */}
-          <div>
+          <div className="flex flex-col justify-center">
             {product.badge && (
-              <span className="inline-block mb-4 bg-orange-50 text-orange-600 text-sm font-semibold px-4 py-2 rounded-full border border-orange-200">
+              <span className="inline-block mb-4 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 self-start">
                 {product.badge}
               </span>
             )}
 
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{product.name}</h1>
+            <h1 className="font-antique text-3xl sm:text-4xl text-[#2f1e14] dark:text-[#f5e9dc] mb-3 leading-snug">
+              {product.name}
+            </h1>
 
-            <p className="text-gray-600 mb-6">{product.description}</p>
+            <p className="text-[#7A5C4F] dark:text-[#c8b6a6] mb-6 leading-relaxed text-sm sm:text-base">
+              {product.description}
+            </p>
 
             {/* Rating */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-5 h-5 ${
-                      i < Math.floor(product.rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'fill-gray-200 text-gray-200'
-                    }`}
-                  />
-                ))}
+            {(product.rating > 0 || product.reviews > 0) && (
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < Math.floor(product.rating)
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'fill-amber-100 dark:fill-amber-900/30 text-amber-200 dark:text-amber-800'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[#7A5C4F] dark:text-[#c8b6a6] text-sm font-medium">
+                  {product.rating} · {product.reviews} reviews
+                </span>
               </div>
-              <span className="text-gray-900 font-bold">
-                {product.rating} ({product.reviews} reviews)
-              </span>
-            </div>
+            )}
 
             {/* Price */}
             <div className="flex items-baseline gap-3 mb-8">
-              <span className="text-4xl font-bold text-orange-500">
+              <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">
                 £{product.price.toFixed(2)}
               </span>
-              <span className="text-xl text-gray-400 line-through">
-                £{product.originalPrice.toFixed(2)}
-              </span>
+              {product.originalPrice > product.price && (
+                <span className="text-lg text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 line-through">
+                  £{product.originalPrice.toFixed(2)}
+                </span>
+              )}
             </div>
 
-            {/* View Full Product Page */}
+            {/* CTA — redirects to full product page which has full size/subscription/add-to-cart flow */}
             <Link
               href={`/products/${product.slug}`}
-              className="inline-block w-full text-center bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 dark:from-amber-500 dark:to-amber-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
-              View Full Details & Add to Cart
+              View Full Details &amp; Add to Cart
             </Link>
+
+            <p className="text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 text-center mt-3">
+              Choose your size, subscription &amp; more on the next page
+            </p>
           </div>
         </div>
       </div>

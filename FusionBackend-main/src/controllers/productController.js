@@ -208,6 +208,8 @@ export const getAllProducts = async (req, res, next) => {
       filter.$or = [{ name: regex }, { description: regex }];
     }
 
+    filter.isActive = { $ne: false };
+
     const products = await ProductModel.find(filter)
       .populate('variety', 'name category')
       .sort({ createdAt: -1 });
@@ -242,7 +244,7 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const product = await ProductModel.findOne({ slug }).populate('variety');
+    const product = await ProductModel.findOne({ slug, isActive: { $ne: false } }).populate('variety');
 
     if (!product) return next(handleError(404, 'Product not found'));
 
@@ -261,7 +263,7 @@ export const getProductById = async (req, res, next) => {
       return next(handleError(400, 'Invalid product ID'));
     }
 
-    const product = await ProductModel.findById(id).populate('variety');
+    const product = await ProductModel.findOne({ _id: id, isActive: { $ne: false } }).populate('variety');
 
     if (!product) return next(handleError(404, 'Product not found'));
 
@@ -280,7 +282,7 @@ export const getProductsByVariety = async (req, res, next) => {
       return next(handleError(400, 'Invalid variety ID'));
     }
 
-    const products = await ProductModel.find({ variety: varietyId })
+    const products = await ProductModel.find({ variety: varietyId, isActive: { $ne: false } })
       .populate('variety')
       .sort({ createdAt: -1 });
 
@@ -472,7 +474,7 @@ export const getProductsByCategory = async (req, res, next) => {
   try {
     const { category } = req.params;
 
-    const products = await ProductModel.find({ category })
+    const products = await ProductModel.find({ category, isActive: { $ne: false } })
       .populate('variety')
       .sort({ createdAt: -1 });
 
@@ -499,7 +501,7 @@ export const getProductsByType = async (req, res, next) => {
       });
     }
 
-    const products = await ProductModel.find({ productType: type })
+    const products = await ProductModel.find({ productType: type, isActive: { $ne: false } })
       .populate('variety')
       .lean()
       .sort({ createdAt: -1 });
@@ -515,12 +517,57 @@ export const getProductsByType = async (req, res, next) => {
 export const getFeaturedProducts = async (req, res, next) => {
   try {
     const products = await ProductModel.find({
-      badge: { $ne: null, $exists: true }
+      badge: { $ne: null, $exists: true },
+      isActive: { $ne: false },
     })
     .populate('variety')
     .sort({ createdAt: -1 });
 
     return handleSuccess(res, 200, 'Featured products fetched successfully', products.map(p => rewriteProductImages(p, req)));
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Archive Product (soft delete — sets isActive: false, keeps files)
+export const archiveProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await ProductModel.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+    if (!product) return next(handleError(404, 'Product not found'));
+    return handleSuccess(res, 200, 'Product archived successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Restore Product (sets isActive: true)
+export const restoreProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await ProductModel.findByIdAndUpdate(
+      id,
+      { isActive: true },
+      { new: true }
+    ).populate('variety');
+    if (!product) return next(handleError(404, 'Product not found'));
+    return handleSuccess(res, 200, 'Product restored successfully', rewriteProductImages(product, req));
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Archived Products (admin only)
+export const getArchivedProducts = async (req, res, next) => {
+  try {
+    const products = await ProductModel.find({ isActive: false })
+      .populate('variety', 'name category')
+      .sort({ updatedAt: -1 });
+    return handleSuccess(res, 200, 'Archived products fetched', products.map(p => rewriteProductImages(p, req)));
   } catch (error) {
     next(error);
   }

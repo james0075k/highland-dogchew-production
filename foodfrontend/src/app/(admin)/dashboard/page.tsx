@@ -6,7 +6,7 @@ import {
   FiPackage, FiStar, FiMail, FiLayers, FiGrid,
   FiArrowRight, FiAlertCircle, FiRefreshCw, FiShoppingBag,
   FiTrendingUp, FiUsers, FiMessageCircle, FiAward,
-  FiCreditCard, FiRepeat, FiCheckCircle, FiClock,
+  FiCreditCard, FiRepeat, FiCheckCircle, FiClock, FiXCircle,
 } from 'react-icons/fi';
 import { GiDogBowl } from 'react-icons/gi';
 
@@ -383,6 +383,21 @@ export default function AdminDashboard() {
     return { replyRate, avgRating, approvalRate };
   }, [allContacts, allReviews]);
 
+  const stockStats = useMemo(() => {
+    const LOW = 10;
+    let totalStock = 0, lowStock = 0, outOfStock = 0;
+    for (const p of allProducts) {
+      const eff = p.sizes?.length > 0
+        ? p.sizes.reduce((s: number, sz: any) => s + (sz.stockQuantity ?? 0), 0)
+        : (p.stockQuantity ?? 0);
+      totalStock += eff;
+      if (!p.trackStock) continue;
+      if (eff === 0) outOfStock++;
+      else if (eff < LOW) lowStock++;
+    }
+    return { totalStock, lowStock, outOfStock };
+  }, [allProducts]);
+
   const contactSparkline = monthlyData.map(d => d.contacts);
   const reviewSparkline  = monthlyData.map(d => d.reviews);
 
@@ -685,6 +700,27 @@ export default function AdminDashboard() {
                   View all {activeTab === 'messages' ? 'messages' : 'reviews'} <FiArrowRight size={12} />
                 </Link>
               </div>
+            </div>
+          </div>
+
+          {/* ══════════ STOCK OVERVIEW ══════════ */}
+          <div style={{ ...card, padding:'18px 20px 20px', marginTop:16 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ padding:8, background:'#eff6ff', borderRadius:10 }}><FiPackage size={16} style={{ color:'#3b82f6' }} /></div>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:'#0f172a' }}>Stock Overview</p>
+                  <p style={{ fontSize:11, color:'#94a3b8', marginTop:1 }}>Units across all products &amp; variants</p>
+                </div>
+              </div>
+              <Link href="/dashboard/stock" style={{ color:'#3b82f6', fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:3, textDecoration:'none' }}>
+                Stock Tracker <FiArrowRight size={11} />
+              </Link>
+            </div>
+            <div className="db-three-col" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+              <StatCard icon={FiPackage}     label="Total Stock"   value={stockStats.totalStock}  accentColor="linear-gradient(90deg,#3b82f6,#6366f1)" iconBg="#eff6ff"  iconColor="#3b82f6" sub="Total units in inventory" />
+              <StatCard icon={FiAlertCircle} label="Low Stock"     value={stockStats.lowStock}    accentColor="linear-gradient(90deg,#f59e0b,#ea580c)" iconBg="#fffbeb"  iconColor="#d97706" sub="Below 10 units" />
+              <StatCard icon={FiXCircle}     label="Out of Stock"  value={stockStats.outOfStock}  accentColor="linear-gradient(90deg,#ef4444,#dc2626)" iconBg="#fff1f2"  iconColor="#dc2626" sub="Zero units remaining" />
             </div>
           </div>
 

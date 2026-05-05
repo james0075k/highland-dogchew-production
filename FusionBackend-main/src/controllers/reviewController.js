@@ -16,7 +16,7 @@ export const createReview = async (req, res, next) => {
 export const getAllReviews = async (req, res, next) => {
   try {
     const { status, productId } = req.query;
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
     if (status && status !== 'all') filter.status = status;
     if (productId) filter.product = productId;
 
@@ -36,6 +36,7 @@ export const getProductReviews = async (req, res, next) => {
     const reviews = await ReviewModel.find({
       product: productId,
       status: 'approved',
+      isDeleted: { $ne: true },
     }).sort({ createdAt: -1 });
 
     return handleSuccess(res, 200, 'Product reviews fetched', reviews);
@@ -47,7 +48,7 @@ export const getProductReviews = async (req, res, next) => {
 // GET reviews by tour package ID (legacy)
 export const getReviewById = async (req, res, next) => {
   try {
-    const reviews = await ReviewModel.find({ tour: req.params.tourId });
+    const reviews = await ReviewModel.find({ tour: req.params.tourId, isDeleted: { $ne: true } });
     return handleSuccess(res, 200, 'Reviews for this tour fetched', reviews);
   } catch (err) {
     return next(handleError(500, `Failed to fetch reviews: ${err.message}`));
@@ -65,11 +66,15 @@ export const updateReview = async (req, res, next) => {
   }
 };
 
-// DELETE review (admin)
+// DELETE review (admin — soft delete)
 export const deleteReview = async (req, res, next) => {
   try {
-    const deletedReview = await ReviewModel.findByIdAndDelete(req.params.id);
-    if (!deletedReview) return next(handleError(404, 'Review not found'));
+    const review = await ReviewModel.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true },
+      { new: true }
+    );
+    if (!review) return next(handleError(404, 'Review not found'));
     return handleSuccess(res, 200, 'Review deleted');
   } catch (err) {
     return next(handleError(500, `Failed to delete review: ${err.message}`));

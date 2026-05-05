@@ -86,6 +86,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
+  const [showArchivedView, setShowArchivedView] = useState(false);
+  const [archivedProducts, setArchivedProducts] = useState<ProductItem[]>([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
 
   // Varieties state
   const [varieties, setVarieties] = useState<VarietyItem[]>([]);
@@ -142,6 +145,42 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       setDebugInfo(`Fetch Error: ${error.message}`);
     } finally {
       setLoadingProducts(false);
+    }
+  };
+
+  const fetchArchivedProducts = async () => {
+    try {
+      setLoadingArchived(true);
+      const token = Cookies.get('token');
+      const response = await fetch(`${API_BASE}/products/archived`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (result.success) setArchivedProducts(result.data || []);
+    } catch (error) {
+      console.error('Error fetching archived products:', error);
+    } finally {
+      setLoadingArchived(false);
+    }
+  };
+
+  const handleRestoreProduct = async (product: ProductItem) => {
+    try {
+      const token = Cookies.get('token');
+      const response = await fetch(`${API_BASE}/products/${product._id}/restore`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMessage({ type: 'success', text: `"${product.name}" restored successfully!` });
+        fetchArchivedProducts();
+        fetchProducts();
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Failed to restore product' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'An error occurred while restoring' });
     }
   };
 
@@ -347,24 +386,24 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       setLoading(true);
       const token = Cookies.get('token');
 
-      const response = await fetch(`${API_BASE}/products/${productToDelete._id}`, {
-        method: 'DELETE',
+      const response = await fetch(`${API_BASE}/products/${productToDelete._id}/archive`, {
+        method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setMessage({ type: 'success', text: 'Product deleted successfully!' });
+        setMessage({ type: 'success', text: 'Product archived successfully!' });
         setShowDeleteModal(false);
         setProductToDelete(null);
         if (editingProduct?._id === productToDelete._id) handleCancelEdit();
         fetchProducts();
       } else {
-        setMessage({ type: 'error', text: result.message || 'Failed to delete product' });
+        setMessage({ type: 'error', text: result.message || 'Failed to archive product' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'An error occurred while deleting' });
+      setMessage({ type: 'error', text: 'An error occurred while archiving' });
     } finally {
       setLoading(false);
     }
@@ -1327,7 +1366,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                <h2 className="text-lg font-bold">Products ({products.length})</h2>
+                <h2 className="text-lg font-bold">
+                  {showArchivedView ? `Archived (${archivedProducts.length})` : `Products (${products.length})`}
+                </h2>
               </div>
               <button
                 type="button"
@@ -1337,10 +1378,70 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showArchivedView;
+                setShowArchivedView(next);
+                if (next) fetchArchivedProducts();
+              }}
+              className="mt-2 w-full text-xs py-1 px-2 rounded bg-white bg-opacity-20 hover:bg-opacity-30 transition text-white font-medium"
+            >
+              {showArchivedView ? 'View Active Products' : 'View Archived Products'}
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
-            {loadingProducts ? (
+            {showArchivedView ? (
+              loadingArchived ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : archivedProducts.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No archived products</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {archivedProducts.map((product) => (
+                    <div
+                      key={product._id}
+                      className="bg-orange-50 rounded-lg p-3 border border-orange-200"
+                    >
+                      <div className="flex gap-3">
+                        <img
+                          src={product.image as string}
+                          alt={product.name}
+                          className="w-16 h-16 object-cover rounded-lg opacity-60"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm text-gray-700 truncate">{product.name}</h3>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {product.productType && (
+                              <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">
+                                {product.productType as string}
+                              </span>
+                            )}
+                            <span className="text-xs text-orange-600 font-medium">Archived</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm font-bold text-gray-500">£{product.price as number}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreProduct(product)}
+                            className="mt-2 w-full py-1 px-2 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center justify-center gap-1"
+                          >
+                            Restore
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : loadingProducts ? (
               <div className="flex justify-center items-center h-full">
                 <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
               </div>
@@ -1358,17 +1459,17 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                   >
                     <div className="flex gap-3">
                       <img
-                        src={product.image}
+                        src={product.image as string}
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded-lg"
                       />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-gray-800 truncate">{product.name}</h3>
-                        <p className="text-xs text-gray-600 truncate">{product.description}</p>
+                        <p className="text-xs text-gray-600 truncate">{product.description as string}</p>
                         <div className="flex items-center gap-1 mt-0.5">
                           {product.productType && (
                             <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
-                              {product.productType}
+                              {product.productType as string}
                             </span>
                           )}
                           {product.variety && (
@@ -1378,8 +1479,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-bold text-amber-600">£{product.price}</span>
-                          <span className="text-xs text-gray-400 line-through">£{product.originalPrice}</span>
+                          <span className="text-sm font-bold text-amber-600">£{product.price as number}</span>
+                          <span className="text-xs text-gray-400 line-through">£{product.originalPrice as number}</span>
                         </div>
 
                         <div className="flex gap-2 mt-2">
@@ -1395,10 +1496,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                           <button
                             type="button"
                             onClick={() => handleDeleteClick(product)}
-                            className="flex-1 py-1 px-2 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center justify-center gap-1"
+                            className="flex-1 py-1 px-2 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition flex items-center justify-center gap-1"
                           >
                             <Trash2 className="w-3 h-3" />
-                            Delete
+                            Archive
                           </button>
                         </div>
                       </div>
@@ -1428,10 +1529,10 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
           <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl p-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-800">Delete Product</h3>
+                <h3 className="text-lg font-bold text-gray-800">Archive Product</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Are you sure you want to delete{' '}
-                  <span className="font-semibold">{productToDelete?.name}</span>?
+                  Archive <span className="font-semibold">{productToDelete?.name}</span>?
+                  It will be hidden from all listings but can be restored later.
                 </p>
               </div>
               <button
@@ -1455,9 +1556,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                 type="button"
                 disabled={loading}
                 onClick={confirmDelete}
-                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-60"
+                className="flex-1 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition disabled:opacity-60"
               >
-                {loading ? 'Deleting...' : 'Delete'}
+                {loading ? 'Archiving...' : 'Archive'}
               </button>
             </div>
           </div>

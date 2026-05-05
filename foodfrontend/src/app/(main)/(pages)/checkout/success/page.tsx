@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -16,6 +16,7 @@ import {
   RefreshCcw,
   Calendar,
   Clock,
+  Sparkles,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSubscriptionContext, type Subscription } from '@/context/SubscriptionContext';
@@ -108,8 +109,6 @@ async function loadOrder(
     const data = await res.json();
     if (data.success && data.data) {
       const order = data.data as OrderData;
-      // If the order exists but is missing customer info (race with confirm),
-      // a sync call will patch it. Only do this if we have session data.
       if (customer && !order.shippingAddress.email) {
         // Fall through to sync to trigger the patch logic
       } else {
@@ -169,8 +168,6 @@ export default function CheckoutSuccessPage() {
   }, [redirectStatus, paymentIntent, piClientSecret, router]);
 
   // Capture subscription cart items BEFORE clearing, then clear.
-  // Only run when a valid payment_intent is present — prevents clearing cart
-  // if user navigates to this page directly without completing payment.
   useEffect(() => {
     if (!paymentIntent) return;
     const piKey = paymentIntent;
@@ -237,33 +234,36 @@ export default function CheckoutSuccessPage() {
 
   if (redirectStatus === 'failed') {
     return (
-      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#2f1e14] dark:text-[#f5e9dc]" />
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-amber-600 dark:text-amber-400" />
       </div>
     );
   }
 
-  // ─── Processing state (e.g. bank transfer, delayed methods) ───────────────
+  // ─── Processing state ──────────────────────────────────────────────────────
 
   if (redirectStatus === 'processing') {
     return (
-      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300">
         <div className="text-center max-w-md px-6">
-          <div className="mx-auto mb-6 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center" style={{ width: 72, height: 72 }}>
+          <div
+            className="mx-auto mb-6 rounded-full flex items-center justify-center ring-8 ring-amber-100/60 dark:ring-amber-900/30 bg-amber-50 dark:bg-amber-900/20"
+            style={{ width: 80, height: 80 }}
+          >
             <Clock className="w-9 h-9 text-amber-500 dark:text-amber-400" />
           </div>
-          <h1 className="text-2xl font-semibold text-[#2f1e14] dark:text-[#f5e9dc] mb-3 tracking-tight">
+          <h1 className="font-antique text-3xl text-[#2f1e14] dark:text-[#f5e9dc] mb-3">
             Payment Processing
           </h1>
-          <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed mb-2">
+          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed mb-2">
             Your payment is being processed. This can take a moment depending on your payment method.
           </p>
-          <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed mb-8">
+          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed mb-8">
             You will receive an email confirmation once your order is confirmed. No further action is needed.
           </p>
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 bg-[#2f1e14] dark:bg-amber-600 text-white text-sm font-medium py-3 px-8 rounded hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
           >
             <ShoppingBag className="w-4 h-4" />
             Continue shopping
@@ -277,18 +277,18 @@ export default function CheckoutSuccessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300 print:hidden">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300 print:hidden">
         <div className="text-center px-4">
-          <div className="relative w-14 h-14 mx-auto mb-5">
-            <Loader2 className="w-14 h-14 animate-spin text-amber-500/25" />
+          <div className="relative w-16 h-16 mx-auto mb-5">
+            <Loader2 className="w-16 h-16 animate-spin text-amber-400/30 dark:text-amber-600/20" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Package className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <Package className="w-6 h-6 text-amber-600 dark:text-amber-400" />
             </div>
           </div>
           <p className="text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] mb-1">
             Confirming your order…
           </p>
-          <p className="text-xs text-[#aaa] dark:text-[#666]">This may take a few seconds</p>
+          <p className="text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">This may take a few seconds</p>
         </div>
       </div>
     );
@@ -298,20 +298,23 @@ export default function CheckoutSuccessPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300 print:hidden">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] flex items-center justify-center transition-colors duration-300 print:hidden">
         <div className="text-center max-w-md px-6">
-          <div className="w-18 h-18 mx-auto mb-6 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center" style={{ width: 72, height: 72 }}>
-            <CheckCircle className="w-9 h-9 text-green-500 dark:text-green-400" />
+          <div
+            className="mx-auto mb-6 rounded-full flex items-center justify-center ring-8 ring-green-100/60 dark:ring-green-900/30 bg-green-50 dark:bg-green-900/20"
+            style={{ width: 80, height: 80 }}
+          >
+            <CheckCircle className="w-10 h-10 text-green-500 dark:text-green-400" />
           </div>
-          <h1 className="text-2xl font-semibold text-[#2f1e14] dark:text-[#f5e9dc] mb-3 tracking-tight">
+          <h1 className="font-antique text-3xl text-[#2f1e14] dark:text-[#f5e9dc] mb-3">
             Payment Received
           </h1>
-          <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed mb-8">
+          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed mb-8">
             Your payment was successful. A confirmation email will be sent to you shortly with your full order details.
           </p>
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 bg-[#2f1e14] dark:bg-amber-600 text-white text-sm font-medium py-3 px-8 rounded hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
           >
             <ShoppingBag className="w-4 h-4" />
             Continue shopping
@@ -335,47 +338,54 @@ export default function CheckoutSuccessPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes successFadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .success-fade { animation: successFadeUp 0.5s ease both; }
+      `}</style>
+
       {/* ══════ Screen layout ══════ */}
-      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#1a1410] transition-colors duration-300 print:hidden">
-        <div className="max-w-2xl mx-auto px-4 py-12 md:py-16">
+      <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410] transition-colors duration-300 print:hidden">
+        <div className="max-w-2xl mx-auto px-4 pt-40 pb-12 md:pb-16">
 
           {/* Logo */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 success-fade" style={{ animationDelay: '0ms' }}>
             <Link href="/">
-              <span
-                className="text-[2rem] font-extralight tracking-[0.18em] text-[#2f1e14] dark:text-[#f5e9dc] lowercase leading-none select-none"
-                style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif', fontWeight: 200 }}
-              >
+              <span className="font-antique text-3xl text-[#2f1e14] dark:text-[#f5e9dc] select-none hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
                 Highland Yak Chew
               </span>
             </Link>
           </div>
 
           {/* Confirmation header */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 success-fade" style={{ animationDelay: '80ms' }}>
             <div
-              className="mx-auto mb-5 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center"
-              style={{ width: 64, height: 64 }}
+              className="mx-auto mb-6 rounded-full flex items-center justify-center ring-8 ring-green-100/70 dark:ring-green-900/30 bg-green-50 dark:bg-green-900/20"
+              style={{ width: 80, height: 80 }}
             >
-              <CheckCircle className="w-8 h-8 text-green-500 dark:text-green-400" />
+              <CheckCircle className="w-10 h-10 text-green-500 dark:text-green-400" />
             </div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#aaa] dark:text-[#666] mb-2">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-amber-600 dark:text-amber-400 font-semibold mb-2">
               Order {order.orderNumber}
             </p>
-            <h1
-              className="text-2xl md:text-3xl font-light text-[#2f1e14] dark:text-[#f5e9dc] tracking-tight mb-3"
-              style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif' }}
-            >
+            <h1 className="font-antique text-3xl md:text-4xl text-[#2f1e14] dark:text-[#f5e9dc] mb-3">
               Thank you, {firstName}!
             </h1>
-            <p className="text-sm text-[#888] dark:text-[#aaa] leading-relaxed max-w-sm mx-auto">
+            <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed max-w-sm mx-auto">
               Your order is confirmed. A receipt has been sent to{' '}
-              <span className="text-[#2f1e14] dark:text-[#f5e9dc]">{addr.email}</span>.
+              <span className="text-[#2f1e14] dark:text-[#f5e9dc] font-medium">{addr.email}</span>.
             </p>
           </div>
 
           {/* Card */}
-          <div className="bg-white dark:bg-[#1e1812] border border-[#e8e3dc] dark:border-[#2e2420] rounded-xl overflow-hidden shadow-sm">
+          <div
+            className="bg-white dark:bg-[#1e1812] border border-[#e8e3dc] dark:border-[#2e2420] rounded-2xl overflow-hidden shadow-sm success-fade"
+            style={{ animationDelay: '160ms' }}
+          >
+            {/* Amber accent stripe */}
+            <div className="h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600" />
 
             {/* ── Customer ── */}
             <div className="px-6 py-5 border-b border-[#f0ebe4] dark:border-[#2e2420]">
@@ -406,45 +416,45 @@ export default function CheckoutSuccessPage() {
               <SectionLabel icon={<Package className="w-3.5 h-3.5" />} text="Items ordered" />
 
               {/* Column headers — desktop only */}
-              <div className="hidden sm:grid grid-cols-[1fr_48px_72px_72px] gap-2 text-[11px] uppercase tracking-[0.12em] text-[#aaa] dark:text-[#666] pb-2 mb-1 border-b border-[#f0ebe4] dark:border-[#2e2420]">
+              <div className="hidden sm:grid grid-cols-[1fr_48px_72px_72px] gap-2 text-[11px] uppercase tracking-[0.12em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 pb-2 mb-1 border-b border-dashed border-[#e8e3dc] dark:border-[#2e2420]">
                 <span>Product</span>
                 <span className="text-right">Qty</span>
                 <span className="text-right">Unit</span>
                 <span className="text-right">Total</span>
               </div>
 
-              <div className="space-y-4 sm:space-y-2">
+              <div className="space-y-4 sm:space-y-0 sm:divide-y sm:divide-dashed sm:divide-[#f0ebe4] dark:sm:divide-[#2e2420]">
                 {order.items.map((item, idx) => {
                   const total = item.lineTotal ?? item.unitPrice * item.quantity;
                   return (
                     <div
                       key={idx}
-                      className="sm:grid sm:grid-cols-[1fr_48px_72px_72px] sm:gap-2 sm:items-center"
+                      className="sm:grid sm:grid-cols-[1fr_48px_72px_72px] sm:gap-2 sm:items-center sm:py-3"
                     >
                       {/* Product name + size */}
                       <div className="mb-1 sm:mb-0">
-                        <p className="text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc]">
+                        <p className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">
                           {item.name}
                         </p>
-                        <p className="text-xs text-[#aaa] dark:text-[#666]">{item.size}</p>
+                        <p className="text-xs text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">{item.size}</p>
                       </div>
 
                       {/* Mobile: inline labels; Desktop: grid columns */}
                       <div className="flex sm:block justify-between items-center text-sm">
-                        <span className="sm:hidden text-xs text-[#aaa] dark:text-[#666]">Qty</span>
+                        <span className="sm:hidden text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">Qty</span>
                         <span className="text-[#2f1e14] dark:text-[#f5e9dc] sm:text-right">
                           × {item.quantity}
                         </span>
                       </div>
                       <div className="flex sm:block justify-between items-center text-sm">
-                        <span className="sm:hidden text-xs text-[#aaa] dark:text-[#666]">Unit price</span>
+                        <span className="sm:hidden text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">Unit price</span>
                         <span className="text-[#2f1e14] dark:text-[#f5e9dc] sm:text-right">
                           £{item.unitPrice.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex sm:block justify-between items-center text-sm">
-                        <span className="sm:hidden text-xs text-[#aaa] dark:text-[#666]">Line total</span>
-                        <span className="font-medium text-[#2f1e14] dark:text-[#f5e9dc] sm:text-right">
+                        <span className="sm:hidden text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">Line total</span>
+                        <span className="font-semibold text-amber-600 dark:text-amber-400 sm:text-right">
                           £{total.toFixed(2)}
                         </span>
                       </div>
@@ -457,7 +467,7 @@ export default function CheckoutSuccessPage() {
             {/* ── Pricing summary ── */}
             <div className="px-6 py-5 border-b border-[#f0ebe4] dark:border-[#2e2420]">
               <SectionLabel icon={<CreditCard className="w-3.5 h-3.5" />} text="Order summary" />
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2.5 text-sm">
                 <PriceRow label="Subtotal"   value={`£${order.subtotal.toFixed(2)}`} />
                 {order.totalDiscount > 0 && (
                   <PriceRow
@@ -468,11 +478,11 @@ export default function CheckoutSuccessPage() {
                 )}
                 <PriceRow label="VAT (20%)"  value={`£${order.totalTax.toFixed(2)}`} />
                 <PriceRow label="Shipping"   value={`£${order.totalDelivery.toFixed(2)}`} />
-                <div className="flex justify-between items-baseline pt-3 mt-1 border-t border-[#f0ebe4] dark:border-[#2e2420]">
+                <div className="flex justify-between items-baseline pt-3 mt-1 border-t-2 border-dashed border-amber-200 dark:border-amber-900/40">
                   <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">Total</span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs text-[#aaa] dark:text-[#666]">GBP</span>
-                    <span className="text-lg font-bold text-[#2f1e14] dark:text-[#f5e9dc]">
+                    <span className="text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">GBP</span>
+                    <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">
                       £{order.grandTotal.toFixed(2)}
                     </span>
                   </div>
@@ -481,14 +491,14 @@ export default function CheckoutSuccessPage() {
             </div>
 
             {/* ── Footer meta ── */}
-            <div className="px-6 py-4 space-y-1">
+            <div className="px-6 py-4 bg-amber-50/40 dark:bg-amber-900/10 space-y-1.5">
               {formattedDate && (
-                <div className="flex justify-between text-xs text-[#aaa] dark:text-[#666]">
+                <div className="flex justify-between text-xs text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">
                   <span>Order date</span>
                   <span>{formattedDate}</span>
                 </div>
               )}
-              <div className="flex justify-between text-xs text-[#aaa] dark:text-[#666]">
+              <div className="flex justify-between text-xs text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">
                 <span>Payment reference</span>
                 <span className="font-mono">
                   {order.paymentIntentId
@@ -496,28 +506,30 @@ export default function CheckoutSuccessPage() {
                     : '—'}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-[#aaa] dark:text-[#666]">
+              <div className="flex justify-between text-xs text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">
                 <span>Status</span>
-                <span className="capitalize">{order.paymentStatus}</span>
+                <span className="capitalize text-green-600 dark:text-green-400 font-medium">{order.paymentStatus}</span>
               </div>
             </div>
           </div>
 
           {/* ── Subscription confirmation (if any) ── */}
           {createdSubs.length > 0 && (
-            <div className="mt-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5">
+            <div
+              className="mt-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 success-fade"
+              style={{ animationDelay: '240ms' }}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <RefreshCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <h2 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                <h2 className="font-antique text-lg text-emerald-800 dark:text-emerald-300">
                   Subscribe &amp; Save activated
                 </h2>
               </div>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-4">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-4 leading-relaxed">
                 Your recurring deliveries are set up. You can manage, skip or cancel them anytime.
               </p>
               <div className="space-y-3">
                 {createdSubs.map((sub) => {
-                  // Compute next delivery display date
                   const nextDate = new Date(sub.nextDelivery);
                   const nextFormatted = nextDate.toLocaleDateString('en-GB', {
                     day: 'numeric', month: 'long', year: 'numeric',
@@ -525,7 +537,7 @@ export default function CheckoutSuccessPage() {
                   return (
                     <div
                       key={sub.id}
-                      className="bg-white dark:bg-[#1e1812] rounded-lg p-3.5 border border-emerald-100 dark:border-emerald-900/40"
+                      className="bg-white dark:bg-[#1e1812] rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-900/40"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <p className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc] line-clamp-1">
@@ -551,7 +563,7 @@ export default function CheckoutSuccessPage() {
               </div>
               <Link
                 href="/track-order?tab=subscriptions"
-                className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-emerald-300 dark:border-emerald-700 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+                className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
               >
                 <RefreshCcw className="w-3.5 h-3.5" />
                 Manage subscriptions
@@ -560,37 +572,55 @@ export default function CheckoutSuccessPage() {
           )}
 
           {/* Actions */}
-          <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div
+            className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3 success-fade"
+            style={{ animationDelay: '300ms' }}
+          >
             <button
               onClick={() => window.print()}
-              className="flex items-center justify-center gap-2 border border-[#d8d0c8] dark:border-[#2e2420] rounded py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-[#f0ebe4] dark:hover:bg-[#2a211b] transition-colors"
+              className="flex items-center justify-center gap-2 border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-amber-50 dark:hover:bg-[#2a211b] transition-colors"
             >
               <Printer className="w-4 h-4" />
               Print receipt
             </button>
             <Link
               href="/track-order"
-              className="flex items-center justify-center gap-2 border border-[#d8d0c8] dark:border-[#2e2420] rounded py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-[#f0ebe4] dark:hover:bg-[#2a211b] transition-colors"
+              className="flex items-center justify-center gap-2 border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-amber-50 dark:hover:bg-[#2a211b] transition-colors"
             >
               <Truck className="w-4 h-4" />
               Track your order
             </Link>
             <Link
               href="/products"
-              className="flex items-center justify-center gap-2 bg-[#2f1e14] dark:bg-amber-600 text-white rounded py-3 px-5 text-sm font-medium hover:opacity-90 transition-opacity"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 dark:from-amber-500 dark:to-amber-600 text-white rounded-xl py-3 px-5 text-sm font-semibold shadow-md hover:shadow-lg transition-all"
             >
               <ShoppingBag className="w-4 h-4" />
               Continue shopping
             </Link>
           </div>
 
+          {/* Sparkle delight line */}
+          <div
+            className="mt-6 flex items-center justify-center gap-2 success-fade"
+            style={{ animationDelay: '380ms' }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <p className="text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">
+              Thank you for supporting Highland Yak Chew
+            </p>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+
           {/* Footer links */}
-          <div className="mt-10 pt-6 border-t border-[#e8e3dc] dark:border-[#2e2420] flex flex-wrap gap-x-4 gap-y-2 justify-center">
+          <div
+            className="mt-8 pt-6 border-t border-[#e8e3dc] dark:border-[#2e2420] flex flex-wrap gap-x-4 gap-y-2 justify-center success-fade"
+            style={{ animationDelay: '420ms' }}
+          >
             {['Refund policy', 'Shipping policy', 'Privacy policy', 'Contact'].map((label) => (
               <Link
                 key={label}
                 href={`/${label.toLowerCase().replace(/ /g, '-')}`}
-                className="text-[11px] text-[#aaa] dark:text-[#555] hover:text-[#2f1e14] dark:hover:text-[#f5e9dc] transition-colors"
+                className="text-[11px] text-[#7A5C4F]/50 dark:text-[#c8b6a6]/40 hover:text-[#2f1e14] dark:hover:text-[#f5e9dc] transition-colors"
               >
                 {label}
               </Link>
@@ -746,8 +776,8 @@ function SectionLabel({
 }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <span className="text-[#aaa] dark:text-[#666]">{icon}</span>
-      <h2 className="text-[11px] uppercase tracking-[0.18em] text-[#aaa] dark:text-[#666] font-medium">
+      <span className="text-amber-500 dark:text-amber-400">{icon}</span>
+      <h2 className="text-[11px] uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400 font-semibold">
         {text}
       </h2>
     </div>
@@ -757,7 +787,7 @@ function SectionLabel({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] text-[#aaa] dark:text-[#666] mb-0.5">{label}</p>
+      <p className="text-[11px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mb-0.5">{label}</p>
       <p className="text-[#2f1e14] dark:text-[#f5e9dc] font-medium break-all">{value}</p>
     </div>
   );
@@ -774,7 +804,7 @@ function PriceRow({
 }) {
   return (
     <div className="flex justify-between">
-      <span className={green ? 'text-green-600 dark:text-green-400' : 'text-[#888] dark:text-[#777]'}>
+      <span className={green ? 'text-green-600 dark:text-green-400' : 'text-[#7A5C4F] dark:text-[#c8b6a6]'}>
         {label}
       </span>
       <span className={green ? 'text-green-600 dark:text-green-400' : 'text-[#2f1e14] dark:text-[#f5e9dc]'}>

@@ -147,6 +147,13 @@ const productSchema = new mongoose.Schema({
     default: 0,
   },
 
+  // Soft delete — false means archived/hidden from all public listings
+  isActive: {
+    type: Boolean,
+    default: true,
+    index: true,
+  },
+
   // Nutrition / Guaranteed Analysis
   nutritionFacts: {
     servingSize: { type: String, default: '' },
