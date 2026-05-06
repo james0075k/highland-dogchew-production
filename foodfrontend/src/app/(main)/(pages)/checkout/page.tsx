@@ -783,11 +783,11 @@ export default function CheckoutPage() {
 
           {/* ── Product items ── */}
           <div className="space-y-4 mb-6">
-            {items.map((item) => {
+            {items.map((item, index) => {
               const lineSubtotal = +(item.unitPrice * item.quantity).toFixed(2);
               return (
                 <div
-                  key={`${item.productId}-${item.size}-${item.isSubscription ? 'sub' : 'once'}`}
+                  key={`${item.productId}-${item.size}-${item.isSubscription ? 'sub' : 'once'}-${index}`}
                   className="flex gap-3.5 bg-white dark:bg-[#241b16] rounded-xl border border-amber-100 dark:border-[#3a2c23] p-3 shadow-sm"
                 >
                   {/* Thumbnail */}
