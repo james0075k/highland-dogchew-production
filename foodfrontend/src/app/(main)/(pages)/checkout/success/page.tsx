@@ -1,5 +1,8 @@
 'use client';
 
+// Per-request page (reads payment_intent from URL, calls APIs) — opt out of static rendering.
+export const dynamic = 'force-dynamic';
+
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -562,7 +565,7 @@ export default function CheckoutSuccessPage() {
                 })}
               </div>
               <Link
-                href="/track-order?tab=subscriptions"
+                href={`/my-orders?tab=subscriptions${addr.email ? `&email=${encodeURIComponent(addr.email)}` : ''}`}
                 className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
               >
                 <RefreshCcw className="w-3.5 h-3.5" />
@@ -584,7 +587,7 @@ export default function CheckoutSuccessPage() {
               Print receipt
             </button>
             <Link
-              href="/track-order"
+              href={`/my-orders?tab=track&order=${encodeURIComponent(order.orderNumber)}${addr.email ? `&email=${encodeURIComponent(addr.email)}` : ''}`}
               className="flex items-center justify-center gap-2 border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl py-3 px-5 text-sm font-medium text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-amber-50 dark:hover:bg-[#2a211b] transition-colors"
             >
               <Truck className="w-4 h-4" />

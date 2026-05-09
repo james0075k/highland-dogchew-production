@@ -8,6 +8,8 @@ import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideS
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
+import FancySelect from '@/components/molecules/FancySelect/FancySelect';
+
 type SortKey = 'rating' | 'price-asc' | 'price-desc' | 'name';
 
 function SkeletonCard() {
@@ -110,21 +112,19 @@ export default function YakChewsPage() {
               )}
             </p>
 
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-[#7A5C4F] dark:text-[#c8b6a6] font-medium whitespace-nowrap">
-                Sort by:
-              </label>
-              <select
+            <div className="w-full sm:w-auto sm:min-w-[220px]">
+              <FancySelect<SortKey>
+                variant="pill"
+                triggerPrefix="Sort:"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortKey)}
-                className="text-xs font-medium pl-3 pr-8 py-2 rounded-lg border border-gray-200 dark:border-[#3a2c23] bg-white dark:bg-[#1e1510] text-[#2E1F14] dark:text-[#f5e9dc] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 cursor-pointer appearance-none"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
-              >
-                <option value="rating">Best Rated</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="name">Name A–Z</option>
-              </select>
+                onChange={setSortBy}
+                options={[
+                  { value: 'rating',     label: 'Best Rated' },
+                  { value: 'price-asc',  label: 'Price · Low to High' },
+                  { value: 'price-desc', label: 'Price · High to Low' },
+                  { value: 'name',       label: 'Name · A–Z' },
+                ]}
+              />
             </div>
           </div>
 

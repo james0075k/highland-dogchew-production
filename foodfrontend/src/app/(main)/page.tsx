@@ -1,8 +1,7 @@
-// page.tsx - Fixed version without fetchAPI
-export const dynamic = "force-dynamic";
+// page.tsx — server component, statically rendered with ISR
+export const revalidate = 300; // re-generate at most every 5 min
 
 import { Metadata } from "next";
-import Image from "next/image";
 
 const BASE_URL = "https://highlanddogchew.co.uk";
 
@@ -41,13 +40,34 @@ import HimalayanStorySection from "@/components/organisms/HimalayanStorySection/
 import SizeGuideSection from "@/components/organisms/SizeGuideSection/SizeGuideSection";
 import HighlandMixChewSection from "@/components/organisms/HighlandMixChewSection/HighlandMixChewSection";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
+
+async function fetchByType(type: string) {
+  try {
+    const r = await fetch(`${API_BASE}/products?type=${type}`, {
+      next: { revalidate: 300 },
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return data?.success ? data.data || [] : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function Home() {
+  const [yak, puff, mix] = await Promise.all([
+    fetchByType("yak-milk"),
+    fetchByType("puff-treat"),
+    fetchByType("highland-mix"),
+  ]);
+
   return (
     <>
       <RhodeHero />
-      <YakMilkSection />
-      <PuffTreatsSection />
-      <HighlandMixChewSection />
+      <YakMilkSection initialProducts={yak} />
+      <PuffTreatsSection initialProducts={puff} />
+      <HighlandMixChewSection initialProducts={mix} />
       <VarietiesSection />
       <HimalayanStorySection />
       <SizeGuideSection />

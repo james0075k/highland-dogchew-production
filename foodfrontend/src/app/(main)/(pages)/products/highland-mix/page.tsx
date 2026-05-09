@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
 import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
+import FancySelect from '@/components/molecules/FancySelect/FancySelect';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 

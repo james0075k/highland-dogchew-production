@@ -29,6 +29,9 @@ export interface PromoInfo {
 
 interface CartContextType {
   items: CartItem[];
+  /** False until the cart has been loaded from localStorage on mount. Use this to
+   *  avoid premature "empty cart" decisions (e.g. redirecting from /checkout). */
+  hydrated: boolean;
   addToCart: (item: Omit<CartItem, 'tax' | 'delivery'>) => void;
   removeFromCart: (productId: string, size: string, isSubscription?: boolean) => void;
   updateQuantity: (productId: string, size: string, quantity: number, isSubscription?: boolean) => void;
@@ -215,6 +218,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider
       value={{
         items,
+        hydrated,
         addToCart,
         removeFromCart,
         updateQuantity,

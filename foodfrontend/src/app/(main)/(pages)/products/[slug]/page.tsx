@@ -9,6 +9,7 @@ import ProductReviews from '@/components/organisms/ProductReviews/ProductReviews
 import SizeGuideSection from '@/components/organisms/SizeGuideSection/SizeGuideSection';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
+import FancySelect, { type FancyOption } from '@/components/molecules/FancySelect/FancySelect';
 
 const categoryBackLinks: Record<string, { href: string; label: string }> = {
   'yak-milk': { href: '/products/yak-chews', label: 'Yak Milk Chews' },
@@ -521,57 +522,115 @@ export default function ProductDetailPage() {
 
             <div className="h-px bg-gray-100 dark:bg-[#2a2018] mb-5" />
 
-            {/* ── Size selection (pills if ≤6, dropdown if more) ── */}
+            {/* ── Size selection — pills (≤6) or animated FancySelect (more) ── */}
             {hasSizes && (
               <div className="mb-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">
-                    Size: <span className="text-amber-600 dark:text-amber-400">{selectedSizeObj?.label || selectedSize}</span>
-                  </p>
-                  <a href="#size-guide" className="text-xs text-amber-600 dark:text-amber-400 hover:underline underline-offset-2 font-medium">
-                    Size guide
-                  </a>
-                </div>
-
                 {usePillSizes ? (
-                  <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size: any) => (
-                      <button
-                        key={size.value}
-                        onClick={() => setSelectedSize(size.value)}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all duration-150 ${
-                          selectedSize === size.value
-                            ? 'border-[#2E1F14] dark:border-amber-500 bg-[#2E1F14] dark:bg-amber-600 text-white'
-                            : 'border-gray-200 dark:border-[#3a2c23] text-gray-700 dark:text-[#c8b6a6] hover:border-[#2E1F14] dark:hover:border-amber-500 bg-white dark:bg-[#1e1510]'
-                        }`}
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-semibold text-[#2E1F14] dark:text-[#f5e9dc]">
+                        Size:{' '}
+                        <span
+                          key={selectedSize /* re-mount triggers fade-in on change */}
+                          className="text-amber-600 dark:text-amber-400 inline-block animate-[hyc-fade-in_0.25s_ease-out]"
+                        >
+                          {selectedSizeObj?.label || selectedSize}
+                        </span>
+                      </p>
+                      <a
+                        href="#size-guide"
+                        className="text-xs text-amber-600 dark:text-amber-400 hover:underline underline-offset-2 font-medium"
                       >
-                        {size.label}
-                        {size.price > 0 && (
-                          <span className={`ml-1.5 text-xs font-normal ${selectedSize === size.value ? 'text-white/80' : 'text-gray-400'}`}>
-                            £{Number(size.price).toFixed(2)}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                        Size guide
+                      </a>
+                    </div>
+
+                    {/* Refined pill grid — responsive, animated press, amber halo on selection */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                      {product.sizes.map((size: any) => {
+                        const isSelected = selectedSize === size.value;
+                        return (
+                          <button
+                            key={size.value}
+                            type="button"
+                            onClick={() => setSelectedSize(size.value)}
+                            aria-pressed={isSelected}
+                            className={`group/pill relative overflow-hidden ` +
+                              `flex flex-col items-start justify-center text-left ` +
+                              `min-h-[56px] px-4 py-2.5 rounded-xl ` +
+                              `border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ` +
+                              `active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ` +
+                              (isSelected
+                                ? 'border-[#2E1F14] dark:border-amber-500 bg-[#2E1F14] dark:bg-amber-600 text-white shadow-[0_8px_22px_-10px_rgba(46,31,20,0.45)] dark:shadow-[0_8px_22px_-10px_rgba(217,119,6,0.5)] -translate-y-[1px]'
+                                : 'border-[#e2d8c8] dark:border-[#3a2c23] text-[#3a2820] dark:text-[#e8d8c5] hover:border-amber-400/70 hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] bg-white dark:bg-[#1e1510]')
+                            }
+                          >
+                            {/* Soft amber wash on hover for unselected */}
+                            {!isSelected && (
+                              <span
+                                aria-hidden="true"
+                                className="absolute inset-0 bg-gradient-to-br from-amber-50/0 via-amber-50/0 to-amber-100/0 group-hover/pill:from-amber-50/60 group-hover/pill:via-amber-50/30 group-hover/pill:to-amber-100/40 dark:group-hover/pill:from-amber-900/15 dark:group-hover/pill:to-amber-900/5 transition-opacity duration-300"
+                              />
+                            )}
+
+                            {/* Selected check pip */}
+                            {isSelected && (
+                              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white/95 text-[#2E1F14] dark:text-amber-700 flex items-center justify-center animate-[hyc-pop_0.35s_cubic-bezier(0.16,1,0.3,1)]">
+                                <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                              </span>
+                            )}
+
+                            <span className="relative text-sm font-bold leading-tight truncate w-full">
+                              {size.label}
+                            </span>
+                            {size.price > 0 && (
+                              <span
+                                className={`relative mt-0.5 text-[11px] font-semibold tracking-wide ${
+                                  isSelected ? 'text-white/85' : 'text-amber-700 dark:text-amber-400'
+                                }`}
+                              >
+                                £{Number(size.price).toFixed(2)}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
                 ) : (
-                  <div className="relative">
-                    <select
-                      value={selectedSize}
-                      onChange={(e) => setSelectedSize(e.target.value)}
-                      className="w-full appearance-none px-4 py-3 pr-10 bg-white dark:bg-[#1e1510] text-[#2E1F14] dark:text-[#f5e9dc] border-2 border-gray-200 dark:border-[#3a2c23] rounded-xl text-sm font-medium focus:outline-none focus:border-[#2E1F14] dark:focus:border-amber-500 cursor-pointer transition-colors"
-                    >
-                      {product.sizes.map((size: any) => (
-                        <option key={size.value} value={size.value}>
-                          {size.label}{size.price > 0 ? ` — £${Number(size.price).toFixed(2)}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
+                  <FancySelect
+                    label="Size"
+                    labelAside={
+                      <a
+                        href="#size-guide"
+                        className="text-amber-600 dark:text-amber-400 hover:underline underline-offset-2 font-medium"
+                      >
+                        Size guide
+                      </a>
+                    }
+                    value={selectedSize}
+                    onChange={(v) => setSelectedSize(v)}
+                    options={product.sizes.map((size: any): FancyOption => ({
+                      value: size.value,
+                      label: size.label,
+                      hint: size.price > 0 ? `£${Number(size.price).toFixed(2)}` : undefined,
+                    }))}
+                  />
                 )}
               </div>
             )}
+
+            <style jsx global>{`
+              @keyframes hyc-fade-in {
+                from { opacity: 0; transform: translateY(-2px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes hyc-pop {
+                0%   { opacity: 0; transform: scale(0.4); }
+                70%  { opacity: 1; transform: scale(1.15); }
+                100% { opacity: 1; transform: scale(1); }
+              }
+            `}</style>
 
             {/* ── Mix & Match / Bulk Pricing ── */}
             {hasBulkPricing && (
@@ -989,17 +1048,18 @@ export default function ProductDetailPage() {
             </div>
 
             {hasSizes && (
-              <div className="relative flex-1 max-w-[160px] lg:max-w-[200px]">
-                <select
+              <div className="flex-1 max-w-[160px] lg:max-w-[200px]">
+                <FancySelect
+                  variant="pill"
+                  placement="top"
                   value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] rounded-xl pl-3 pr-7 py-2.5 text-sm font-medium text-[#2E1F14] dark:text-[#f5e9dc] focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
-                >
-                  {product.sizes.map((size: any) => (
-                    <option key={size.value} value={size.value}>{size.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  onChange={(v) => setSelectedSize(v)}
+                  options={product.sizes.map((size: any): FancyOption => ({
+                    value: size.value,
+                    label: size.label,
+                    hint: size.price > 0 ? `£${Number(size.price).toFixed(2)}` : undefined,
+                  }))}
+                />
               </div>
             )}
 

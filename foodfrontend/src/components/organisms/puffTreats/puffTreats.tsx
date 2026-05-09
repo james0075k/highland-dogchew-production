@@ -1,7 +1,6 @@
-'use client';
 import ProductSection from '@/components/organisms/ProductSection/ProductSection';
 
-export default function PuffTreatsSection() {
+export default function PuffTreatsSection({ initialProducts }: { initialProducts?: unknown[] }) {
   return (
     <ProductSection
       apiPath="products?type=puff-treat"
@@ -10,6 +9,7 @@ export default function PuffTreatsSection() {
       subtitle="Airy, natural snacks your dog will go wild for"
       variant="light"
       viewAllHref="/products"
+      initialProducts={initialProducts as never}
     />
   );
 }

@@ -1,7 +1,6 @@
-'use client';
 import ProductSection from '@/components/organisms/ProductSection/ProductSection';
 
-export default function YakMilkSection() {
+export default function YakMilkSection({ initialProducts }: { initialProducts?: unknown[] }) {
   return (
     <ProductSection
       apiPath="products?type=yak-milk"
@@ -10,6 +9,7 @@ export default function YakMilkSection() {
       subtitle="100% Natural, Full of Protein & Calcium"
       variant="none"
       viewAllHref="/products"
+      initialProducts={initialProducts as never}
     />
   );
 }

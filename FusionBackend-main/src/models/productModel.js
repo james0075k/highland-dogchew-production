@@ -168,6 +168,9 @@ const productSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Compound index for the most common public query (list by type, active only, newest-first)
+productSchema.index({ productType: 1, isActive: 1, createdAt: -1 });
+
 // Auto-generate slug from name
 productSchema.pre('validate', function (next) {
   if (this.name && !this.slug) {

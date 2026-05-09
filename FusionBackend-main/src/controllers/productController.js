@@ -212,7 +212,13 @@ export const getAllProducts = async (req, res, next) => {
 
     const products = await ProductModel.find(filter)
       .populate('variety', 'name category')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Public list — safe to cache at the edge for a short window
+    if (!searchQuery) {
+      res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    }
 
     let rewritten = products.map(p => rewriteProductImages(p, req));
 
@@ -244,10 +250,11 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const product = await ProductModel.findOne({ slug, isActive: { $ne: false } }).populate('variety');
+    const product = await ProductModel.findOne({ slug, isActive: { $ne: false } }).populate('variety').lean();
 
     if (!product) return next(handleError(404, 'Product not found'));
 
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
     return handleSuccess(res, 200, 'Product fetched successfully', rewriteProductImages(product, req));
   } catch (error) {
     next(error);
@@ -506,6 +513,7 @@ export const getProductsByType = async (req, res, next) => {
       .lean()
       .sort({ createdAt: -1 });
 
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
     const rewritten = products.map(p => rewriteProductImages(p, req));
     return handleSuccess(res, 200, 'Products fetched by type successfully', rewritten);
   } catch (error) {

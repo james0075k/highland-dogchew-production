@@ -630,7 +630,7 @@ export default function CheckoutPage() {
   const router       = useRouter();
   const { resolvedTheme } = useTheme();
   const {
-    items,
+    items, hydrated,
     subtotal, discount, totalTax, totalDelivery, grandTotal,
     promoCode, promoInfo,
     setPromoCode, applyPromoCode, removePromoCode,
@@ -651,13 +651,17 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
-  useEffect(() => { if (items.length === 0) router.push('/cart'); }, [items, router]);
+  // Only redirect once the cart has finished loading from localStorage. Otherwise
+  // a fresh render bounces users back to /cart before their saved cart hydrates.
+  useEffect(() => {
+    if (hydrated && items.length === 0) router.push('/cart');
+  }, [hydrated, items, router]);
 
   const cartKey  = items.map((i) => `${i.productId}:${i.size}:${i.quantity}`).join('|');
   const promoKey = promoInfo?.code ?? '';
 
   useEffect(() => {
-    if (items.length === 0) return;
+    if (!hydrated || items.length === 0) return;
     const createIntent = async () => {
       setLoading(true);
       setError(null);
@@ -709,7 +713,7 @@ export default function CheckoutPage() {
     setPromoLoading(false);
   };
 
-  if (items.length === 0) {
+  if (!hydrated || items.length === 0) {
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#f8f3ea] dark:bg-[#1a1410]">
         <Loader2 className="w-6 h-6 animate-spin text-amber-600" />

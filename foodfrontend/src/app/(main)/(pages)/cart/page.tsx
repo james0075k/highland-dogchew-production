@@ -34,7 +34,7 @@ const makeDelay = (ms: number): React.CSSProperties => ({
 export default function CartPage() {
   const router = useRouter();
   const {
-    items,
+    items, hydrated,
     removeFromCart,
     clearCart,
     cartCount,
@@ -52,6 +52,12 @@ export default function CartPage() {
 
   /* mirrors backend math exactly — tax on (subtotal − discount) */
   const discountedSubtotal = +(subtotal - discount).toFixed(2);
+
+  /* ── pre-hydration: show nothing until localStorage cart is loaded
+        (prevents a flash of "your cart is empty" on hard reload) ── */
+  if (!hydrated) {
+    return <div className="min-h-screen bg-[#f8f3ea] dark:bg-[#1a1410]" />;
+  }
 
   /* ── empty state ── */
   if (items.length === 0) {

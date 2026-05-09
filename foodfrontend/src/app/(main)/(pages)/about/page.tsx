@@ -763,7 +763,7 @@ const AboutPage = () => {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
-                    href="/contacts"
+                    href="/contact"
                     className="inline-flex items-center gap-2 text-white/60 hover:text-amber-400 border border-white/20 hover:border-amber-400/50 px-6 py-3.5 rounded-full text-sm font-semibold transition-all duration-300"
                   >
                     Get in Touch

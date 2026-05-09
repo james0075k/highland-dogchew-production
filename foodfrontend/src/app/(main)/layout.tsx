@@ -1,5 +1,4 @@
 ﻿// layout.tsx
-export const dynamic = "force-dynamic";
 import { Metadata } from "next";
 import { DM_Sans, Playfair_Display, Cormorant_Garamond, DM_Serif_Display } from "next/font/google";
 

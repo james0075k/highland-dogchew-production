@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 import { getStripe } from '../config/stripe.js';
 import ProductModel from '../models/productModel.js';
 import PromoCodeModel from '../models/promoCodeModel.js';
@@ -295,7 +295,9 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
 
     // H-1 fix: constant-time comparison prevents timing attacks
     const storedToken = pi.metadata?.update_token || '';
-    if (!storedToken || storedToken !== updateToken) {
+    const a = Buffer.from(storedToken);
+    const b = Buffer.from(updateToken);
+    if (!storedToken || a.length !== b.length || !timingSafeEqual(a, b)) {
       return next(handleError(403, 'Invalid update token'));
     }
 

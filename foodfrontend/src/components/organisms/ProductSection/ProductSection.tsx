@@ -27,6 +27,7 @@ interface ProductSectionProps {
   /** "light" = warm cream | "subtle" = off-white light / dark-brown dark (respects theme) | "none" = transparent */
   variant?: 'light' | 'subtle' | 'none';
   viewAllHref?: string;
+  initialProducts?: Product[];
 }
 
 /* ── Skeleton loader ─────────────────────────────────────────────────── */
@@ -59,9 +60,17 @@ export default function ProductSection({
   subtitle,
   variant = 'none',
   viewAllHref,
+  initialProducts,
 }: ProductSectionProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const sortFn = (a: Product, b: Product) => {
+    if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+    return (b.reviews || 0) - (a.reviews || 0);
+  };
+  const seed = initialProducts && initialProducts.length
+    ? [...initialProducts].sort(sortFn)
+    : [];
+  const [products, setProducts] = useState<Product[]>(seed);
+  const [loading, setLoading] = useState(seed.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -71,8 +80,9 @@ export default function ProductSection({
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
-  /* ── Fetch ─────────────────────────────────────────────────────────── */
+  /* ── Fetch (skipped when seeded from server) ──────────────────────── */
   useEffect(() => {
+    if (initialProducts && initialProducts.length) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -84,16 +94,16 @@ export default function ProductSection({
       .then((data) => {
         if (!cancelled) {
           const arr: Product[] = data.success ? (data.data || []) : [];
-          const sorted = [...arr].sort((a, b) => {
-            if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
-            return (b.reviews || 0) - (a.reviews || 0);
-          });
-          setProducts(sorted);
+          setProducts([...arr].sort(sortFn));
         }
       })
       .catch((e) => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
+    // initialProducts intentionally omitted — it's a one-shot SSR seed; re-running
+    // this effect when the parent re-renders with a new array reference would
+    // cause unnecessary refetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiPath, API_BASE]);
 
   /* ── Scroll reveal ──────────────────────────────────────────────────── */

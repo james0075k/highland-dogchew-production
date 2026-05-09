@@ -366,21 +366,19 @@ export default function InstagramFeedSection() {
               href={igUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group/btn inline-flex items-center gap-3 font-medium text-sm md:text-base px-8 py-3.5 rounded-full transition-all duration-400 hover:shadow-lg"
+              className={
+                'group/btn inline-flex items-center gap-3 font-medium text-sm md:text-base px-8 py-3.5 rounded-full ' +
+                'transition-all duration-300 ease-out ' +
+                /* Light mode: dark-brown button on cream page.
+                   Dark mode: amber button on dark page — pops instead of vanishing
+                   into the same near-black tone the brand-color tokens use. */
+                'bg-[#2E1F14] text-[#F4EDE4] hover:bg-[#5C4033] hover:shadow-[0_6px_24px_rgba(46,31,20,0.25)] ' +
+                'dark:bg-amber-600 dark:text-white dark:hover:bg-amber-500 ' +
+                'dark:shadow-[0_6px_22px_-8px_rgba(217,119,6,0.55)] dark:hover:shadow-[0_10px_30px_-8px_rgba(217,119,6,0.7)]'
+              }
               style={{
-                background: 'var(--color-dark-brown)',
-                color: 'var(--color-parchment)',
                 fontFamily: 'var(--font-dm-sans)',
                 letterSpacing: '0.04em',
-                boxShadow: '0 2px 8px rgba(46, 31, 20, 0.15)',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--color-warm-brown)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(46, 31, 20, 0.25)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--color-dark-brown)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(46, 31, 20, 0.15)';
               }}
             >
               <Instagram className="w-5 h-5 transition-transform duration-300 group-hover/btn:rotate-6" />

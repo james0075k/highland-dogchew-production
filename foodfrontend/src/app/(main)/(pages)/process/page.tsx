@@ -188,9 +188,10 @@ const OurPromiseCards = () => {
           style={{ y: heroY, scale: heroScale }}
         >
           <Image
-            src="/images/dog-3.jpeg"
-            alt="Dog enjoying Highland Yak Chew"
+            src="/images/dog-28.jpeg"
+            alt="Happy dog enjoying a Highland Yak Chew"
             fill
+            priority
             className="object-cover"
           />
         </motion.div>

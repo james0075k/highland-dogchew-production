@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -526,11 +528,30 @@ export default function MyOrdersPage() {
   const [trackError, setTrackError] = useState<string | null>(null);
   const [trackResult, setTrackResult] = useState<TrackResult | null>(null);
 
-  // Support deep-linking: ?tab=subscriptions or ?tab=track
+  // Support deep-linking:
+  //   ?tab=subscriptions | ?tab=track | ?tab=orders
+  //   ?email=...    pre-fills the email field on whichever tab is active
+  //   ?order=HD-... pre-fills the order number on the Track tab and switches to it
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'subscriptions') setActiveTab('subscriptions');
-    else if (tab === 'track') setActiveTab('track');
+    const tab    = searchParams.get('tab');
+    const qEmail = searchParams.get('email');
+    const qOrder = searchParams.get('order');
+
+    if (qOrder) {
+      setActiveTab('track');
+      setTrackOrderNumber(qOrder.toUpperCase());
+      if (qEmail) setTrackEmail(qEmail.toLowerCase());
+    } else if (tab === 'subscriptions') {
+      setActiveTab('subscriptions');
+    } else if (tab === 'track') {
+      setActiveTab('track');
+      if (qEmail) setTrackEmail(qEmail.toLowerCase());
+    } else {
+      // Default: orders (email-based lookup) — the friendliest entry for
+      // "I've lost my order number" flows.
+      if (tab === 'orders') setActiveTab('orders');
+      if (qEmail) setEmail(qEmail.toLowerCase());
+    }
   }, [searchParams]);
 
   // ── My Orders lookup ────────────────────────────────────────────────────────
@@ -604,8 +625,8 @@ export default function MyOrdersPage() {
     : null;
 
   const TAB_CONFIG: { key: PageTab; label: string; icon: React.ReactNode }[] = [
-    { key: 'orders', label: 'My Orders', icon: <ShoppingBag className="w-4 h-4" /> },
-    { key: 'track', label: 'Track Parcel', icon: <Truck className="w-4 h-4" /> },
+    { key: 'orders', label: 'Find by Email', icon: <MailOpen className="w-4 h-4" /> },
+    { key: 'track', label: 'Track by Order #', icon: <Truck className="w-4 h-4" /> },
     { key: 'subscriptions', label: 'Subscriptions', icon: <RefreshCcw className="w-4 h-4" /> },
   ];
 
@@ -656,7 +677,7 @@ export default function MyOrdersPage() {
                   My Orders
                 </h1>
                 <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] mt-0.5">
-                  Track deliveries, view orders &amp; manage subscriptions
+                  Look up your orders with the email you used at checkout — no account needed.
                 </p>
               </div>
             </div>
@@ -691,9 +712,12 @@ export default function MyOrdersPage() {
                 onSubmit={handleOrdersLookup}
                 className="bg-white dark:bg-[#1e1812] border border-[#e8e3dc] dark:border-[#2e2420] rounded-2xl p-6 shadow-sm mb-6"
               >
-                <label className="block text-xs font-semibold text-[#7A5C4F] dark:text-[#c8b6a6] uppercase tracking-wider mb-2.5">
-                  Email Address
+                <label className="block text-xs font-semibold text-[#7A5C4F] dark:text-[#c8b6a6] uppercase tracking-wider mb-1">
+                  Your email
                 </label>
+                <p className="text-xs text-[#aaa] dark:text-[#666] mb-2.5">
+                  We&apos;ll show every order placed with this email — receipts, deliveries, subscriptions.
+                </p>
                 <div className="flex gap-3">
                   <div className="relative flex-1">
                     <MailOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#c8b6a6] dark:text-[#5a4a40]" />

@@ -92,7 +92,7 @@ export default function RhodeHero() {
         autoPlay
         muted
         playsInline
-        preload="auto"
+        preload={current === 0 ? "auto" : "metadata"}
         onEnded={handleVideoEnded}
         style={{
           opacity,

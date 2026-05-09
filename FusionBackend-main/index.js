@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import compression from 'compression';
 
 import errorMiddleware from './src/middlewares/ErrorMiddleware/errorMiddleware.js';
 import Connection from './src/config/Connection.js';
@@ -65,6 +67,16 @@ const port = process.env.PORT || 3333;
 // Required for express-rate-limit to read the real client IP from X-Forwarded-For
 // instead of the reverse proxy's IP (which would make all clients share one bucket).
 app.set('trust proxy', 1);
+
+// Security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, etc.)
+// crossOriginResourcePolicy disabled because /uploads is consumed cross-origin by the Next frontend.
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false, // CSP belongs in the frontend; API serves JSON, not HTML
+}));
+
+// Gzip JSON responses — typically 70%+ smaller for product lists
+app.use(compression());
 
 app.use(cors({
   origin: [
@@ -166,22 +178,35 @@ Connection().then(() => {
 });
 
 // ─── Daily subscription renewal cron ─────────────────────────────────────────
-import('./src/controllers/subscriptionProcessController.js').then(({ processSubscriptions }) => {
+// Lease ensures only ONE instance runs the sweep when scaling horizontally.
+// Per-subscription idempotency is enforced inside processSubscriptions
+// (atomic nextBillingDate claim), so this is a duplicate-work guard, not a
+// correctness guard. Lease TTL > expected sweep duration; auto-expires on crash.
+Promise.all([
+  import('./src/controllers/subscriptionProcessController.js'),
+  import('./src/utils/cronLease.js'),
+]).then(([{ processSubscriptions }, { acquireLease, releaseLease }]) => {
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  const LEASE_NAME        = 'subscription-renewal';
+  const LEASE_TTL_MS      = 30 * 60 * 1000; // 30 min — long enough for any sane sweep
 
-  // Run once shortly after startup to catch any subs missed while server was down
-  setTimeout(() => {
-    processSubscriptions().catch((err) =>
-      console.error('[cron] Startup sweep failed:', err.message)
-    );
-  }, 60_000); // 1 minute after start
+  async function runSweep(label) {
+    const got = await acquireLease(LEASE_NAME, LEASE_TTL_MS);
+    if (!got) {
+      console.log(`[cron] ${label} skipped — another instance holds the lease`);
+      return;
+    }
+    try {
+      await processSubscriptions();
+    } catch (err) {
+      console.error(`[cron] ${label} failed:`, err.message);
+    } finally {
+      await releaseLease(LEASE_NAME);
+    }
+  }
 
-  // Then run every 24 hours
-  setInterval(() => {
-    processSubscriptions().catch((err) =>
-      console.error('[cron] Daily sweep failed:', err.message)
-    );
-  }, TWENTY_FOUR_HOURS);
+  setTimeout(() => runSweep('Startup sweep'), 60_000);
+  setInterval(() => runSweep('Daily sweep'),  TWENTY_FOUR_HOURS);
 
-  console.log('[cron] Subscription renewal cron scheduled (every 24 h)');
+  console.log('[cron] Subscription renewal cron scheduled (every 24 h, single-instance leased)');
 }).catch((err) => console.error('[cron] Failed to load subscription processor:', err.message));

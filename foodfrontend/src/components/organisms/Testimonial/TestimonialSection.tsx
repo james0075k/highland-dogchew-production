@@ -570,19 +570,24 @@ const TestimonialSection = () => {
           ].map(({ Icon, text }, i) => (
             <motion.div
               key={text}
-              className="flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm border"
-              style={{
-                background: 'rgba(255,253,248,0.6)',
-                borderColor: 'var(--color-gold-light)',
-              }}
+              className={
+                'flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm border ' +
+                /* Light: faint cream wash. Dark: solid warm-brown surface so the
+                   pill reads against the page instead of disappearing into it. */
+                'bg-[rgba(255,253,248,0.7)] border-[var(--color-gold-light)] ' +
+                'dark:bg-[#241b16] dark:border-amber-700/40 ' +
+                'shadow-[0_1px_2px_rgba(46,31,20,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
+              }
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.08, ease: EASE_EXPO }}
               whileHover={{ y: -2, scale: 1.03 }}
             >
-              <Icon className="w-4 h-4" style={{ color: 'var(--color-gold)' }} />
-              <span className="font-medium text-xs tracking-wide" style={{ color: 'var(--text-secondary)' }}>{text}</span>
+              <Icon className="w-4 h-4 text-[#B8976A] dark:text-amber-400" />
+              <span className="font-medium text-xs tracking-wide text-[#7A5C4F] dark:text-[#e8d8c5]">
+                {text}
+              </span>
             </motion.div>
           ))}
         </motion.div>

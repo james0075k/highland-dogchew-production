@@ -462,7 +462,7 @@ export default function HimalayanStorySection() {
 
             {/* Stats row */}
             <motion.div
-              className="grid grid-cols-3 gap-4 pt-6 mt-8"
+              className="grid grid-cols-2 gap-3 pt-6 mt-8 sm:grid-cols-4"
               style={{ borderTop: '1px solid var(--border-base)' }}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -470,20 +470,107 @@ export default function HimalayanStorySection() {
               transition={{ duration: 0.8, delay: 0.7, ease: EASE_EXPO }}
             >
               {[
-                { value: '55%+', label: 'Protein' },
-                { value: '<5%', label: 'Fat' },
-                { value: '100%', label: 'Natural' },
+                {
+                  value: '55%+',
+                  label: 'Protein',
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.698-1.338 2.698H4.136c-1.368 0-2.337-1.698-1.338-2.698L4 15.3" />
+                    </svg>
+                  ),
+                  featured: false,
+                },
+                {
+                  value: '<5%',
+                  label: 'Fat',
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+                    </svg>
+                  ),
+                  featured: false,
+                },
+                {
+                  value: '100%',
+                  label: 'Natural',
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                  ),
+                  featured: false,
+                },
+                {
+                  value: 'High',
+                  label: 'Calcium',
+                  icon: (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
+                  featured: true,
+                },
               ].map((stat, i) => (
                 <motion.div
                   key={i}
-                  className="text-center"
+                  className={
+                    'group/stat relative flex flex-col items-center justify-center gap-2 ' +
+                    /* Square aspect on every card → uniform grid no matter the
+                       value length ("55%+" vs. "High"). Padding scales with screen. */
+                    'aspect-square p-3 sm:p-4 ' +
+                    'rounded-2xl text-center overflow-hidden cursor-default ' +
+                    /* Border + bg gradient: featured card uses a stronger amber
+                       so it still reads as the headline stat; the others share an
+                       identical lighter base that brightens on hover. */
+                    'border transition-[border-color,box-shadow,transform,background] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ' +
+                    (stat.featured
+                      ? 'border-[rgba(184,151,106,0.45)] bg-[linear-gradient(135deg,rgba(184,151,106,0.18)_0%,rgba(184,151,106,0.06)_100%)] ' +
+                        'shadow-[0_4px_18px_-8px_rgba(184,151,106,0.45)] ' +
+                        'hover:shadow-[0_10px_28px_-10px_rgba(184,151,106,0.65)] hover:border-[rgba(184,151,106,0.7)]'
+                      : 'border-[rgba(184,151,106,0.18)] bg-[linear-gradient(135deg,rgba(184,151,106,0.06)_0%,rgba(184,151,106,0.01)_100%)] ' +
+                        'hover:border-[rgba(184,151,106,0.45)] hover:bg-[linear-gradient(135deg,rgba(184,151,106,0.14)_0%,rgba(184,151,106,0.04)_100%)] ' +
+                        'hover:shadow-[0_8px_24px_-10px_rgba(184,151,106,0.4)]')
+                  }
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: 0.8 + i * 0.1, ease: EASE_EXPO }}
+                  whileHover={{ scale: 1.04, y: -3 }}
                 >
+                  {/* Persistent radial glow on the featured card */}
+                  {stat.featured && (
+                    <motion.div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{
+                        background:
+                          'radial-gradient(ellipse at 50% 0%, rgba(184,151,106,0.22) 0%, transparent 70%)',
+                      }}
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  )}
+
+                  {/* Hover-only sweeping shine — appears for every card on hover */}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-500"
+                    style={{
+                      background:
+                        'radial-gradient(circle at 50% 100%, rgba(184,151,106,0.20) 0%, transparent 60%)',
+                    }}
+                  />
+
+                  {/* icon — gains a soft amber halo on hover */}
+                  <span
+                    className="relative transition-all duration-300 group-hover/stat:scale-110 group-hover/stat:drop-shadow-[0_0_8px_rgba(184,151,106,0.55)]"
+                    style={{ color: 'var(--color-gold)', opacity: stat.featured ? 1 : 0.85 }}
+                  >
+                    {stat.icon}
+                  </span>
+
                   <p
-                    className="text-2xl font-bold md:text-3xl"
+                    className="relative text-xl font-bold md:text-2xl lg:text-3xl leading-none"
                     style={{
                       fontFamily: 'var(--font-antique-serif), DM Serif Display, serif',
                       color: 'var(--color-gold)',
@@ -491,9 +578,28 @@ export default function HimalayanStorySection() {
                   >
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-xs tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
+                  <p
+                    className="relative text-[10px] tracking-widest uppercase leading-tight"
+                    style={{
+                      color: stat.featured ? 'var(--color-gold)' : 'var(--text-muted)',
+                      opacity: stat.featured ? 0.9 : 1,
+                    }}
+                  >
                     {stat.label}
                   </p>
+
+                  {stat.featured && (
+                    <span
+                      className="relative text-[9px] tracking-wider uppercase mt-0.5 px-2 py-0.5 rounded-full"
+                      style={{
+                        background: 'rgba(184,151,106,0.2)',
+                        color: 'var(--color-gold)',
+                        border: '1px solid rgba(184,151,106,0.3)',
+                      }}
+                    >
+                      Content
+                    </span>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

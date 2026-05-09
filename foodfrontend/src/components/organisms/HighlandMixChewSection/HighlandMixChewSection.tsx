@@ -1,7 +1,6 @@
-'use client';
 import ProductSection from '@/components/organisms/ProductSection/ProductSection';
 
-export default function HighlandMixChewSection() {
+export default function HighlandMixChewSection({ initialProducts }: { initialProducts?: unknown[] }) {
   return (
     <ProductSection
       apiPath="products?type=highland-mix"
@@ -10,6 +9,7 @@ export default function HighlandMixChewSection() {
       subtitle="The ultimate mix — every bite packed with natural goodness"
       variant="subtle"
       viewAllHref="/products"
+      initialProducts={initialProducts as never}
     />
   );
 }
