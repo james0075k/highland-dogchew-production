@@ -246,7 +246,12 @@ const VarietiesSection = () => {
           );
         }
       } catch (err) {
-        console.error('Failed to fetch varieties:', err);
+        // Soft-fail: the section just renders empty / skeleton if the API is
+        // unreachable. Warn (not error) so Next's dev overlay doesn't pop up
+        // for an expected offline-backend state.
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[VarietiesSection] varieties fetch failed:', (err as Error).message);
+        }
       } finally {
         setLoading(false);
       }

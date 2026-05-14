@@ -72,7 +72,7 @@ export default function Navbar() {
   const isTransparentState = isHomepage && scrollY === 0;
 
   const navbarClasses = useMemo(() => {
-    const base = "fixed top-0 left-0 w-full z-60 transition-all duration-400 ease-out";
+    const base = "fixed top-0 left-0 w-full z-[60] transition-all duration-400 ease-out";
     const visibility = showNavbar ? "translate-y-0" : "-translate-y-full";
 
     const theme = isTransparentState
@@ -263,9 +263,19 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu — backdrop sits BEHIND the menu panel and closes on tap.
+          The menu panel is z-[55], one above the backdrop, and one below the navbar
+          (z-[60]) so the hamburger stays clickable to toggle. */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white/90 dark:bg-[#241b16]/95 backdrop-blur-md text-[#2E1F14] dark:text-[#f5e9dc] px-4 py-6 absolute top-full left-0 w-full z-50 border-t border-amber-100 dark:border-[#3a2c23]">
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={handleMenuItemClick}
+          className="md:hidden fixed inset-0 top-[var(--navbar-h,64px)] bg-black/30 backdrop-blur-[2px] z-[54] cursor-default"
+        />
+      )}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white/95 dark:bg-[#241b16]/95 backdrop-blur-md text-[#2E1F14] dark:text-[#f5e9dc] px-4 py-6 absolute top-full left-0 w-full z-[55] border-t border-amber-100 dark:border-[#3a2c23] shadow-xl">
           <ul className="space-y-1">
             {allLinks.map((link) => (
               <li key={link.name}>

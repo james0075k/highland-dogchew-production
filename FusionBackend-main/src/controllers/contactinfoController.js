@@ -1,6 +1,6 @@
-import ContactInfo from '../models/contactinfoModel.js';
+﻿import ContactInfo from '../models/contactinfoModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 // Create or Update Contact Info (singleton)
 

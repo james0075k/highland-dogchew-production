@@ -1,7 +1,7 @@
-import CategoryModel from '../models/categoryModel.js';
+﻿import CategoryModel from '../models/categoryModel.js';
 import VarietyModel from '../models/varietyModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 // Create Category
 export const createCategory = async (req, res, next) => {

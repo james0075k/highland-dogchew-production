@@ -1,12 +1,12 @@
-import GalleryItemModel from '../models/galleryItemModel.js';
+﻿import GalleryItemModel from '../models/galleryItemModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import path from 'path';
 import fs from 'fs';
 
-// ─── Image URL helpers (same pattern as instagramPostController) ─────────────
+// â”€â”€â”€ Image URL helpers (same pattern as instagramPostController) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
@@ -35,9 +35,9 @@ const deleteLocalFile = async (imageUrl) => {
   if (fs.existsSync(imagePath)) await deleteFile(imagePath);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// GET all active items (public — sorted by order then newest)
+// GET all active items (public â€” sorted by order then newest)
 export const getGalleryItems = async (req, res, next) => {
   try {
     const items = await GalleryItemModel.find({ isActive: true })

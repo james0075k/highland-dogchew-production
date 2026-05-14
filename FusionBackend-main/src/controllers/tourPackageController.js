@@ -1,6 +1,6 @@
-import TourPackage from '../models/tourPackageModel.js';
+﻿import TourPackage from '../models/tourPackageModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import destinationModel from '../models/destinationModel.js';
@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 import tourCategoryModel from '../models/tourCategoryModel.js';
 import PDFDocument from "pdfkit";
 
-// ✅ Helper function to parse JSON safely
+// âœ… Helper function to parse JSON safely
 const safeJsonParse = (str, defaultValue = null) => {
   try {
     return str ? JSON.parse(str) : defaultValue;
@@ -22,12 +22,12 @@ const safeJsonParse = (str, defaultValue = null) => {
   }
 };
 
-// ✅ Helper function to validate ObjectId
+// âœ… Helper function to validate ObjectId
 const isValidObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
-// ✅ Create Tour Package
+// âœ… Create Tour Package
 export const createTourPackage = async (req, res, next) => {
   try {
     const {
@@ -98,13 +98,13 @@ if (req.files?.gallery) {
   );
 }
 
-// ✅ Google Map Image
+// âœ… Google Map Image
 let googleMapImageUrl = '';
 if (req.files?.googleMapImage?.[0]) {
   googleMapImageUrl = `${req.protocol}://${req.get('host')}${getFileUrl(req.files.googleMapImage[0].filename)}`;
 }
 
-// ✅ Attach images to itinerary steps
+// âœ… Attach images to itinerary steps
 let itineraryWithImages = [];
 if (req.files?.itineraryImages && Array.isArray(req.files.itineraryImages)) {
   itineraryWithImages = parsedItinerary.map((item, index) => {
@@ -154,7 +154,7 @@ if (req.files?.itineraryImages && Array.isArray(req.files.itineraryImages)) {
   }
 };
 
-// ✅ Get All Tour Packages
+// âœ… Get All Tour Packages
 export const getAllTourPackages = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -170,7 +170,7 @@ export const getAllTourPackages = async (req, res, next) => {
 
     const total = await TourPackage.countDocuments();
     
-    console.log(`✅ Fetched ${tours.length} tour packages (page ${page})`);
+    console.log(`âœ… Fetched ${tours.length} tour packages (page ${page})`);
 
     return handleSuccess(res, 200, 'Tour packages fetched successfully', {
       tours,
@@ -182,17 +182,17 @@ export const getAllTourPackages = async (req, res, next) => {
       }
     });
   } catch (err) {
-    console.error("🔥 GetAllTourPackages Error:", err);
+    console.error("ðŸ”¥ GetAllTourPackages Error:", err);
     return next(handleError(500, 'Unable to fetch tour packages'));
   }
 };
 
-// ✅ Get Single Tour by ID
+// âœ… Get Single Tour by ID
 export const getTourPackageById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // ✅ Validate ObjectId first
+    // âœ… Validate ObjectId first
     if (!isValidObjectId(id)) {
       return next(handleError(400, 'Invalid tour package ID format'));
     }
@@ -205,16 +205,16 @@ export const getTourPackageById = async (req, res, next) => {
       return next(handleError(404, 'Tour package not found'));
     }
 
-    console.log("✅ Tour package fetched:", tour._id);
+    console.log("âœ… Tour package fetched:", tour._id);
     return handleSuccess(res, 200, 'Tour package fetched successfully', tour);
     
   } catch (err) {
-    console.error("🔥 GetTourPackageById Error:", err);
+    console.error("ðŸ”¥ GetTourPackageById Error:", err);
     return next(handleError(500, 'Unable to fetch tour package'));
   }
 };
 
-// ✅ Update Tour Package
+// âœ… Update Tour Package
 export const updateTourPackage = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -230,7 +230,7 @@ export const updateTourPackage = async (req, res, next) => {
       feature, destination, fixedDepartures, activitiescategory
     } = req.body;
 
-    // ✅ Parse JSON fields safely
+    // âœ… Parse JSON fields safely
     const parsedLocation = safeJsonParse(location);
     const parsedDuration = safeJsonParse(duration);
     const parsedItinerary = safeJsonParse(itinerary, []);
@@ -242,7 +242,7 @@ export const updateTourPackage = async (req, res, next) => {
     const parsedFixedDepartures = safeJsonParse(fixedDepartures, []);
     const parsedFeature = safeJsonParse(feature);
 
-    // ✅ Get gallery images (if new)
+    // âœ… Get gallery images (if new)
     let gallery = [];
     if (req.files?.gallery) {
       gallery = req.files.gallery.map(file =>
@@ -250,13 +250,13 @@ export const updateTourPackage = async (req, res, next) => {
       );
     }
 
-    // ✅ Google Map Image
+    // âœ… Google Map Image
     let googleMapImageUrl = '';
     if (req.files?.googleMapImage?.[0]) {
       googleMapImageUrl = `${req.protocol}://${req.get('host')}${getFileUrl(req.files.googleMapImage[0].filename)}`;
     }
 
-    // ✅ Itinerary Images
+    // âœ… Itinerary Images
     const itineraryWithImages = parsedItinerary.map((item, index) => {
       let imageUrl = item?.image || null;
       if (req.files?.itineraryImages && req.files.itineraryImages[index]) {
@@ -268,7 +268,7 @@ export const updateTourPackage = async (req, res, next) => {
       };
     });
 
-    // ✅ Destination ID Resolution
+    // âœ… Destination ID Resolution
     let foundDestination = null;
     if (destination) {
       foundDestination = isValidObjectId(destination)
@@ -280,7 +280,7 @@ export const updateTourPackage = async (req, res, next) => {
       }
     }
 
-    // ✅ Activities Category Resolution
+    // âœ… Activities Category Resolution
     let foundCategory = null;
     if (activitiescategory) {
       foundCategory = isValidObjectId(activitiescategory)
@@ -292,7 +292,7 @@ export const updateTourPackage = async (req, res, next) => {
       }
     }
 
-    // ✅ Build final update object
+    // âœ… Build final update object
     const updateData = {
       ...(title && { title }),
       ...(description && { description }),
@@ -326,22 +326,22 @@ export const updateTourPackage = async (req, res, next) => {
       return next(handleError(404, 'Tour package not found'));
     }
 
-    console.log("✅ Tour package updated:", updated._id);
+    console.log("âœ… Tour package updated:", updated._id);
     return handleSuccess(res, 200, 'Tour package updated successfully', updated);
 
   } catch (err) {
-    console.error("🔥 UpdateTourPackage Error:", err);
+    console.error("ðŸ”¥ UpdateTourPackage Error:", err);
     return next(handleError(500, `Failed to update tour package: ${err.message}`));
   }
 };
 
 
-// ✅ Delete Tour Package
+// âœ… Delete Tour Package
 export const deleteTourPackage = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // ✅ Validate ObjectId
+    // âœ… Validate ObjectId
     if (!isValidObjectId(id)) {
       return next(handleError(400, 'Invalid tour package ID format'));
     }
@@ -351,7 +351,7 @@ export const deleteTourPackage = async (req, res, next) => {
       return next(handleError(404, 'Tour package not found'));
     }
 
-    // ✅ Delete associated images
+    // âœ… Delete associated images
     const imagesToDelete = [];
     
     // Gallery images
@@ -389,16 +389,16 @@ export const deleteTourPackage = async (req, res, next) => {
       }
     }
 
-    console.log("✅ Tour package and images deleted:", tour._id);
+    console.log("âœ… Tour package and images deleted:", tour._id);
     return handleSuccess(res, 200, 'Tour package and associated images deleted successfully');
     
   } catch (err) {
-    console.error("🔥 DeleteTourPackage Error:", err);
+    console.error("ðŸ”¥ DeleteTourPackage Error:", err);
     return next(handleError(500, 'Unable to delete tour package'));
   }
 };
 
-// ✅ Search Tour Packages
+// âœ… Search Tour Packages
 export const searchTourPackages = async (req, res, next) => {
   try {
     const { location, min, max, type, tag, priceMin, priceMax } = req.query;
@@ -440,16 +440,16 @@ export const searchTourPackages = async (req, res, next) => {
       .populate('activitiescategory')
       .sort({ createdAt: -1 });
 
-    console.log(`✅ Search completed: ${results.length} results found`);
+    console.log(`âœ… Search completed: ${results.length} results found`);
     return handleSuccess(res, 200, 'Search completed successfully', results);
     
   } catch (error) {
-    console.error("🔥 SearchTourPackages Error:", error);
+    console.error("ðŸ”¥ SearchTourPackages Error:", error);
     return next(handleError(500, 'Unable to search tour packages'));
   }
 };
 
-// ✅ Get Tours by Activity Category
+// âœ… Get Tours by Activity Category
 export const getToursByActivitySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
@@ -467,16 +467,16 @@ export const getToursByActivitySlug = async (req, res, next) => {
       .populate('activitiescategory', 'name slug')
       .sort({ createdAt: -1 });
 
-    console.log(`✅ Found ${packages.length} packages for category slug: ${slug}`);
+    console.log(`âœ… Found ${packages.length} packages for category slug: ${slug}`);
     return handleSuccess(res, 200, 'Tour packages by category fetched successfully', packages);
     
   } catch (err) {
-    console.error("🔥 GetToursByActivitySlug Error:", err);
+    console.error("ðŸ”¥ GetToursByActivitySlug Error:", err);
     return next(handleError(500, 'Unable to fetch packages by activity slug'));
   }
 };
 
-// ✅ Get Tours by Tag
+// âœ… Get Tours by Tag
 export const getTourPackagesByTag = async (req, res, next) => {
   try {
     const { tag } = req.params;
@@ -490,16 +490,16 @@ export const getTourPackagesByTag = async (req, res, next) => {
       .populate('activitiescategory', 'name slug')
       .sort({ createdAt: -1 });
 
-    console.log(`✅ Found ${packages.length} packages with tag:`, tag);
+    console.log(`âœ… Found ${packages.length} packages with tag:`, tag);
     return handleSuccess(res, 200, `Tour packages with tag "${tag}" fetched successfully`, packages);
     
   } catch (err) {
-    console.error("🔥 GetTourPackagesByTag Error:", err);
+    console.error("ðŸ”¥ GetTourPackagesByTag Error:", err);
     return next(handleError(500, 'Failed to fetch tour packages by tag'));
   }
 };
 
-// ✅ Get Related Packages
+// âœ… Get Related Packages
 export const getRelatedPackages = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -526,16 +526,16 @@ export const getRelatedPackages = async (req, res, next) => {
     .limit(6)
     .sort({ rating: -1 });
 
-    console.log(`✅ Found ${relatedPackages.length} related packages`);
+    console.log(`âœ… Found ${relatedPackages.length} related packages`);
     return handleSuccess(res, 200, 'Related packages fetched successfully', relatedPackages);
     
   } catch (error) {
-    console.error("🔥 GetRelatedPackages Error:", error);
+    console.error("ðŸ”¥ GetRelatedPackages Error:", error);
     return next(handleError(500, 'Unable to fetch related packages'));
   }
 };
 
-// ✅ Filter by Duration
+// âœ… Filter by Duration
 export const filterByDuration = async (req, res, next) => {
   try {
     const { min, max } = req.query;
@@ -554,11 +554,11 @@ export const filterByDuration = async (req, res, next) => {
     .populate('activitiescategory', 'name slug')
     .sort({ createdAt: -1 });
 
-    console.log(`✅ Filtered ${filteredPackages.length} packages by duration`);
+    console.log(`âœ… Filtered ${filteredPackages.length} packages by duration`);
     return handleSuccess(res, 200, 'Packages filtered by duration successfully', filteredPackages);
     
   } catch (err) {
-    console.error("🔥 FilterByDuration Error:", err);
+    console.error("ðŸ”¥ FilterByDuration Error:", err);
     return next(handleError(500, 'Unable to filter by duration'));
   }
 };
@@ -614,13 +614,13 @@ export const generateTourPDF = async (req, res, next) => {
     // Inclusions
     if (tour.inclusions?.length) {
       doc.addPage().fontSize(14).text("Cost Includes:", { underline: true });
-      tour.inclusions.forEach((item, i) => doc.fontSize(12).text(`• ${item}`));
+      tour.inclusions.forEach((item, i) => doc.fontSize(12).text(`â€¢ ${item}`));
     }
 
     // Exclusions
     if (tour.exclusions?.length) {
       doc.addPage().fontSize(14).text("Cost Excludes:", { underline: true });
-      tour.exclusions.forEach((item, i) => doc.fontSize(12).text(`• ${item}`));
+      tour.exclusions.forEach((item, i) => doc.fontSize(12).text(`â€¢ ${item}`));
     }
 
     // Itinerary
@@ -634,7 +634,7 @@ export const generateTourPDF = async (req, res, next) => {
 
     doc.end(); // Finalize PDF
   } catch (error) {
-    console.error("🔥 PDF Generation Error:", error);
+    console.error("ðŸ”¥ PDF Generation Error:", error);
     return next(handleError(500, "Failed to generate PDF"));
   }
 };

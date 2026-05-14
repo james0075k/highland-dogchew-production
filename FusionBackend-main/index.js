@@ -3,7 +3,10 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import compression from 'compression';
+import pinoHttp from 'pino-http';
+import cron from 'node-cron';
 
+import logger from './src/utils/logger.js';
 import errorMiddleware from './src/middlewares/ErrorMiddleware/errorMiddleware.js';
 import Connection from './src/config/Connection.js';
 import LogoRoute from './src/routes/LogoRoute.js';
@@ -11,7 +14,7 @@ import testimonialRoute from './src/routes/testimonialRoute.js';
 import faqRoute from './src/routes/faqRoute.js';
 import partnerRoute from './src/routes/partnerRoute.js';
 import blogRoute from './src/routes/blogRoute.js';
-import destinationRoute from './src/routes/destionationRoute.js';
+import destinationRoute from './src/routes/destinationRoute.js';
 import statRoute from './src/routes/statRoute.js';
 import contactRoute from './src/routes/contactRoute.js';
 import heroBannerRoute from './src/routes/heroBannerRoute.js';
@@ -54,8 +57,7 @@ const requiredEnvVars = [
 ];
 const missingVars = requiredEnvVars.filter(v => !process.env[v]);
 if (missingVars.length > 0) {
-  console.error(`[STARTUP] Missing required environment variables: ${missingVars.join(', ')}`);
-  console.error('[STARTUP] Please check your .env file');
+  logger.fatal({ missingVars }, 'Missing required environment variables. Check your .env file.');
   process.exit(1);
 }
 
@@ -78,14 +80,23 @@ app.use(helmet({
 // Gzip JSON responses — typically 70%+ smaller for product lists
 app.use(compression());
 
+// Production origins are always allowed. Localhost origins only in non-production
+// so that leaked dev URLs cannot be exploited against a real deployment.
+const PROD_ORIGINS = [
+  'https://dogchewuk.vercel.app',
+  'https://highlanddogchew.co.uk',
+  'https://www.highlanddogchew.co.uk',
+];
+const DEV_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? PROD_ORIGINS
+  : [...PROD_ORIGINS, ...DEV_ORIGINS];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://dogchewuk.vercel.app',
-    'https://highlanddogchew.co.uk',
-    'https://www.highlanddogchew.co.uk',
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -102,13 +113,20 @@ app.use(`/${api}/webhook`, productWebhookRoute);
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ limit: '50kb', extended: true }));
 
-// L-3 fix: only log requests in non-production environments
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, _res, next) => {
-    console.log(`[dev] ${req.method} ${req.url}`);
-    next();
-  });
-}
+// Structured HTTP request logging — pino-http picks up method, url, status,
+// response time, and the client's real IP (via trust proxy above).
+app.use(pinoHttp({
+  logger,
+  customLogLevel: (_req, res, err) => {
+    if (err || res.statusCode >= 500) return 'error';
+    if (res.statusCode >= 400) return 'warn';
+    return 'info';
+  },
+  serializers: {
+    req: (req) => ({ method: req.method, url: req.url }),
+    res: (res) => ({ statusCode: res.statusCode }),
+  },
+}));
 
 app.use(`/${api}/logo`, LogoRoute);
 app.use(`/${api}/testimonials`, testimonialRoute);
@@ -163,50 +181,61 @@ app.use(errorMiddleware);
 
 // Global unhandled rejection / exception catchers
 process.on('unhandledRejection', (reason) => {
-  console.error('[UNHANDLED REJECTION]', reason);
+  logger.error({ reason }, 'Unhandled promise rejection');
 });
 process.on('uncaughtException', (err) => {
-  console.error('[UNCAUGHT EXCEPTION]', err.message);
+  logger.fatal({ err }, 'Uncaught exception');
   process.exit(1);
 });
 
 // Database connection — wait for DB before accepting requests
 Connection().then(() => {
   app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    logger.info({ port }, 'Server listening');
   });
 });
 
 // ─── Daily subscription renewal cron ─────────────────────────────────────────
-// Lease ensures only ONE instance runs the sweep when scaling horizontally.
-// Per-subscription idempotency is enforced inside processSubscriptions
-// (atomic nextBillingDate claim), so this is a duplicate-work guard, not a
-// correctness guard. Lease TTL > expected sweep duration; auto-expires on crash.
+// node-cron runs on a real schedule string (no drift across long uptimes) and
+// the cluster lease still guarantees single-instance execution. Per-subscription
+// idempotency lives inside processSubscriptions (atomic nextBillingDate claim).
+const cronLog = logger.child({ component: 'cron' });
+
 Promise.all([
   import('./src/controllers/subscriptionProcessController.js'),
   import('./src/utils/cronLease.js'),
 ]).then(([{ processSubscriptions }, { acquireLease, releaseLease }]) => {
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-  const LEASE_NAME        = 'subscription-renewal';
-  const LEASE_TTL_MS      = 30 * 60 * 1000; // 30 min — long enough for any sane sweep
+  const LEASE_NAME   = 'subscription-renewal';
+  const LEASE_TTL_MS = 30 * 60 * 1000;
+  // Daily at 02:00 UTC — quiet hours for the UK customer base and well away
+  // from peak Stripe API traffic. Override via SUBSCRIPTION_CRON if needed.
+  const SCHEDULE     = process.env.SUBSCRIPTION_CRON || '0 2 * * *';
+
+  if (!cron.validate(SCHEDULE)) {
+    cronLog.fatal({ schedule: SCHEDULE }, 'Invalid SUBSCRIPTION_CRON expression');
+    process.exit(1);
+  }
 
   async function runSweep(label) {
     const got = await acquireLease(LEASE_NAME, LEASE_TTL_MS);
     if (!got) {
-      console.log(`[cron] ${label} skipped — another instance holds the lease`);
+      cronLog.info({ label }, 'Sweep skipped — another instance holds the lease');
       return;
     }
+    const start = Date.now();
     try {
       await processSubscriptions();
+      cronLog.info({ label, ms: Date.now() - start }, 'Sweep completed');
     } catch (err) {
-      console.error(`[cron] ${label} failed:`, err.message);
+      cronLog.error({ err, label }, 'Sweep failed');
     } finally {
       await releaseLease(LEASE_NAME);
     }
   }
 
-  setTimeout(() => runSweep('Startup sweep'), 60_000);
-  setInterval(() => runSweep('Daily sweep'),  TWENTY_FOUR_HOURS);
+  // Startup sweep one minute after boot to catch anything missed during downtime
+  setTimeout(() => runSweep('startup'), 60_000);
 
-  console.log('[cron] Subscription renewal cron scheduled (every 24 h, single-instance leased)');
-}).catch((err) => console.error('[cron] Failed to load subscription processor:', err.message));
+  cron.schedule(SCHEDULE, () => runSweep('scheduled'), { timezone: 'UTC' });
+  cronLog.info({ schedule: SCHEDULE, tz: 'UTC' }, 'Subscription renewal cron scheduled');
+}).catch((err) => cronLog.error({ err }, 'Failed to load subscription processor'));

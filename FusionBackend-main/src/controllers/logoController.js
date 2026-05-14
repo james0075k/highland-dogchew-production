@@ -1,7 +1,7 @@
-import LogoModel from '../models/logoModel.js';
+﻿import LogoModel from '../models/logoModel.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

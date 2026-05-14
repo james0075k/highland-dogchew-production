@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import {
-  Upload, Trash2, Save, Edit2, X, ChevronRight, ChevronLeft,
-  AlertCircle, Check, Loader2, Image, ToggleLeft, ToggleRight,
-  RefreshCw, Camera,
+  Upload, Trash2, Save, Edit2, X, AlertCircle, Check, Loader2,
+  Image as ImageIcon, ToggleLeft, ToggleRight, Camera,
 } from 'lucide-react';
+import { FiArrowLeft, FiRefreshCw, FiEye, FiEyeOff, FiFilter } from 'react-icons/fi';
 
-/* ─── Types ──────────────────────────────────────────────────────────────── */
 interface GalleryItem {
   _id: string;
   image: string;
@@ -26,36 +26,32 @@ const CATEGORIES = [
 ];
 
 const emptyForm = {
-  title:       '',
+  title: '',
   description: '',
-  category:    'GALLERY',
-  order:       '0',
-  isActive:    true,
+  category: 'GALLERY',
+  order: '0',
+  isActive: true,
 };
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Component
-═══════════════════════════════════════════════════════════════════════════ */
 export default function GalleryAdminPage() {
-  const router   = useRouter();
+  const router = useRouter();
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
-  const [formData,     setFormData]     = useState(emptyForm);
-  const [imageFile,    setImageFile]    = useState<File | null>(null);
+  const [formData, setFormData] = useState(emptyForm);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [loading,      setLoading]      = useState(false);
-  const [message,      setMessage]      = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
 
-  const [items,         setItems]         = useState<GalleryItem[]>([]);
-  const [loadingList,   setLoadingList]   = useState(true);
-  const [showSidebar,   setShowSidebar]   = useState(true);
-  const [editingItem,   setEditingItem]   = useState<GalleryItem | null>(null);
-  const [deleteTarget,  setDeleteTarget]  = useState<GalleryItem | null>(null);
-  const [filterCat,     setFilterCat]     = useState<string>('ALL');
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GalleryItem | null>(null);
+  const [filterCat, setFilterCat] = useState<string>('ALL');
+  const [filterVis, setFilterVis] = useState<'all' | 'live' | 'hidden'>('all');
 
-  /* ── auth ── */
   const getToken = (): string | null =>
-    Cookies.get('token') || localStorage.getItem('adminToken') || null;
+    Cookies.get('token') || (typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null);
 
   const authHeaders = (): Record<string, string> | null => {
     const token = getToken();
@@ -70,7 +66,7 @@ export default function GalleryAdminPage() {
   const handleApiError = (status: number, msg: string) => {
     if (status === 401 || status === 403) {
       Cookies.remove('token');
-      localStorage.removeItem('adminToken');
+      if (typeof window !== 'undefined') localStorage.removeItem('adminToken');
       setMessage({ type: 'error', text: 'Session expired. Redirecting…' });
       setTimeout(() => router.push('/login'), 1500);
       return;
@@ -78,13 +74,12 @@ export default function GalleryAdminPage() {
     setMessage({ type: 'error', text: msg || 'Something went wrong' });
   };
 
-  /* ── fetch list ── */
   const fetchItems = useCallback(async () => {
     const token = getToken();
     if (!token) { setLoadingList(false); return; }
     try {
       setLoadingList(true);
-      const res  = await fetch(`${API_BASE}/gallery/admin/all`, {
+      const res = await fetch(`${API_BASE}/gallery/admin/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -95,14 +90,15 @@ export default function GalleryAdminPage() {
     } finally {
       setLoadingList(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [API_BASE]);
 
   useEffect(() => {
     fetchItems();
     return () => { if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── form helpers ── */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -119,11 +115,11 @@ export default function GalleryAdminPage() {
   const handleEdit = (item: GalleryItem) => {
     setEditingItem(item);
     setFormData({
-      title:       item.title       || '',
+      title: item.title || '',
       description: item.description || '',
-      category:    item.category    || 'GALLERY',
-      order:       String(item.order ?? 0),
-      isActive:    item.isActive    ?? true,
+      category: item.category || 'GALLERY',
+      order: String(item.order ?? 0),
+      isActive: item.isActive ?? true,
     });
     setImageFile(null);
     setImagePreview(item.image || null);
@@ -140,20 +136,19 @@ export default function GalleryAdminPage() {
     setMessage({ type: '', text: '' });
   };
 
-  /* ── delete ── */
   const confirmDelete = async () => {
     if (!deleteTarget?._id) return;
     const headers = authHeaders();
     if (!headers) return;
     try {
       setLoading(true);
-      const res  = await fetch(`${API_BASE}/gallery/${deleteTarget._id}`, { method: 'DELETE', headers });
+      const res = await fetch(`${API_BASE}/gallery/${deleteTarget._id}`, { method: 'DELETE', headers });
       const data = await res.json();
       if (res.ok) {
         setMessage({ type: 'success', text: 'Photo deleted.' });
-        setDeleteTarget(null);
         if (editingItem?._id === deleteTarget._id) handleCancelEdit();
-        fetchItems();
+        setItems(prev => prev.filter(i => i._id !== deleteTarget._id));
+        setDeleteTarget(null);
       } else {
         handleApiError(res.status, data.message);
       }
@@ -164,7 +159,6 @@ export default function GalleryAdminPage() {
     }
   };
 
-  /* ── submit ── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
@@ -184,376 +178,354 @@ export default function GalleryAdminPage() {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append('title',       formData.title.trim());
+      fd.append('title', formData.title.trim());
       fd.append('description', formData.description.trim());
-      fd.append('category',    formData.category);
-      fd.append('order',       formData.order);
-      fd.append('isActive',    String(formData.isActive));
+      fd.append('category', formData.category);
+      fd.append('order', formData.order);
+      fd.append('isActive', String(formData.isActive));
       if (imageFile) fd.append('image', imageFile);
 
-      const url    = editingItem ? `${API_BASE}/gallery/${editingItem._id}` : `${API_BASE}/gallery`;
+      const url = editingItem ? `${API_BASE}/gallery/${editingItem._id}` : `${API_BASE}/gallery`;
       const method = editingItem ? 'PUT' : 'POST';
-      const res    = await fetch(url, { method, headers, body: fd });
+      const res = await fetch(url, { method, headers, body: fd });
       const result = await res.json();
 
       if (res.ok) {
-        setMessage({
-          type: 'success',
-          text: editingItem ? 'Photo updated!' : 'Photo added to gallery!',
-        });
+        setMessage({ type: 'success', text: editingItem ? 'Photo updated!' : 'Photo added to gallery!' });
         setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         handleCancelEdit();
         fetchItems();
       } else {
         handleApiError(res.status, result.message);
       }
-    } catch (err: any) {
-      setMessage({ type: 'error', text: `Network error: ${err.message}` });
+    } catch (err) {
+      setMessage({ type: 'error', text: `Network error: ${err instanceof Error ? err.message : 'unknown'}` });
     } finally {
       setLoading(false);
     }
   };
 
-  const displayedItems = filterCat === 'ALL'
-    ? items
-    : items.filter(i => i.category === filterCat);
+  const filtered = useMemo(() => items.filter(i => {
+    if (filterCat !== 'ALL' && i.category !== filterCat) return false;
+    if (filterVis === 'live' && !i.isActive) return false;
+    if (filterVis === 'hidden' && i.isActive) return false;
+    return true;
+  }), [items, filterCat, filterVis]);
 
-  /* ── render ── */
+  const grouped = useMemo(() => {
+    const map = new Map<string, GalleryItem[]>();
+    for (const i of filtered) {
+      if (!map.has(i.category)) map.set(i.category, []);
+      map.get(i.category)!.push(i);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  const counts = useMemo(() => ({
+    total: items.length,
+    live: items.filter(i => i.isActive).length,
+    hidden: items.filter(i => !i.isActive).length,
+    categories: new Set(items.map(i => i.category)).size,
+  }), [items]);
+
+  const STAT_CARDS = [
+    { label: 'Total',     value: counts.total,      icon: ImageIcon, text: 'text-slate-700',  bg: 'bg-slate-50',  ring: 'ring-slate-100' },
+    { label: 'Live',      value: counts.live,       icon: FiEye,     text: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'ring-emerald-100' },
+    { label: 'Hidden',    value: counts.hidden,     icon: FiEyeOff,  text: 'text-gray-600',    bg: 'bg-gray-50',     ring: 'ring-gray-100' },
+    { label: 'Categories', value: counts.categories, icon: FiFilter,  text: 'text-amber-600',   bg: 'bg-amber-50',   ring: 'ring-amber-100' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 relative">
+    <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa]">
 
-      {/* Sidebar toggle */}
-      <button
-        type="button"
-        onClick={() => setShowSidebar(s => !s)}
-        className="fixed top-24 right-4 z-50 bg-gradient-to-r from-amber-500 to-orange-600 text-white p-3 rounded-full shadow-lg hover:opacity-90 transition"
-      >
-        {showSidebar ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-      </button>
-
-      {/* ── Form ───────────────────────────────────────────────────────── */}
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-
-          {/* Header */}
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <Camera className="w-6 h-6 text-amber-500" />
-                {editingItem ? 'Edit Gallery Photo' : 'Add Gallery Photo'}
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Photos added here appear on the public <strong>/gallery</strong> page
-              </p>
-            </div>
-            {editingItem && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-1"
-              >
-                <X className="w-4 h-4" /> Cancel
-              </button>
-            )}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 transition-colors">
+            <FiArrowLeft size={16} />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Camera className="w-5 h-5 text-amber-500" />
+              Gallery
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {editingItem ? `Editing "${editingItem.title}"` : 'Photos that appear on /gallery — grouped by category'}
+            </p>
           </div>
-
-          {/* Message banner */}
-          {message.text && (
-            <div className={`mb-5 p-4 rounded-xl flex items-center gap-2 text-sm font-medium ${
-              message.type === 'success'
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {message.type === 'success'
-                ? <Check       className="w-4 h-4 flex-shrink-0" />
-                : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
-              {message.text}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-
-            {/* Image upload */}
-            <div className="border-b pb-6">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Upload className="w-4 h-4 text-amber-500" />
-                Photo
-                {!editingItem && <span className="text-red-500">*</span>}
-              </h2>
-              <div className="flex items-start gap-4">
-                <label className="flex-1 cursor-pointer">
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-amber-400 transition bg-gray-50 hover:bg-amber-50">
-                    <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                    <p className="text-sm text-gray-600">Click to upload photo</p>
-                    <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WEBP up to 10 MB</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Recommended: 4:3 ratio (e.g. 800×600)</p>
-                  </div>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                </label>
-                {imagePreview && (
-                  <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-amber-200 shadow flex-shrink-0">
-                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => { setImageFile(null); setImagePreview(null); }}
-                      className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full hover:bg-red-600"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="border-b pb-6 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700">Photo Details</h2>
-
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  maxLength={100}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-sm"
-                  placeholder="e.g. Honey Flavored Chew"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Description</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  maxLength={200}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-sm"
-                  placeholder="e.g. Sweet & natural honey coating"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Category</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-sm bg-white"
-                >
-                  {CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">
-                  This controls which filter tab shows this photo on the gallery page
-                </p>
-              </div>
-
-              {/* Order + Active */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Display Order</label>
-                  <input
-                    type="number"
-                    name="order"
-                    value={formData.order}
-                    onChange={handleChange}
-                    min="0"
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-sm"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Lower = shown first</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">Visibility</label>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition w-full ${
-                      formData.isActive
-                        ? 'bg-green-50 border-green-200 text-green-700'
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {formData.isActive
-                      ? <><ToggleRight className="w-4 h-4" /> Visible</>
-                      : <><ToggleLeft  className="w-4 h-4" /> Hidden</>}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold rounded-xl transition disabled:opacity-50 shadow-md"
-            >
-              {loading
-                ? <><Loader2 className="w-4 h-4 animate-spin" />{editingItem ? 'Updating…' : 'Uploading…'}</>
-                : <><Save    className="w-4 h-4" />{editingItem ? 'Update Photo' : 'Add to Gallery'}</>
-              }
-            </button>
-          </form>
         </div>
+        <button
+          onClick={fetchItems}
+          disabled={loadingList}
+          className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors disabled:opacity-60"
+        >
+          <FiRefreshCw size={14} className={loadingList ? 'animate-spin' : ''} />
+          Refresh
+        </button>
       </div>
 
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <div
-        className={`fixed top-0 right-0 h-full bg-white shadow-2xl transition-transform duration-300 z-40 ${
-          showSidebar ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        style={{ width: '320px' }}
-      >
-        <div className="h-full flex flex-col">
-          <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Camera className="w-5 h-5" />
-                <h2 className="text-base font-bold">Gallery ({items.length})</h2>
-              </div>
-              <button type="button" onClick={() => setShowSidebar(false)} className="hover:bg-white/20 p-1 rounded">
-                <X className="w-5 h-5" />
-              </button>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        {STAT_CARDS.map(card => (
+          <div key={card.label} className={`bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3 ring-1 ${card.ring}`}>
+            <div className={`p-2 rounded-lg ${card.bg}`}><card.icon size={15} className={card.text} /></div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{card.label}</p>
+              <p className={`text-lg font-bold tabular-nums ${card.text}`}>{card.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+        {/* Form */}
+        <div className="xl:col-span-2">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-gray-900">{editingItem ? 'Edit Photo' : 'Add Photo'}</h2>
+              {editingItem && (
+                <button type="button" onClick={handleCancelEdit} className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                  Cancel
+                </button>
+              )}
             </div>
 
-            {/* Category filter */}
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {['ALL', ...CATEGORIES].map(cat => (
+            {message.text && (
+              <div className={`mb-4 p-3 rounded-xl flex items-center gap-2 text-xs font-medium ${
+                message.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {message.type === 'success' ? <Check className="w-4 h-4 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                {message.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Photo {!editingItem && <span className="text-red-500">*</span>}
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 text-center hover:border-amber-400 hover:bg-amber-50 transition bg-gray-50">
+                      <Upload className="w-4 h-4 mx-auto text-gray-400 mb-1" />
+                      <p className="text-xs text-gray-600">Upload photo</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">4:3 ratio, up to 10MB</p>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                  </label>
+                  {imagePreview && (
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setImageFile(null); if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview); setImagePreview(null); }}
+                        className="absolute top-0.5 right-0.5 bg-red-500 text-white p-0.5 rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Title *</label>
+                <input
+                  type="text" name="title" value={formData.title} onChange={handleChange} required maxLength={100}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none text-sm"
+                  placeholder="Honey Flavored Chew"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Description</label>
+                <input
+                  type="text" name="description" value={formData.description} onChange={handleChange} maxLength={200}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none text-sm"
+                  placeholder="Sweet & natural honey coating"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Category</label>
+                  <select
+                    name="category" value={formData.category} onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none text-sm bg-white"
+                  >
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Order</label>
+                  <input
+                    type="number" name="order" value={formData.order} onChange={handleChange} min="0"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Visibility</label>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition w-full ${
+                    formData.isActive
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
+                  }`}
+                >
+                  {formData.isActive ? <><ToggleRight className="w-4 h-4" /> Visible on gallery</> : <><ToggleLeft className="w-4 h-4" /> Hidden</>}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition disabled:opacity-50 text-sm"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />{editingItem ? 'Updating…' : 'Uploading…'}</>
+                ) : (
+                  <><Save className="w-4 h-4" />{editingItem ? 'Update Photo' : 'Add to Gallery'}</>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Gallery grid */}
+        <div className="xl:col-span-3 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
+              <FiFilter size={13} className="text-gray-400 ml-1 flex-shrink-0" />
+              {(['ALL', ...CATEGORIES]).map(cat => (
                 <button
                   key={cat}
-                  type="button"
                   onClick={() => setFilterCat(cat)}
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${
-                    filterCat === cat ? 'bg-white text-amber-700' : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap
+                    ${filterCat === cat ? 'bg-[#0c1e35] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'}`}
                 >
                   {cat}
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-xl shadow-sm">
+              {(['all', 'live', 'hidden'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setFilterVis(v)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap
+                    ${filterVis === v ? 'bg-[#0c1e35] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'}`}
+                >
+                  {v === 'all' ? 'All' : v === 'live' ? 'Live' : 'Hidden'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* List */}
-          <div className="flex-1 overflow-y-auto p-3">
-            {loadingList ? (
-              <div className="flex justify-center items-center h-32">
-                <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-              </div>
-            ) : displayedItems.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <Image className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">{items.length === 0 ? 'No photos yet' : 'No photos in this category'}</p>
-                <p className="text-xs mt-1">Upload your first photo above</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {displayedItems.map(item => (
-                  <div
-                    key={item._id}
-                    className={`rounded-xl border overflow-hidden transition ${
-                      editingItem?._id === item._id
-                        ? 'border-amber-400 bg-amber-50'
-                        : 'border-gray-200 bg-gray-50 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex gap-3 p-2.5">
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                        <div className={`absolute bottom-0 inset-x-0 text-center text-[8px] font-bold py-0.5 ${
-                          item.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
-                        }`}>
-                          {item.isActive ? 'LIVE' : 'HIDDEN'}
+          {loadingList ? (
+            <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-gray-400">Loading photos…</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-20 gap-3">
+              <ImageIcon className="w-7 h-7 text-gray-300" />
+              <p className="text-sm text-gray-400 font-medium">No photos found</p>
+              <p className="text-[11px] text-gray-400">{items.length === 0 ? 'Upload your first photo using the form.' : 'Try adjusting the filters.'}</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {grouped.map(([category, photos]) => (
+                <section key={category} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <header className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-amber-50 to-white border-b border-gray-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">{category}</span>
+                      <span className="text-xs text-gray-500">
+                        <span className="font-semibold text-gray-700 tabular-nums">{photos.length}</span> {photos.length === 1 ? 'photo' : 'photos'}
+                      </span>
+                    </div>
+                  </header>
+                  <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {photos.map(item => (
+                      <div
+                        key={item._id}
+                        className={`group relative rounded-xl overflow-hidden border transition-shadow hover:shadow-md ${
+                          editingItem?._id === item._id ? 'border-amber-400 ring-2 ring-amber-200' : 'border-gray-100'
+                        } ${!item.isActive ? 'opacity-60' : ''}`}
+                      >
+                        <div className="aspect-[4/3] bg-gray-100">
+                          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                        </div>
+
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                            item.isActive ? 'bg-emerald-500 text-white' : 'bg-gray-500 text-white'
+                          }`}>
+                            {item.isActive ? 'LIVE' : 'HIDDEN'}
+                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-black/50 text-white tabular-nums">
+                            #{item.order ?? 0}
+                          </span>
+                        </div>
+
+                        <div className="p-2 bg-white">
+                          <p className="text-[11px] font-semibold text-gray-800 truncate">{item.title}</p>
+                          <p className="text-[10px] text-gray-400 truncate">{item.description || '—'}</p>
+                          <div className="flex gap-1 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(item)}
+                              title="Edit"
+                              className="flex-1 inline-flex items-center justify-center gap-1 p-1.5 rounded-lg border border-gray-200 bg-white text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(item)}
+                              title="Delete"
+                              className="flex-1 inline-flex items-center justify-center gap-1 p-1.5 rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-gray-800 truncate">{item.title}</p>
-                        <p className="text-[10px] text-gray-400 truncate mt-0.5">{item.description || '—'}</p>
-                        <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">
-                          {item.category}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5 px-2.5 pb-2.5">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(item)}
-                        className="flex-1 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-1"
-                      >
-                        <Edit2 className="w-3 h-3" /> Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(item)}
-                        className="flex-1 py-1.5 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center justify-center gap-1"
-                      >
-                        <Trash2 className="w-3 h-3" /> Delete
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="p-3 border-t">
-            <button
-              type="button"
-              onClick={fetchItems}
-              disabled={loadingList}
-              className="w-full py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingList ? 'animate-spin' : ''}`} />
-              {loadingList ? 'Loading…' : 'Refresh'}
-            </button>
-          </div>
+                </section>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Delete modal ─────────────────────────────────────────────────── */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteTarget(null)} />
-          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-5 h-5 text-red-600" />
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="text-red-600 w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-800">Delete Gallery Photo</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  &ldquo;{deleteTarget.title}&rdquo; will be permanently removed. This cannot be undone.
-                </p>
+                <h3 className="text-lg font-bold text-gray-800">Delete photo?</h3>
+                <p className="text-xs text-gray-500">This cannot be undone.</p>
               </div>
-              <button type="button" onClick={() => setDeleteTarget(null)} className="p-1 rounded hover:bg-gray-100 ml-auto">
-                <X className="w-4 h-4 text-gray-400" />
-              </button>
             </div>
-            <div className="flex gap-3 mt-5">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="flex-1 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={confirmDelete}
-                className="flex-1 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting…</>
-                  : <><Trash2  className="w-4 h-4" /> Delete</>}
+            <p className="text-sm text-gray-600">
+              Permanently delete &ldquo;<span className="font-semibold">{deleteTarget.title}</span>&rdquo; from the gallery?
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition">Cancel</button>
+              <button onClick={confirmDelete} disabled={loading} className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition disabled:opacity-60">
+                {loading ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>

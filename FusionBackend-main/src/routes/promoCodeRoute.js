@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { verifyPromoCode, createPromoCode, getAllPromoCodes, deactivatePromoCode } from '../controllers/promoCodeController.js';
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware/authMiddleware.js';
+import { promoLimiter } from '../middlewares/rateLimit/rateLimiters.js';
 
 const promoCodeRoute = Router();
 
-// Public — verify a promo code
-promoCodeRoute.post('/verify', verifyPromoCode);
+// Public — verify a promo code (rate-limited: brute-force enumeration target)
+promoCodeRoute.post('/verify', promoLimiter, verifyPromoCode);
 
 // Admin only — create a promo code
 promoCodeRoute.post('/create', authenticate, authorizeRoles('admin'), createPromoCode);

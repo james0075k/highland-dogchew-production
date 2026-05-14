@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Cookies from 'js-cookie';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -10,6 +9,8 @@ import {
   FiChevronDown, FiPackage, FiCalendar, FiPhone, FiMail,
   FiExternalLink,
 } from 'react-icons/fi';
+import { formatMoney } from '@/lib/format';
+import { authHeader, getAuthToken } from '@/lib/auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -173,10 +174,10 @@ export default function OrderDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      const token = Cookies.get('token');
+      const token = getAuthToken();
       if (!token) { setError('Not authenticated. Please log in again.'); return; }
       const res   = await fetch(`${API}/admin/orders/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader(),
       });
       const data  = await res.json();
 
@@ -199,10 +200,10 @@ export default function OrderDetailPage() {
     setSubsLoading(true);
     setSubsError(false);
     try {
-      const token = Cookies.get('token');
+      const token = getAuthToken();
       if (!token) { setSubsError(true); return; }
       const res = await fetch(`${API}/admin/subscriptions?search=${encodeURIComponent(email)}&limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader(),
       });
       if (!res.ok) { setSubsError(true); return; }
       const data = await res.json();
@@ -226,7 +227,7 @@ export default function OrderDetailPage() {
     try {
       setUpdating(true);
       setUpdateMsg(null);
-      const token = Cookies.get('token');
+      const token = getAuthToken();
       if (!token) { setUpdateMsg({ type: 'error', text: 'Not authenticated. Please log in again.' }); return; }
       const body: Record<string, string> = { orderStatus: newStatus };
       if (newStatus === 'shipped' && trackingInput.trim()) {
@@ -235,10 +236,7 @@ export default function OrderDetailPage() {
 
       const res = await fetch(`${API}/admin/orders/${id}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -269,11 +267,9 @@ export default function OrderDetailPage() {
   // ── Loading skeleton ─────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <div className="bg-gradient-to-r from-[#0c1e35] via-[#132f4f] to-[#0e2640] px-6 md:px-10 py-8">
-          <div className="h-8 w-64 bg-white/10 rounded-xl animate-pulse" />
-        </div>
-        <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6 grid lg:grid-cols-2 gap-6">
+      <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa]">
+        <div className="h-10 w-64 bg-white rounded-xl animate-pulse mb-5 border border-gray-100" />
+        <div className="grid lg:grid-cols-2 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl h-48 animate-pulse border border-gray-100" />
           ))}
@@ -307,53 +303,48 @@ export default function OrderDetailPage() {
   const itemTotal = (order.items ?? []).reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0);
 
   return (
-    <div className="min-h-screen pb-16 bg-gray-50/50">
+    <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa]">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-[#0c1e35] via-[#132f4f] to-[#0e2640] px-6 md:px-10 py-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Back */}
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div className="flex items-center gap-3">
           <Link
             href="/dashboard/orders"
-            className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-sm mb-4 transition-colors"
+            className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 transition-colors"
           >
-            <FiArrowLeft size={14} />
-            All Orders
+            <FiArrowLeft size={16} />
           </Link>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-3 font-mono">
-                <FiShoppingBag className="text-amber-400" size={22} />
-                {order.orderNumber}
-              </h1>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${paymentBadge[order.paymentStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-                  {cap(order.paymentStatus)}
-                </span>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${orderBadge[order.orderStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-                  {cap(order.orderStatus)}
-                </span>
-                <span className="text-blue-200/50 text-xs flex items-center gap-1">
-                  <FiCalendar size={11} />
-                  {fmtDate(order.createdAt)} at {fmtTime(order.createdAt)}
-                </span>
-              </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2 font-mono">
+              <FiShoppingBag className="text-amber-500" size={18} />
+              {order.orderNumber}
+            </h1>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${paymentBadge[order.paymentStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                {cap(order.paymentStatus)}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${orderBadge[order.orderStatus ?? ''] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                {cap(order.orderStatus)}
+              </span>
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <FiCalendar size={11} />
+                {fmtDate(order.createdAt)} at {fmtTime(order.createdAt)}
+              </span>
             </div>
-
-            <button
-              onClick={fetchOrder}
-              className="self-start flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors border border-white/10 text-sm font-medium"
-            >
-              <FiRefreshCw size={14} />
-              Refresh
-            </button>
           </div>
         </div>
+        <button
+          onClick={fetchOrder}
+          className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
+        >
+          <FiRefreshCw size={14} />
+          Refresh
+        </button>
       </div>
 
       {/* ── Body ───────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 mt-6">
+      <div>
+
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* ════════ LEFT COLUMN ════════ */}
@@ -518,12 +509,12 @@ export default function OrderDetailPage() {
                         <td className="px-3 py-3.5 text-center">
                           <span className="text-sm font-bold text-gray-700">{item.quantity}</span>
                         </td>
-                        <td className="px-3 py-3.5 text-right text-sm text-gray-500">
-                          £{(item.unitPrice ?? 0).toFixed(2)}
+                        <td className="px-3 py-3.5 text-right text-sm text-gray-500 tabular-nums">
+                          {formatMoney(item.unitPrice ?? 0)}
                         </td>
                         <td className="px-3 py-3.5 text-right">
-                          <span className="text-sm font-bold text-gray-900">
-                            £{((item.unitPrice ?? 0) * item.quantity).toFixed(2)}
+                          <span className="text-sm font-bold text-gray-900 tabular-nums">
+                            {formatMoney((item.unitPrice ?? 0) * item.quantity)}
                           </span>
                         </td>
                       </tr>
@@ -534,8 +525,8 @@ export default function OrderDetailPage() {
                       <td colSpan={4} className="px-3 py-2.5 text-right text-xs font-semibold text-gray-400 uppercase">
                         Items subtotal
                       </td>
-                      <td className="px-3 py-2.5 text-right text-sm font-bold text-gray-900">
-                        £{itemTotal.toFixed(2)}
+                      <td className="px-3 py-2.5 text-right text-sm font-bold text-gray-900 tabular-nums">
+                        {formatMoney(itemTotal)}
                       </td>
                     </tr>
                   </tfoot>
@@ -561,8 +552,8 @@ export default function OrderDetailPage() {
                       className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0"
                     >
                       <span className="text-sm text-gray-500">{row!.label}</span>
-                      <span className={`text-sm font-semibold ${(row as { negative?: boolean }).negative ? 'text-emerald-600' : 'text-gray-800'}`}>
-                        {(row as { negative?: boolean }).negative ? '-' : ''}£{Math.abs(row!.value).toFixed(2)}
+                      <span className={`text-sm font-semibold tabular-nums ${(row as { negative?: boolean }).negative ? 'text-emerald-600' : 'text-gray-800'}`}>
+                        {(row as { negative?: boolean }).negative ? '-' : ''}{formatMoney(Math.abs(row!.value))}
                       </span>
                     </div>
                   ))}
@@ -570,8 +561,8 @@ export default function OrderDetailPage() {
                 {/* Grand total */}
                 <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-gray-200">
                   <span className="text-base font-bold text-gray-900">Grand Total</span>
-                  <span className="text-xl font-bold text-amber-600">
-                    £{(order.grandTotal ?? 0).toFixed(2)}
+                  <span className="text-xl font-bold text-amber-600 tabular-nums">
+                    {formatMoney(order.grandTotal ?? 0)}
                   </span>
                 </div>
               </div>

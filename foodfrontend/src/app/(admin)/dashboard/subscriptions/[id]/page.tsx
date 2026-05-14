@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Cookies from 'js-cookie';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FiArrowLeft, FiRefreshCw, FiCheckCircle, FiPauseCircle,
-  FiAlertCircle, FiXCircle, FiMail, FiMapPin, FiClock,
+  FiAlertCircle, FiXCircle, FiMail, FiMapPin, FiClock, FiRepeat,
 } from 'react-icons/fi';
+import { formatMoney } from '@/lib/format';
+import { authHeader, jsonAuthHeader } from '@/lib/auth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,9 +99,7 @@ export default function SubscriptionDetailPage() {
     setLoading(true);
     setFetchError(null);
     try {
-      const token = Cookies.get('token');
-      const headers = { Authorization: `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' };
-      const res  = await fetch(`${base}/admin/subscriptions/${id}`, { headers });
+      const res  = await fetch(`${base}/admin/subscriptions/${id}`, { headers: authHeader() });
       if (!res.ok) { setFetchError(`Server error (${res.status}). Please try again.`); return; }
       const data = await res.json();
       if (data.success && data.data?.subscription) {
@@ -123,11 +122,9 @@ export default function SubscriptionDetailPage() {
     setUpdating(true);
     setUpdateError(null);
     try {
-      const token = Cookies.get('token');
-      const headers = { Authorization: `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' };
       const res  = await fetch(`${base}/admin/subscriptions/${id}/status`, {
         method: 'PATCH',
-        headers,
+        headers: jsonAuthHeader(),
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) { setUpdateError(`Server error (${res.status}). Please try again.`); return; }
@@ -143,17 +140,25 @@ export default function SubscriptionDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-slate-400">
-        <FiRefreshCw className="animate-spin mr-2" /> Loading…
+      <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa]">
+        <div className="h-10 w-64 bg-white rounded-xl animate-pulse mb-5 border border-gray-100" />
+        <div className="grid lg:grid-cols-3 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl h-48 animate-pulse border border-gray-100" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (!sub) {
     return (
-      <div className="p-8 text-center text-slate-500">
-        {fetchError || 'Subscription not found.'}{' '}
-        <button onClick={() => router.back()} className="text-slate-900 underline">Go back</button>
+      <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa] flex flex-col items-center justify-center gap-4 text-center">
+        <FiAlertCircle size={48} className="text-gray-300" />
+        <h2 className="text-lg font-bold text-gray-700">{fetchError || 'Subscription not found.'}</h2>
+        <button onClick={() => router.back()} className="px-5 py-2.5 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors">
+          Go back
+        </button>
       </div>
     );
   }
@@ -163,46 +168,56 @@ export default function SubscriptionDetailPage() {
   const addr = sub.shippingAddress;
 
   return (
-    <div className="p-6 min-h-screen bg-slate-50">
-      <div className="max-w-5xl mx-auto">
+    <div className="p-5 md:p-7 min-h-screen bg-[#f5f7fa]">
 
-        {/* Back */}
-        <Link
-          href="/dashboard/subscriptions"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-6 transition-colors"
-        >
-          <FiArrowLeft size={14} /> All Subscriptions
-        </Link>
-
-        {/* Header */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs text-slate-400 font-mono mb-1">{sub.subscriptionId}</p>
-              <h1 className="text-2xl font-bold text-slate-900">{sub.productName}</h1>
-              <p className="text-slate-500 text-sm mt-1">{sub.size} · Qty {sub.quantity} · {sub.intervalLabel}</p>
-            </div>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${sm.cls}`}>
-              <StatusIcon size={14} />
-              {sm.label}
-            </span>
-          </div>
-
-          {/* Key metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
-            {[
-              { label: 'Per Delivery',   value: `£${(sub.unitPrice * sub.quantity).toFixed(2)}` },
-              { label: 'Next Billing',   value: fmt(sub.nextBillingDate) },
-              { label: 'Last Billed',    value: fmt(sub.lastBilledAt) },
-              { label: 'Since',          value: fmt(sub.createdAt) },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-xs text-slate-400 uppercase tracking-wider">{label}</p>
-                <p className="text-lg font-bold text-slate-900 mt-0.5">{value}</p>
-              </div>
-            ))}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/subscriptions"
+            className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 transition-colors"
+          >
+            <FiArrowLeft size={16} />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <FiRepeat className="text-amber-500" size={18} />
+              {sub.productName}
+            </h1>
+            <p className="text-[11px] text-gray-400 mt-0.5 font-mono">{sub.subscriptionId}</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${sm.cls}`}>
+            <StatusIcon size={11} />
+            {sm.label}
+          </span>
+          <button
+            onClick={fetchSub}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
+          >
+            <FiRefreshCw size={14} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Key metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        {[
+          { label: 'Per Delivery', value: formatMoney(sub.unitPrice * sub.quantity), color: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'ring-emerald-100' },
+          { label: 'Next Billing', value: fmt(sub.nextBillingDate), color: 'text-blue-600', bg: 'bg-blue-50', ring: 'ring-blue-100' },
+          { label: 'Last Billed',  value: fmt(sub.lastBilledAt),   color: 'text-amber-600', bg: 'bg-amber-50', ring: 'ring-amber-100' },
+          { label: 'Active Since', value: fmt(sub.createdAt),       color: 'text-slate-700', bg: 'bg-slate-50', ring: 'ring-slate-100' },
+        ].map(card => (
+          <div key={card.label} className={`bg-white rounded-xl border border-gray-100 px-4 py-3 ring-1 ${card.ring}`}>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{card.label}</p>
+            <p className={`text-lg font-bold tabular-nums mt-0.5 ${card.color}`}>{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -234,7 +249,7 @@ export default function SubscriptionDetailPage() {
                     {[...sub.billingHistory].reverse().map((entry, i) => (
                       <tr key={i} className="hover:bg-slate-50">
                         <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{fmtDateTime(entry.date)}</td>
-                        <td className="px-4 py-3 font-semibold">£{entry.amount.toFixed(2)}</td>
+                        <td className="px-4 py-3 font-semibold tabular-nums">{formatMoney(entry.amount)}</td>
                         <td className="px-4 py-3">
                           {entry.status === 'success' ? (
                             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
@@ -349,7 +364,7 @@ export default function SubscriptionDetailPage() {
                   {typeof sub.firstOrderId === 'object' ? sub.firstOrderId.orderNumber : '—'}
                 </Link>
                 {typeof sub.firstOrderId === 'object' && sub.firstOrderId.grandTotal && (
-                  <p className="text-sm text-slate-500 mt-1">£{sub.firstOrderId.grandTotal.toFixed(2)}</p>
+                  <p className="text-sm text-slate-500 mt-1 tabular-nums">{formatMoney(sub.firstOrderId.grandTotal)}</p>
                 )}
               </div>
             )}

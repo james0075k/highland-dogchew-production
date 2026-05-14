@@ -55,6 +55,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const TAX_RATE = 0.20;           // 20% VAT
 const DELIVERY_FLAT = 2.99;      // single flat delivery for the entire cart
 const STORAGE_KEY = 'highland-dogchew-cart';
+// Bump CART_SCHEMA_VERSION whenever the CartItem shape changes in a way that
+// would break old localStorage payloads (renaming/required fields, etc.).
+// On mismatch we clear the stored cart rather than feed malformed data into
+// the checkout flow.
+const CART_SCHEMA_VERSION = 2;
 
 // --- Helper: enrich each item with its line-level tax (delivery is cart-level, not per-item) ---
 function enrichItem(item: Omit<CartItem, 'tax' | 'delivery'>): CartItem {
@@ -78,11 +83,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed: CartItem[] = JSON.parse(stored);
-        setItems(parsed);
+        const parsed = JSON.parse(stored);
+        // Versioned payload: { v: number, items: CartItem[] }
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          parsed.v === CART_SCHEMA_VERSION &&
+          Array.isArray(parsed.items)
+        ) {
+          setItems(parsed.items);
+        } else {
+          // Unknown / legacy shape — clear it rather than send malformed data to checkout
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {
-      // ignore corrupt data
+      localStorage.removeItem(STORAGE_KEY);
     }
     setHydrated(true);
   }, []);
@@ -90,7 +106,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Persist cart to localStorage on change (skip initial hydration)
   useEffect(() => {
     if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ v: CART_SCHEMA_VERSION, items }),
+      );
     }
   }, [items, hydrated]);
 
@@ -207,7 +226,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Computed totals — mirrors backend resolveAndCalculate exactly
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = +items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0).toFixed(2);
-  const discount = promoInfo ? promoInfo.discount : 0;
+  // Recompute discount from discountType/discountValue against the *current* subtotal,
+  // not the stale snapshot taken when applyPromoCode was called. Otherwise editing the
+  // cart after applying a promo leaves a stale discount that won't match the server PI.
+  const discount = promoInfo
+    ? (promoInfo.discountType === 'percentage'
+        ? +(subtotal * (promoInfo.discountValue / 100)).toFixed(2)
+        : +Math.min(promoInfo.discountValue, subtotal).toFixed(2))
+    : 0;
   const discountedSubtotal = +(subtotal - discount).toFixed(2);
   const totalTax = +(discountedSubtotal * TAX_RATE).toFixed(2);
   // Single flat delivery for the whole cart regardless of how many lines there are

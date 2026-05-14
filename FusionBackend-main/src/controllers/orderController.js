@@ -1,20 +1,20 @@
-/**
- * orderController.js — FALLBACK order creation path (sync endpoint)
+﻿/**
+ * orderController.js â€” FALLBACK order creation path (sync endpoint)
  *
- * POST /api/orders/sync  — called by the success page after Stripe redirects back.
- *   • Works in local dev (no webhook reachable)
- *   • Acts as a safety net in production if webhook is delayed or missed
- *   • Fully idempotent — safe to call multiple times for the same payment
+ * POST /api/orders/sync  â€” called by the success page after Stripe redirects back.
+ *   â€¢ Works in local dev (no webhook reachable)
+ *   â€¢ Acts as a safety net in production if webhook is delayed or missed
+ *   â€¢ Fully idempotent â€” safe to call multiple times for the same payment
  *
  * GET  /api/orders/payment-intent/:paymentIntentId
- *   • Used by the success page to check if the order already exists
- *   • Returns a stripped response (no phone/internal fields)
+ *   â€¢ Used by the success page to check if the order already exists
+ *   â€¢ Returns a stripped response (no phone/internal fields)
  *
  * POST /api/orders/my-orders
- *   • Returns order history for a given email (rate-limited in route)
+ *   â€¢ Returns order history for a given email (rate-limited in route)
  *
  * POST /api/orders/track
- *   • Public parcel tracking — validates email + orderNumber before returning
+ *   â€¢ Public parcel tracking â€” validates email + orderNumber before returning
  *
  * NOTE: POST /api/orders/create has been removed.
  *       Order creation now happens exclusively via the Stripe webhook
@@ -27,11 +27,11 @@ import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
-// ─── GET /api/orders/payment-intent/:paymentIntentId ─────────────────────────
+// â”€â”€â”€ GET /api/orders/payment-intent/:paymentIntentId â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Used by the success page to confirm the order exists.
-// Phone is excluded — it is PII that the success page doesn't need.
+// Phone is excluded â€” it is PII that the success page doesn't need.
 export const getOrderByPaymentIntent = async (req, res, next) => {
   try {
     const { paymentIntentId } = req.params;
@@ -49,9 +49,9 @@ export const getOrderByPaymentIntent = async (req, res, next) => {
           county:       shippingAddress.county,
           postcode:     shippingAddress.postcode,
           country:      shippingAddress.country,
-          // email included so success page can show "confirmation sent to …"
+          // email included so success page can show "confirmation sent to â€¦"
           email:        shippingAddress.email,
-          // phone omitted — not needed on success page
+          // phone omitted â€” not needed on success page
         }
       : {};
 
@@ -61,7 +61,7 @@ export const getOrderByPaymentIntent = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/orders — admin only ────────────────────────────────────────────
+// â”€â”€â”€ GET /api/orders â€” admin only â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getUserOrders = async (req, res, next) => {
   try {
     const orders = await OrderModel.find().sort({ createdAt: -1 }).limit(50);
@@ -71,10 +71,10 @@ export const getUserOrders = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/orders/my-orders — Fetch all orders by email ──────────────────
+// â”€â”€â”€ POST /api/orders/my-orders â€” Fetch all orders by email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Body: { email }
 // Rate-limited in orderRoute.js (10 req / 15 min per IP).
-// Returns only safe customer-facing fields — no phone, no internal IDs.
+// Returns only safe customer-facing fields â€” no phone, no internal IDs.
 export const getMyOrders = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -121,7 +121,7 @@ export const getMyOrders = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/orders/track — Public parcel tracking ─────────────────────────
+// â”€â”€â”€ POST /api/orders/track â€” Public parcel tracking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Body: { orderNumber, email }
 // Validates email against shippingAddress.email; returns limited safe fields.
 export const trackOrder = async (req, res, next) => {
@@ -178,17 +178,17 @@ export const trackOrder = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/orders/sync — FALLBACK order creation ─────────────────────────
+// â”€â”€â”€ POST /api/orders/sync â€” FALLBACK order creation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Flow:
-//   1. Check DB first — if order exists, return it instantly (no Stripe call)
+//   1. Check DB first â€” if order exists, return it instantly (no Stripe call)
 //   2. Retrieve PI from Stripe and verify it actually succeeded
 //   3. Delegate to createOrderFromPI (same utility as webhook)
 //
 // The unique index on paymentIntentId makes concurrent webhook + sync calls safe:
-//   • If webhook wins → sync finds the existing order at step 1
-//   • If sync wins   → webhook finds the existing order and skips creation
-//   • If both race   → MongoDB unique index rejects the second insert; the
+//   â€¢ If webhook wins â†’ sync finds the existing order at step 1
+//   â€¢ If sync wins   â†’ webhook finds the existing order and skips creation
+//   â€¢ If both race   â†’ MongoDB unique index rejects the second insert; the
 //                      duplicate-key handler in createOrderFromPI returns the winner
 //
 export const syncOrderFromPaymentIntent = async (req, res, next) => {
@@ -201,7 +201,7 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
       return next(handleError(400, 'paymentIntentId is required'));
     }
 
-    // ── Retrieve PI from Stripe to verify payment ─────────────────────────────
+    // â”€â”€ Retrieve PI from Stripe to verify payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let pi;
     try {
       pi = await getStripe().paymentIntents.retrieve(paymentIntentId);
@@ -213,7 +213,7 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
       return next(handleError(402, `Payment not completed (status: ${pi.status})`));
     }
 
-    // ── Delegate to shared util — passes customerOverride so empty metadata ────
+    // â”€â”€ Delegate to shared util â€” passes customerOverride so empty metadata â”€â”€â”€â”€
     //    orders are backfilled with sessionStorage data from the checkout page.
     const { order, created } = await createOrderFromPI(pi, customer || null);
 
@@ -222,7 +222,7 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
       await createSubscriptionsFromPI(pi, order);
     }
 
-    console.log(`[sync] ${created ? '✅ Created' : '⏭️  Already existed'}: Order ${order.orderNumber} (PI: ${pi.id})`);
+    console.log(`[sync] ${created ? 'âœ… Created' : 'â­ï¸  Already existed'}: Order ${order.orderNumber} (PI: ${pi.id})`);
     return handleSuccess(res, created ? 201 : 200, created ? 'Order created' : 'Order fetched', order);
 
   } catch (err) {

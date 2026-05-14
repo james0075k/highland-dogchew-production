@@ -1,7 +1,7 @@
-import BookingModel from '../models/bookingModel.js';
+﻿import BookingModel from '../models/bookingModel.js';
 import TourPackage from '../models/tourPackageModel.js'; 
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { bookingValidationSchema } from '../validations/validationSchemas.js';
 
 

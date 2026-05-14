@@ -1,7 +1,7 @@
-import Stripe from 'stripe';
+﻿import Stripe from 'stripe';
 import BookingModel from '../models/bookingModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import tourPackageModel from '../models/tourPackageModel.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -99,7 +99,7 @@ export const stripeWebhookHandler = async (req, res, next) => {
           { new: true }
         ).populate('tourPackage');
 
-        console.log(`✅ Payment successful for booking ${bookingId}`);
+        console.log(`âœ… Payment successful for booking ${bookingId}`);
         console.log(`Tour Package: ${updatedBooking.tourPackage.title}`);
         
         // Here you can add additional logic like:
@@ -108,7 +108,7 @@ export const stripeWebhookHandler = async (req, res, next) => {
         // - Notify tour operators
         
       } catch (err) {
-        console.error(`❌ Failed to update booking after payment: ${err.message}`);
+        console.error(`âŒ Failed to update booking after payment: ${err.message}`);
       }
       break;
 
@@ -121,15 +121,15 @@ export const stripeWebhookHandler = async (req, res, next) => {
           paymentStatus: 'failed',
           status: 'expired'
         });
-        console.log(`⏰ Payment session expired for booking ${expiredBookingId}`);
+        console.log(`â° Payment session expired for booking ${expiredBookingId}`);
       } catch (err) {
-        console.error(`❌ Failed to update expired booking: ${err.message}`);
+        console.error(`âŒ Failed to update expired booking: ${err.message}`);
       }
       break;
 
     case 'payment_intent.payment_failed':
       const failedPayment = event.data.object;
-      console.log(`❌ Payment failed: ${failedPayment.id}`);
+      console.log(`âŒ Payment failed: ${failedPayment.id}`);
       break;
 
     default:

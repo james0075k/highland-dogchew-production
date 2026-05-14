@@ -1,7 +1,7 @@
-import ProductModel from '../models/productModel.js';
+﻿import ProductModel from '../models/productModel.js';
 import VarietyModel from '../models/varietyModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import path from 'path';
 import fs from 'fs';
@@ -9,38 +9,38 @@ import { __dirname, deleteFile } from '../utils/fileHelpers.js';
 import mongoose from 'mongoose';
 import { productValidationSchema } from '../validations/productValidationSchemas.js';
 
-// ─── Image URL helpers ───────────────────────────────────────────────────────
+// â”€â”€â”€ Image URL helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Build a URL from an uploaded file.
-// • Cloudinary: multer sets file.path = full https://res.cloudinary.com/... URL
-// • Local disk:  file.path is an absolute local path, use filename instead
+// â€¢ Cloudinary: multer sets file.path = full https://res.cloudinary.com/... URL
+// â€¢ Local disk:  file.path is an absolute local path, use filename instead
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path; // Cloudinary URL — works everywhere
+    return file.path; // Cloudinary URL â€” works everywhere
   }
   return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
 };
 
 // Normalise a stored image URL so it always resolves correctly:
-//   • Cloudinary URLs       → leave as-is  (CDN, accessible everywhere)
-//   • Other absolute URLs   → leave as-is  (e.g. production server URLs still work)
-//   • localhost/127 URLs    → rewrite to current host (localhost-only URLs break on prod)
-//   • Relative /uploads/... → make absolute with current host
+//   â€¢ Cloudinary URLs       â†’ leave as-is  (CDN, accessible everywhere)
+//   â€¢ Other absolute URLs   â†’ leave as-is  (e.g. production server URLs still work)
+//   â€¢ localhost/127 URLs    â†’ rewrite to current host (localhost-only URLs break on prod)
+//   â€¢ Relative /uploads/... â†’ make absolute with current host
 const rewriteImageUrl = (url, req) => {
   if (!url || typeof url !== 'string') return url;
-  // Cloudinary — always universally accessible
+  // Cloudinary â€” always universally accessible
   if (url.includes('res.cloudinary.com')) return url;
-  // Relative path — make absolute
+  // Relative path â€” make absolute
   if (url.startsWith('/uploads/')) {
     return `${req.protocol}://${req.get('host')}${url}`;
   }
-  // Only rewrite localhost URLs — they only work on the machine that uploaded the file
+  // Only rewrite localhost URLs â€” they only work on the machine that uploaded the file
   if (url.includes('localhost') || url.includes('127.0.0.1')) {
     const idx = url.indexOf('/uploads/');
     if (idx === -1) return url;
     return `${req.protocol}://${req.get('host')}${url.substring(idx)}`;
   }
-  // Any other absolute URL (e.g. https://api.highlanddogchew.co.uk/uploads/...) — leave as-is
+  // Any other absolute URL (e.g. https://api.highlanddogchew.co.uk/uploads/...) â€” leave as-is
   return url;
 };
 
@@ -58,7 +58,7 @@ const rewriteProductImages = (product, req) => {
   }
   return p;
 };
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Create Product
 export const createProduct = async (req, res, next) => {
@@ -72,7 +72,7 @@ export const createProduct = async (req, res, next) => {
     // TEMP LOG: verify productType arrives from admin form
     console.log('[createProduct] productType received:', productType);
 
-    // Validate productType — required, must be valid enum
+    // Validate productType â€” required, must be valid enum
     const allowedTypes = ['yak-milk', 'puff-treat', 'highland-mix'];
     if (!productType || !allowedTypes.includes(productType)) {
       return res.status(400).json({
@@ -110,7 +110,7 @@ export const createProduct = async (req, res, next) => {
       galleryUrls = req.files.gallery.map(file => getUploadedFileUrl(file, req));
     }
 
-    // Parse JSON strings (safe — returns fallback on malformed input)
+    // Parse JSON strings (safe â€” returns fallback on malformed input)
     const parsedFeatures = safeJsonParse(features, []);
     const parsedSizes = safeJsonParse(sizes, []);
     const parsedBulkPricing = safeJsonParse(bulkPricing, []);
@@ -201,7 +201,7 @@ export const getAllProducts = async (req, res, next) => {
       filter.productType = req.query.type;
     }
 
-    // Search filter — case-insensitive match on name or description
+    // Search filter â€” case-insensitive match on name or description
     const searchQuery = req.query.search?.trim();
     if (searchQuery) {
       const regex = { $regex: searchQuery, $options: 'i' };
@@ -215,7 +215,7 @@ export const getAllProducts = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Public list — safe to cache at the edge for a short window
+    // Public list â€” safe to cache at the edge for a short window
     if (!searchQuery) {
       res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
     }
@@ -280,6 +280,21 @@ export const getProductById = async (req, res, next) => {
   }
 };
 
+// Admin: Get Product By ID (ignores isActive so archived products can be edited)
+export const getProductByIdAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(handleError(400, 'Invalid product ID'));
+    }
+    const product = await ProductModel.findById(id).populate('variety');
+    if (!product) return next(handleError(404, 'Product not found'));
+    return handleSuccess(res, 200, 'Product fetched successfully', rewriteProductImages(product, req));
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get Products by Variety ID
 export const getProductsByVariety = async (req, res, next) => {
   try {
@@ -329,7 +344,7 @@ export const updateProduct = async (req, res, next) => {
     if (updatedData.updatedAt) delete updatedData.updatedAt;
     if (updatedData.__v) delete updatedData.__v;
 
-    // Parse JSON strings if they exist (safe — returns fallback on malformed input)
+    // Parse JSON strings if they exist (safe â€” returns fallback on malformed input)
     if (updatedData.features && typeof updatedData.features === 'string') {
       updatedData.features = safeJsonParse(updatedData.features, []);
     }
@@ -360,7 +375,7 @@ export const updateProduct = async (req, res, next) => {
       updatedData.pricingSettings = { taxPercentage: taxPct, deliveryCharge: delCharge };
     }
 
-    // Fix subscriptionSettings — preserve weeklyOptions and monthlyOptions
+    // Fix subscriptionSettings â€” preserve weeklyOptions and monthlyOptions
     if (updatedData.subscriptionSettings) {
       const subDiscount = parseFloat(updatedData.subscriptionSettings.discountPercentage) || 0;
       if (subDiscount < 0 || subDiscount > 100) {
@@ -414,7 +429,7 @@ export const updateProduct = async (req, res, next) => {
       }
       updatedData.gallery = [...existingGallery, ...newGalleryUrls];
     } else if (updatedData.existingGallery) {
-      // No new files uploaded — use the existing gallery list (may have had items removed)
+      // No new files uploaded â€” use the existing gallery list (may have had items removed)
       try { updatedData.gallery = JSON.parse(updatedData.existingGallery); } catch {}
       delete updatedData.existingGallery;
     }
@@ -537,7 +552,7 @@ export const getFeaturedProducts = async (req, res, next) => {
   }
 };
 
-// Archive Product (soft delete — sets isActive: false, keeps files)
+// Archive Product (soft delete â€” sets isActive: false, keeps files)
 export const archiveProduct = async (req, res, next) => {
   try {
     const { id } = req.params;

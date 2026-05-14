@@ -1,6 +1,6 @@
-import PartnerModel from '../models/partnerModel.js';
+﻿import PartnerModel from '../models/partnerModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import path from 'path';

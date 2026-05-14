@@ -396,8 +396,6 @@ export default function AdminLoginPage() {
             overflow: 'hidden',
             borderRight: '1px solid rgba(245,158,11,0.08)',
           }}
-          // Show on md+ via inline style override ↓
-          // Using data attribute so we can target with a simple media query below
           data-left-panel
         >
           {/* ── Starfield ── */}
@@ -618,7 +616,6 @@ export default function AdminLoginPage() {
                       height={50}
                       style={{ objectFit: 'contain' }}
                       onError={(e) => {
-                        // Fallback: show text logo
                         const parent = (e.target as HTMLImageElement).parentElement;
                         if (parent) {
                           (e.target as HTMLImageElement).style.display = 'none';

@@ -11,8 +11,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard - Fusion Expeditions",
-  description: "Admin Dashboard for managing Fusion Expeditions",
+  title: "Dashboard — Highland Yak Chew",
+  description: "Admin dashboard for managing the Highland Yak Chew store",
 };
 
 export default function RootLayout({

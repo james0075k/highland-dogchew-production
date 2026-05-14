@@ -1,9 +1,9 @@
-import handleError from "../utils/errorHandler.js";
-import handleSuccess from "../utils/sucessHandler.js";
+﻿import handleError from "../utils/errorHandler.js";
+import handleSuccess from "../utils/successHandler.js";
 import contactModel from "../models/contactModel.js";
 
 
-// ✅ POST /contact  (public)
+// âœ… POST /contact  (public)
 export const createContactMessage = async (req, res, next) => {
   try {
     const payload = {
@@ -22,7 +22,7 @@ export const createContactMessage = async (req, res, next) => {
   }
 };
 
-// ✅ GET /contact  (admin)
+// âœ… GET /contact  (admin)
 export const getAllContactMessages = async (req, res, next) => {
   try {
     const { status, q, page = 1, limit = 20 } = req.query;
@@ -58,7 +58,7 @@ export const getAllContactMessages = async (req, res, next) => {
   }
 };
 
-// ✅ GET /contact/:id  (admin)
+// âœ… GET /contact/:id  (admin)
 export const getContactMessageById = async (req, res, next) => {
   try {
     const msg = await contactModel.findOne({ _id: req.params.id, isArchived: { $ne: true } });
@@ -70,7 +70,7 @@ export const getContactMessageById = async (req, res, next) => {
   }
 };
 
-// ✅ PATCH /contact/:id/status  (admin) - mark read/replied
+// âœ… PATCH /contact/:id/status  (admin) - mark read/replied
 export const updateContactStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -94,7 +94,7 @@ export const updateContactStatus = async (req, res, next) => {
   }
 };
 
-// ✅ DELETE /contact/:id  (admin — soft delete)
+// âœ… DELETE /contact/:id  (admin â€” soft delete)
 export const deleteContactMessage = async (req, res, next) => {
   try {
     const msg = await contactModel.findByIdAndUpdate(

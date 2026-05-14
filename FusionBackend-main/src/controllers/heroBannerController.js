@@ -1,16 +1,16 @@
-import HeroBanner from "../models/heroBannerModel.js";
+﻿import HeroBanner from "../models/heroBannerModel.js";
 import handleError from "../utils/errorHandler.js";
-import handleSuccess from "../utils/sucessHandler.js";
+import handleSuccess from "../utils/successHandler.js";
 import { getFileUrl } from "../middlewares/MulterMiddleware/multerMiddleware.js";
 import fs from "fs";
 import path from "path";
 import { deleteFile, __dirname } from "../utils/fileHelpers.js";
 
-// ─── Image URL helpers (mirrors instagramPostController pattern) ──────────────
+// â”€â”€â”€ Image URL helpers (mirrors instagramPostController pattern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path; // Cloudinary URL — works everywhere
+    return file.path; // Cloudinary URL â€” works everywhere
   }
   return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
 };
@@ -35,7 +35,7 @@ const deleteLocalFile = async (imageUrl) => {
   if (fs.existsSync(imagePath)) await deleteFile(imagePath);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Create Hero Banner
 export const createHeroBanner = async (req, res, next) => {
@@ -51,7 +51,7 @@ export const createHeroBanner = async (req, res, next) => {
     // Remove existing banner for the same page
     const existingBanner = await HeroBanner.findOne({ page });
     if (existingBanner) {
-      // Only attempt local disk deletion — Cloudinary files are skipped automatically
+      // Only attempt local disk deletion â€” Cloudinary files are skipped automatically
       await deleteLocalFile(existingBanner.bannerImage);
       await HeroBanner.deleteOne({ _id: existingBanner._id });
     }
@@ -108,7 +108,7 @@ export const updateHeroBanner = async (req, res, next) => {
     banner.width = width || banner.width;
 
     if (req.file) {
-      // Delete old local file only — skip if Cloudinary
+      // Delete old local file only â€” skip if Cloudinary
       await deleteLocalFile(banner.bannerImage);
       banner.bannerImage = getUploadedFileUrl(req.file, req);
     }
@@ -129,7 +129,7 @@ export const deleteHeroBanner = async (req, res, next) => {
     const banner = await HeroBanner.findByIdAndDelete(req.params.id);
     if (!banner) return next(handleError(404, "Banner not found"));
 
-    // Only attempt local disk deletion — Cloudinary files are skipped automatically
+    // Only attempt local disk deletion â€” Cloudinary files are skipped automatically
     await deleteLocalFile(banner.bannerImage);
 
     return handleSuccess(res, 200, "Banner and image deleted successfully", banner);

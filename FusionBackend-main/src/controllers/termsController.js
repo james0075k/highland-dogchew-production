@@ -1,8 +1,8 @@
-import TermsModel from '../models/termsModel.js';
+﻿import TermsModel from '../models/termsModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
-// ✅ Create Terms (Only one allowed)
+// âœ… Create Terms (Only one allowed)
 export const createTerms = async (req, res, next) => {
   try {
     const existing = await TermsModel.findOne();
@@ -19,7 +19,7 @@ export const createTerms = async (req, res, next) => {
   }
 };
 
-// ✅ Update Terms by ID
+// âœ… Update Terms by ID
 export const updateTerms = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -41,7 +41,7 @@ export const updateTerms = async (req, res, next) => {
   }
 };
 
-// ✅ Get All Terms
+// âœ… Get All Terms
 export const getAllTerms = async (req, res, next) => {
   try {
     const terms = await TermsModel.find();
@@ -51,7 +51,7 @@ export const getAllTerms = async (req, res, next) => {
   }
 };
 
-// ✅ Delete Terms by ID
+// âœ… Delete Terms by ID
 export const deleteTerms = async (req, res, next) => {
   try {
     const { id } = req.params;

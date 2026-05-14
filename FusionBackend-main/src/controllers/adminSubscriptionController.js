@@ -1,4 +1,4 @@
-/**
+﻿/**
  * adminSubscriptionController.js
  *
  * Auth-protected admin endpoints for viewing and managing subscriptions.
@@ -6,7 +6,7 @@
 
 import SubscriptionModel from '../models/subscriptionModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import sendEmail from '../utils/sendEmail.js';
 import {
   subscriptionCancelledCustomerEmailHtml,
@@ -20,7 +20,7 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// ─── GET /api/admin/subscriptions/stats ──────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/subscriptions/stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getSubscriptionStats = async (req, res, next) => {
   try {
     const [total, active, paused, payment_failed, cancelled] = await Promise.all([
@@ -31,7 +31,7 @@ export const getSubscriptionStats = async (req, res, next) => {
       SubscriptionModel.countDocuments({ status: 'cancelled' }),
     ]);
 
-    // MRR = sum of (unitPrice × qty × 1.20 VAT + £2.99 delivery) for all active subs
+    // MRR = sum of (unitPrice Ã— qty Ã— 1.20 VAT + Â£2.99 delivery) for all active subs
     const TAX_RATE = 0.20;
     const DELIVERY = 2.99;
     const mrrResult = await SubscriptionModel.aggregate([
@@ -61,7 +61,7 @@ export const getSubscriptionStats = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/admin/subscriptions ────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllSubscriptions = async (req, res, next) => {
   try {
     const { status, search } = req.query;
@@ -108,7 +108,7 @@ export const getAllSubscriptions = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/admin/subscriptions/:id ────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/subscriptions/:id â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getSubscriptionById = async (req, res, next) => {
   try {
     const sub = await SubscriptionModel.findById(req.params.id)
@@ -123,7 +123,7 @@ export const getSubscriptionById = async (req, res, next) => {
   }
 };
 
-// ─── PATCH /api/admin/subscriptions/:id/status ───────────────────────────────
+// â”€â”€â”€ PATCH /api/admin/subscriptions/:id/status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const updateSubscriptionStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -144,7 +144,7 @@ export const updateSubscriptionStatus = async (req, res, next) => {
       if (status === 'cancelled') {
         sendEmail({
           to: sub.email,
-          subject: `Your Highland Yak Chew subscription has been cancelled – ${sub.subscriptionId}`,
+          subject: `Your Highland Yak Chew subscription has been cancelled â€“ ${sub.subscriptionId}`,
           html: subscriptionCancelledCustomerEmailHtml(sub),
         }).catch((err) => console.error('[admin] Cancel customer email failed:', err.message));
 
@@ -152,20 +152,20 @@ export const updateSubscriptionStatus = async (req, res, next) => {
         if (adminEmail) {
           sendEmail({
             to: adminEmail,
-            subject: `Subscription Cancelled – ${sub.subscriptionId}`,
+            subject: `Subscription Cancelled â€“ ${sub.subscriptionId}`,
             html: subscriptionCancelledAdminEmailHtml(sub),
           }).catch((err) => console.error('[admin] Cancel admin email failed:', err.message));
         }
       } else if (status === 'paused') {
         sendEmail({
           to: sub.email,
-          subject: `Your Highland Yak Chew subscription has been paused – ${sub.subscriptionId}`,
+          subject: `Your Highland Yak Chew subscription has been paused â€“ ${sub.subscriptionId}`,
           html: subscriptionPausedEmailHtml(sub),
         }).catch((err) => console.error('[admin] Pause email failed:', err.message));
       } else if (status === 'active') {
         sendEmail({
           to: sub.email,
-          subject: `Your Highland Yak Chew subscription has been resumed – ${sub.subscriptionId}`,
+          subject: `Your Highland Yak Chew subscription has been resumed â€“ ${sub.subscriptionId}`,
           html: subscriptionResumedEmailHtml(sub),
         }).catch((err) => console.error('[admin] Resume email failed:', err.message));
       }

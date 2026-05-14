@@ -87,7 +87,7 @@ const Sidebar = ({
               </div>
               <div>
                 <h1 className="text-white font-bold text-base leading-tight">Highland</h1>
-                <p className="text-amber-400/80 text-[11px] font-medium tracking-wider uppercase">Dog Chew</p>
+                <p className="text-amber-400/80 text-[11px] font-medium tracking-wider uppercase">Yak Chew</p>
               </div>
             </Link>
             <button

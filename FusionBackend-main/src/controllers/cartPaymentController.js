@@ -1,9 +1,9 @@
-import { randomBytes, timingSafeEqual } from 'crypto';
+﻿import { randomBytes, timingSafeEqual } from 'crypto';
 import { getStripe } from '../config/stripe.js';
 import ProductModel from '../models/productModel.js';
 import PromoCodeModel from '../models/promoCodeModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { cartValidationSchema } from '../validations/cartValidationSchema.js';
 
 const TAX_RATE        = 0.20; // 20% VAT
@@ -17,14 +17,14 @@ class CartError extends Error {
   }
 }
 
-// ─── H-4 / M-4 fix: metadata chunking helpers ────────────────────────────────
+// â”€â”€â”€ H-4 / M-4 fix: metadata chunking helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Stripe limits each metadata value to 500 characters (50 keys max).
 // Large item arrays are split across indexed fields:
-//   items_n = "3"           ← total chunk count
-//   items_0 = "[{...}..."   ← first 480 chars
-//   items_1 = "...}{"       ← next 480 chars
-//   items_2 = "...}]"       ← remainder
+//   items_n = "3"           â† total chunk count
+//   items_0 = "[{...}..."   â† first 480 chars
+//   items_1 = "...}{"       â† next 480 chars
+//   items_2 = "...}]"       â† remainder
 //
 // Subscription items use prefix "si" to keep key names short.
 //
@@ -37,7 +37,7 @@ function chunkToMeta(json, prefix) {
   return result;
 }
 
-// ─── Resolve promo code ───────────────────────────────────────────────────────
+// â”€â”€â”€ Resolve promo code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Validates against our DB (always) and Stripe PromotionCode API (if synced).
 // Per Stripe docs, for PaymentIntent-based checkout the discount amount is
@@ -52,14 +52,14 @@ async function resolvePromo(promoCode, subtotal) {
   if (promo.usageLimit !== null && promo.usageCount >= promo.usageLimit) return { discount: 0, promoData: null };
   if (subtotal < promo.minOrderAmount)                                   return { discount: 0, promoData: null };
 
-  // Stripe-level active check — catches codes deactivated via Stripe Dashboard
+  // Stripe-level active check â€” catches codes deactivated via Stripe Dashboard
   if (promo.stripePromotionCodeId) {
     try {
       const sp = await getStripe().promotionCodes.retrieve(promo.stripePromotionCodeId);
       if (!sp.active) return { discount: 0, promoData: null };
       if (sp.expires_at && sp.expires_at < Math.floor(Date.now() / 1000)) return { discount: 0, promoData: null };
     } catch {
-      // Stripe unreachable — DB already passed, continue
+      // Stripe unreachable â€” DB already passed, continue
     }
   }
 
@@ -70,7 +70,7 @@ async function resolvePromo(promoCode, subtotal) {
   return { discount, promoData: promo };
 }
 
-// ─── Core price resolution + totals ──────────────────────────────────────────
+// â”€â”€â”€ Core price resolution + totals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Price priority: size bulk tiers > size-specific price > base price
 // Security: amount is ALWAYS calculated server-side, never trusted from client.
@@ -92,7 +92,7 @@ async function resolveAndCalculate(items, promoCode) {
       throw new CartError(404, 'One or more products in your cart are no longer available.');
     }
 
-    // ── Stock validation ──────────────────────────────────────────────────────
+    // â”€â”€ Stock validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (product.trackStock) {
       let availableStock = product.stockQuantity || 0;
       if (item.size && product.sizes?.length > 0) {
@@ -109,7 +109,7 @@ async function resolveAndCalculate(items, promoCode) {
       }
     }
 
-    // ── Resolve authoritative server-side price ───────────────────────────────
+    // â”€â”€ Resolve authoritative server-side price â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let expectedPrice = product.price;
     let sizeData = null;
 
@@ -126,7 +126,7 @@ async function resolveAndCalculate(items, promoCode) {
         .filter((t) => item.quantity >= t.minQty)
         .sort((a, b) => b.minQty - a.minQty);
       if (applicable.length > 0) {
-        // salePrice is the TOTAL for minQty items — convert to per-unit for lineTotal calculation
+        // salePrice is the TOTAL for minQty items â€” convert to per-unit for lineTotal calculation
         const tier = applicable[0];
         expectedPrice = +(tier.salePrice / tier.minQty).toFixed(2);
         bulkResolved = true;
@@ -138,7 +138,7 @@ async function resolveAndCalculate(items, promoCode) {
       if (bulk) expectedPrice = bulk.price;
     }
 
-    // ── Apply subscription discount server-side ───────────────────────────────
+    // â”€â”€ Apply subscription discount server-side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (item.isSubscription && product.subscriptionSettings?.isEnabled) {
       const discPct = product.subscriptionSettings.discountPercentage || 0;
       if (discPct > 0) {
@@ -174,7 +174,7 @@ async function resolveAndCalculate(items, promoCode) {
   return { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal };
 }
 
-// ─── POST /api/cart-payments/validate ────────────────────────────────────────
+// â”€â”€â”€ POST /api/cart-payments/validate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const validateCart = async (req, res, next) => {
   try {
     const { error, value } = cartValidationSchema.validate(req.body);
@@ -196,7 +196,7 @@ export const validateCart = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/cart-payments/create-payment-intent ───────────────────────────
+// â”€â”€â”€ POST /api/cart-payments/create-payment-intent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const createPaymentIntent = async (req, res, next) => {
   try {
     const { error, value } = cartValidationSchema.validate(req.body);
@@ -209,7 +209,7 @@ export const createPaymentIntent = async (req, res, next) => {
 
     const amountInPence = Math.round(grandTotal * 100);
 
-    // ── H-4 fix: chunk items JSON across multiple metadata fields ──────────────
+    // â”€â”€ H-4 fix: chunk items JSON across multiple metadata fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const itemsChunks = chunkToMeta(JSON.stringify(lineItems), 'items');
 
     const subItems      = lineItems.filter((l) => l.isSubscription);
@@ -218,7 +218,7 @@ export const createPaymentIntent = async (req, res, next) => {
       ? chunkToMeta(JSON.stringify(subItems), 'si')
       : {};
 
-    // ── H-1 fix: one-time token to prove PI ownership on update-meta ───────────
+    // â”€â”€ H-1 fix: one-time token to prove PI ownership on update-meta â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Returned to client; required back on every update-meta call.
     const updateToken = randomBytes(24).toString('hex');
 
@@ -266,7 +266,7 @@ export const createPaymentIntent = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/cart-payments/update-meta ─────────────────────────────────────
+// â”€â”€â”€ POST /api/cart-payments/update-meta â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const updatePaymentIntentMeta = async (req, res, next) => {
   try {
     const { paymentIntentId, updateToken, customer, shipping } = req.body;
@@ -301,7 +301,7 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
       return next(handleError(403, 'Invalid update token'));
     }
 
-    // Only update customer/shipping keys — pricing keys are immutable after PI creation
+    // Only update customer/shipping keys â€” pricing keys are immutable after PI creation
     await getStripe().paymentIntents.update(paymentIntentId, {
       receipt_email: customer.email,
       metadata: {

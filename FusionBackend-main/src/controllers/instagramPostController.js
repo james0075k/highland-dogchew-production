@@ -1,28 +1,28 @@
-import InstagramPostModel from '../models/instagramPostModel.js';
+﻿import InstagramPostModel from '../models/instagramPostModel.js';
 import handleError from '../utils/errorHandler.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import path from 'path';
 import fs from 'fs';
 
-// ─── Image URL helpers (mirrors productController pattern) ───────────────────
+// â”€â”€â”€ Image URL helpers (mirrors productController pattern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Resolve the correct URL from an uploaded file:
 // - If Cloudinary succeeded, req.file.path is already https://res.cloudinary.com/...
 // - If local disk, construct absolute URL from filename
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path; // Cloudinary URL — works everywhere
+    return file.path; // Cloudinary URL â€” works everywhere
   }
   return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
 };
 
 // Rewrite a stored image URL so it resolves correctly on the current host:
-// - Cloudinary URLs → unchanged
-// - localhost/127 URLs → rewritten to current host (fixes dev URLs in production)
-// - Relative /uploads/... → made absolute with current host
-// - Other absolute URLs → unchanged
+// - Cloudinary URLs â†’ unchanged
+// - localhost/127 URLs â†’ rewritten to current host (fixes dev URLs in production)
+// - Relative /uploads/... â†’ made absolute with current host
+// - Other absolute URLs â†’ unchanged
 const rewriteImageUrl = (url, req) => {
   if (!url || typeof url !== 'string') return url;
   if (url.includes('res.cloudinary.com')) return url;
@@ -37,7 +37,7 @@ const rewriteImageUrl = (url, req) => {
   return url;
 };
 
-// Delete a local disk file only — skip if it is a Cloudinary URL
+// Delete a local disk file only â€” skip if it is a Cloudinary URL
 const deleteLocalFile = async (imageUrl) => {
   if (!imageUrl || imageUrl.includes('res.cloudinary.com')) return;
   const imageName = imageUrl.split('/uploads/')[1];
@@ -48,7 +48,7 @@ const deleteLocalFile = async (imageUrl) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Create a new Instagram post
 export const createInstagramPost = async (req, res, next) => {
@@ -78,7 +78,7 @@ export const createInstagramPost = async (req, res, next) => {
   }
 };
 
-// Get all active posts (public — sorted by order, then newest first)
+// Get all active posts (public â€” sorted by order, then newest first)
 export const getAllInstagramPosts = async (req, res, next) => {
   try {
     const posts = await InstagramPostModel.find({ isActive: true })
@@ -91,7 +91,7 @@ export const getAllInstagramPosts = async (req, res, next) => {
   }
 };
 
-// Get ALL posts (admin — includes inactive)
+// Get ALL posts (admin â€” includes inactive)
 export const getAllInstagramPostsAdmin = async (req, res, next) => {
   try {
     const posts = await InstagramPostModel.find().sort({ order: 1, createdAt: -1 }).lean();
@@ -128,7 +128,7 @@ export const updateInstagramPost = async (req, res, next) => {
     if (order !== undefined) post.order = parseInt(order);
     if (isActive !== undefined) post.isActive = isActive === 'true' || isActive === true;
 
-    // Handle image replacement — delete old local file (skip if Cloudinary), store new URL correctly
+    // Handle image replacement â€” delete old local file (skip if Cloudinary), store new URL correctly
     if (req.file) {
       await deleteLocalFile(post.image);
       post.image = getUploadedFileUrl(req.file, req);
@@ -149,7 +149,7 @@ export const deleteInstagramPost = async (req, res, next) => {
     const deleted = await InstagramPostModel.findByIdAndDelete(req.params.id);
     if (!deleted) return next(handleError(404, 'Instagram post not found'));
 
-    // Only attempt local disk deletion — Cloudinary files are skipped automatically
+    // Only attempt local disk deletion â€” Cloudinary files are skipped automatically
     await deleteLocalFile(deleted.image);
 
     res.status(200).json({ success: true, message: 'Instagram post deleted successfully' });

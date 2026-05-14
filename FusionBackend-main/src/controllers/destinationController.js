@@ -1,6 +1,6 @@
-import destinationModel from '../models/destinationModel.js';
+﻿import destinationModel from '../models/destinationModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';     // asdfasdf
 import fs from 'fs';
 import path from 'path';

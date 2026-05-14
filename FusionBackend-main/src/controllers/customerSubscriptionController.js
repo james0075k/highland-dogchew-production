@@ -1,8 +1,8 @@
-/**
+﻿/**
  * customerSubscriptionController.js
  *
  * Customer-facing subscription management (no admin JWT required).
- * Identity is verified by matching email + subscriptionId — the subscriptionId
+ * Identity is verified by matching email + subscriptionId â€” the subscriptionId
  * is a 48-bit random hex string, making brute-force enumeration infeasible.
  *
  * Endpoints:
@@ -19,7 +19,7 @@ import SubscriptionModel from '../models/subscriptionModel.js';
 import OrderModel from '../models/orderModel.js';
 import { getStripe } from '../config/stripe.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import sendEmail from '../utils/sendEmail.js';
 import {
   subscriptionCancelledCustomerEmailHtml,
@@ -45,7 +45,7 @@ async function findOwned(subscriptionId, email) {
   });
 }
 
-// ─── POST /api/customer/subscriptions/lookup ──────────────────────────────────
+// â”€â”€â”€ POST /api/customer/subscriptions/lookup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Returns all subscriptions for the given email address.
 export const lookupSubscriptions = async (req, res, next) => {
   try {
@@ -65,7 +65,7 @@ export const lookupSubscriptions = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/customer/subscriptions/:subscriptionId/orders ──────────────────
+// â”€â”€â”€ GET /api/customer/subscriptions/:subscriptionId/orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Returns all orders linked to this subscription (email verified via query param).
 export const getSubscriptionOrders = async (req, res, next) => {
   try {
@@ -88,7 +88,7 @@ export const getSubscriptionOrders = async (req, res, next) => {
   }
 };
 
-// ─── PATCH /api/customer/subscriptions/:subscriptionId/cancel ────────────────
+// â”€â”€â”€ PATCH /api/customer/subscriptions/:subscriptionId/cancel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const cancelSubscription = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -105,7 +105,7 @@ export const cancelSubscription = async (req, res, next) => {
 
     sendEmail({
       to: sub.email,
-      subject: `Your Highland Yak Chew subscription has been cancelled – ${sub.subscriptionId}`,
+      subject: `Your Highland Yak Chew subscription has been cancelled â€“ ${sub.subscriptionId}`,
       html: subscriptionCancelledCustomerEmailHtml(sub),
     }).catch((err) => console.error('[customer] Cancel email failed:', err.message));
 
@@ -115,7 +115,7 @@ export const cancelSubscription = async (req, res, next) => {
   }
 };
 
-// ─── PATCH /api/customer/subscriptions/:subscriptionId/pause ─────────────────
+// â”€â”€â”€ PATCH /api/customer/subscriptions/:subscriptionId/pause â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const pauseSubscription = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -134,7 +134,7 @@ export const pauseSubscription = async (req, res, next) => {
 
     sendEmail({
       to: sub.email,
-      subject: `Your Highland Yak Chew subscription has been paused – ${sub.subscriptionId}`,
+      subject: `Your Highland Yak Chew subscription has been paused â€“ ${sub.subscriptionId}`,
       html: subscriptionPausedEmailHtml(sub),
     }).catch((err) => console.error('[customer] Pause email failed:', err.message));
 
@@ -144,7 +144,7 @@ export const pauseSubscription = async (req, res, next) => {
   }
 };
 
-// ─── PATCH /api/customer/subscriptions/:subscriptionId/resume ────────────────
+// â”€â”€â”€ PATCH /api/customer/subscriptions/:subscriptionId/resume â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const resumeSubscription = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -165,7 +165,7 @@ export const resumeSubscription = async (req, res, next) => {
 
     sendEmail({
       to: sub.email,
-      subject: `Your Highland Yak Chew subscription has been resumed – ${sub.subscriptionId}`,
+      subject: `Your Highland Yak Chew subscription has been resumed â€“ ${sub.subscriptionId}`,
       html: subscriptionResumedEmailHtml(sub),
     }).catch((err) => console.error('[customer] Resume email failed:', err.message));
 
@@ -175,7 +175,7 @@ export const resumeSubscription = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/customer/subscriptions/:subscriptionId/setup-intent ───────────
+// â”€â”€â”€ POST /api/customer/subscriptions/:subscriptionId/setup-intent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Creates a Stripe SetupIntent so the customer can update their saved card.
 export const createSetupIntent = async (req, res, next) => {
   try {
@@ -209,7 +209,7 @@ export const createSetupIntent = async (req, res, next) => {
   }
 };
 
-// ─── POST /api/customer/subscriptions/:subscriptionId/update-payment ─────────
+// â”€â”€â”€ POST /api/customer/subscriptions/:subscriptionId/update-payment â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Called after Stripe SetupIntent succeeds.
 // Attaches the new payment method to the Stripe Customer + updates our DB.
 // If the subscription was in payment_failed state, reactivates it.
@@ -242,7 +242,7 @@ export const updatePaymentMethod = async (req, res, next) => {
       invoice_settings: { default_payment_method: paymentMethodId },
     });
 
-    // Update subscription record — reactivate if previously failed
+    // Update subscription record â€” reactivate if previously failed
     sub.paymentMethodId = paymentMethodId;
     if (sub.status === 'payment_failed') {
       sub.status       = 'active';

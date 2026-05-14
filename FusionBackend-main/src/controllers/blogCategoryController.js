@@ -1,6 +1,6 @@
-import BlogCategory from '../models/blogCategoryModel.js';
+﻿import BlogCategory from '../models/blogCategoryModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 // Create category
 export const createCategory = async (req, res, next) => {

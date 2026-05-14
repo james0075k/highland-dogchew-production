@@ -82,21 +82,30 @@ const ChatbotWidget = () => {
 
   return (
     <>
+      {/*
+        Floating widget stack on the right side (mobile → desktop):
+          bottom-[72px] : WhatsApp button   (clears sticky cart bar)
+          bottom-[132px]: GoToTop button    (z-[55])
+          bottom-[192px]: Chatbot button    (this widget) — stacks above GoToTop
+        On sm+ everything collapses to right-6 with proportional offsets.
+        Z-index 50 keeps it under WhatsApp (z-[60]) so the WhatsApp panel
+        doesn't get obscured when both are open.
+      */}
       {/* Chat Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-32 right-12 z-50 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group"
+          className="fixed right-4 bottom-[192px] sm:right-6 sm:bottom-[152px] z-50 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white p-3.5 sm:p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 group"
           aria-label="Open chat"
         >
-          <MessageCircle className="w-7 h-7" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+          <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
         </button>
       )}
 
-      {/* Chat Widget */}
+      {/* Chat Widget — full-width sheet on mobile, fixed-width panel on desktop */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-6 sm:right-6 z-50 sm:w-[380px] h-[85vh] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-5 flex items-start justify-between">
             <div className="flex-1">

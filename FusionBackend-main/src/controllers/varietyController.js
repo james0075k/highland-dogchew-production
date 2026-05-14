@@ -1,19 +1,19 @@
-import VarietyModel from '../models/varietyModel.js';
+﻿import VarietyModel from '../models/varietyModel.js';
 import ProductModel from '../models/productModel.js';
 import CategoryModel from '../models/categoryModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import path from 'path';
 import fs from 'fs';
 import { __dirname, deleteFile } from '../utils/fileHelpers.js';
 import mongoose from 'mongoose';
 
-// ─── Image URL helpers (mirrors instagramPostController pattern) ──────────────
+// â”€â”€â”€ Image URL helpers (mirrors instagramPostController pattern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path; // Cloudinary URL — works everywhere
+    return file.path; // Cloudinary URL â€” works everywhere
   }
   return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
 };
@@ -38,7 +38,7 @@ const deleteLocalFile = async (imageUrl) => {
   if (fs.existsSync(imagePath)) await deleteFile(imagePath);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Create Variety
 export const createVariety = async (req, res, next) => {

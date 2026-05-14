@@ -14,12 +14,14 @@ import {
   archiveProduct,
   restoreProduct,
   getArchivedProducts,
+  getProductByIdAdmin,
 } from '../controllers/productController.js';
 import { singleUpload, arrayUpload, fieldsUpload } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware/authMiddleware.js';
 
 // Admin: archived product management (must be before /:id to avoid route conflict)
 productRoute.get('/archived', authenticate, authorizeRoles('admin'), getArchivedProducts);
+productRoute.get('/admin/:id', authenticate, authorizeRoles('admin'), getProductByIdAdmin);
 productRoute.patch('/:id/archive', authenticate, authorizeRoles('admin'), archiveProduct);
 productRoute.patch('/:id/restore', authenticate, authorizeRoles('admin'), restoreProduct);
 

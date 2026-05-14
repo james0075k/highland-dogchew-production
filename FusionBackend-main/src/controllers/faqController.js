@@ -1,6 +1,6 @@
-import FAQ from '../models/faqModel.js';
+﻿import FAQ from '../models/faqModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 // Create FAQ
 export const createFAQ = async (req, res, next) => {

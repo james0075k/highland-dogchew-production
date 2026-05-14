@@ -1,6 +1,6 @@
-import tourCategoryModel from '../models/tourCategoryModel.js';
+﻿import tourCategoryModel from '../models/tourCategoryModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
 import path from 'path';

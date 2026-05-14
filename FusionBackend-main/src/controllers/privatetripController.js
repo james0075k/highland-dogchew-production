@@ -1,6 +1,6 @@
-import PrivateTrip from '../models/privatetripModel.js';
+﻿import PrivateTrip from '../models/privatetripModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import { privateTripValidationSchema } from '../validations/validationSchemas.js';
 
 

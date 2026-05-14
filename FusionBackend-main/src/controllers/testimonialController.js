@@ -1,16 +1,16 @@
-import TestimonialModel from '../models/testimonialModel.js';
+﻿import TestimonialModel from '../models/testimonialModel.js';
 import handleError from '../utils/errorHandler.js';
 import { deleteFile, __dirname } from '../utils/fileHelpers.js';
 import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 import path from 'path';
 import fs from 'fs';
 
-// ─── Image URL helpers (mirrors instagramPostController pattern) ──────────────
+// â”€â”€â”€ Image URL helpers (mirrors instagramPostController pattern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const getUploadedFileUrl = (file, req) => {
   if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
-    return file.path; // Cloudinary URL — works everywhere
+    return file.path; // Cloudinary URL â€” works everywhere
   }
   return `${req.protocol}://${req.get('host')}${getFileUrl(file.filename)}`;
 };
@@ -35,7 +35,7 @@ const deleteLocalFile = async (imageUrl) => {
   if (fs.existsSync(imagePath)) await deleteFile(imagePath);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Create a new testimonial
 export const createTestimonial = async (req, res, next) => {
@@ -104,7 +104,7 @@ export const updateTestimonial = async (req, res, next) => {
     if (rating) testimonial.rating = parseFloat(rating);
 
     if (req.file) {
-      // Delete old local file only — skip if Cloudinary
+      // Delete old local file only â€” skip if Cloudinary
       await deleteLocalFile(testimonial.profileImage);
       testimonial.profileImage = getUploadedFileUrl(req.file, req);
     }
@@ -124,7 +124,7 @@ export const deleteTestimonial = async (req, res, next) => {
     const deletedTestimonial = await TestimonialModel.findByIdAndDelete(req.params.id);
     if (!deletedTestimonial) return next(handleError(404, 'Testimonial not found'));
 
-    // Only attempt local disk deletion — Cloudinary files are skipped automatically
+    // Only attempt local disk deletion â€” Cloudinary files are skipped automatically
     await deleteLocalFile(deletedTestimonial.profileImage);
 
     res.status(200).json({ message: 'Testimonial and image deleted successfully' });

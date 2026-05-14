@@ -16,7 +16,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ currentnavlink }) => {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="bg-light-beige w-full relative z-40 top-15 md:top-20 shadow-sm mb-10"
+      className="bg-light-beige w-full relative z-40 top-[60px] md:top-[80px] shadow-sm mb-10"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="text-sm md:text-base font-semibold flex flex-wrap items-center gap-1 sm:gap-2">

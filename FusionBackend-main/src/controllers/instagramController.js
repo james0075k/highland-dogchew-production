@@ -1,10 +1,10 @@
-import {
+﻿import {
   fetchInstagramFeed,
   clearInstagramCache,
   cacheStatus,
 } from '../services/instagramService.js';
 import InstagramSettings from '../models/instagramSettingsModel.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 /** Helper: get-or-create the singleton settings document. */
 const getOrCreateSettings = () =>
@@ -12,13 +12,13 @@ const getOrCreateSettings = () =>
     doc => doc ?? InstagramSettings.create({ isEnabled: true, postsCount: 8 })
   );
 
-/* ─────────────────────────────────────────────────────────────
-   PUBLIC — GET /api/instagram/feed
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   PUBLIC â€” GET /api/instagram/feed
    Returns live Instagram posts from the Graph API.
    Returns empty array (not an error) when:
-     • section is disabled by admin
-     • token is missing / expired (UI falls back to manual posts)
-───────────────────────────────────────────────────────────── */
+     â€¢ section is disabled by admin
+     â€¢ token is missing / expired (UI falls back to manual posts)
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const getLiveFeed = async (req, res, next) => {
   try {
     const settings = await getOrCreateSettings();
@@ -52,7 +52,7 @@ export const getLiveFeed = async (req, res, next) => {
       });
     }
 
-    // Timeout / network error — don't crash the site
+    // Timeout / network error â€” don't crash the site
     if (err.name === 'AbortError') {
       console.error('[Instagram] Request timed out');
       return res.status(200).json({
@@ -62,7 +62,7 @@ export const getLiveFeed = async (req, res, next) => {
       });
     }
 
-    // Config error — return helpful message
+    // Config error â€” return helpful message
     if (err.message?.includes('INSTAGRAM_ACCESS_TOKEN')) {
       return res.status(200).json({
         success: false,
@@ -76,10 +76,10 @@ export const getLiveFeed = async (req, res, next) => {
   }
 };
 
-/* ─────────────────────────────────────────────────────────────
-   PUBLIC — GET /api/instagram/settings
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   PUBLIC â€” GET /api/instagram/settings
    Returns current settings (isEnabled, postsCount).
-───────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const getSettings = async (req, res, next) => {
   try {
     const settings = await getOrCreateSettings();
@@ -89,10 +89,10 @@ export const getSettings = async (req, res, next) => {
   }
 };
 
-/* ─────────────────────────────────────────────────────────────
-   ADMIN — PUT /api/instagram/settings
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   ADMIN â€” PUT /api/instagram/settings
    Body: { isEnabled?: boolean, postsCount?: number }
-───────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const updateSettings = async (req, res, next) => {
   try {
     const { isEnabled, postsCount } = req.body;
@@ -111,10 +111,10 @@ export const updateSettings = async (req, res, next) => {
   }
 };
 
-/* ─────────────────────────────────────────────────────────────
-   ADMIN — DELETE /api/instagram/cache
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   ADMIN â€” DELETE /api/instagram/cache
    Manually clear the 30-min memory cache.
-───────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const bustCache = (req, res) => {
   clearInstagramCache();
   return res.status(200).json({ success: true, message: 'Instagram cache cleared.' });

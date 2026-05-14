@@ -14,6 +14,9 @@ import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
+import logger from '../utils/logger.js';
+
+const log = logger.child({ component: 'webhook' });
 
 // ─── POST /api/webhook/stripe ─────────────────────────────────────────────────
 export const handleProductWebhook = async (req, res) => {
@@ -27,7 +30,7 @@ export const handleProductWebhook = async (req, res) => {
       process.env.PRODUCT_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('[webhook] Signature verification failed:', err.message);
+    log.warn({ err }, 'Stripe signature verification failed');
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -40,18 +43,17 @@ export const handleProductWebhook = async (req, res) => {
 
       try {
         const { order, created } = await createOrderFromPI(pi);
-        if (created) {
-          console.log(`[webhook] ✅ Order ${order.orderNumber} created (PI: ${pi.id})`);
-        } else {
-          console.log(`[webhook] ⏭️  Order ${order.orderNumber} already exists — skipped`);
-        }
+        log.info(
+          { orderNumber: order.orderNumber, pi: pi.id, created },
+          created ? 'Order created' : 'Order already exists, skipped',
+        );
 
         // Always attempt subscription creation (idempotent internally)
         if (pi.metadata?.hasSubscription === 'true') {
           await createSubscriptionsFromPI(pi, order);
         }
       } catch (err) {
-        console.error('[webhook] ❌ Error processing payment_intent.succeeded:', err.message);
+        log.error({ err, pi: pi.id }, 'Error processing payment_intent.succeeded');
         // H-6 fix: return 500 so Stripe retries (up to ~3 days with exponential back-off).
         // createOrderFromPI is idempotent via unique index — safe to retry.
         return res.status(500).json({ error: 'Processing failed — will retry' });
@@ -64,7 +66,7 @@ export const handleProductWebhook = async (req, res) => {
       const pi = event.data.object;
       if (pi.metadata?.type !== 'product-purchase') break;
       const reason = pi.last_payment_error?.message || 'unknown reason';
-      console.log(`[webhook] ⚠️  Payment failed for PI ${pi.id}: ${reason}`);
+      log.warn({ pi: pi.id, reason }, 'Payment failed');
       break;
     }
 
@@ -76,8 +78,8 @@ export const handleProductWebhook = async (req, res) => {
       await OrderModel.findOneAndUpdate(
         { paymentIntentId: pi.id, paymentStatus: { $ne: 'paid' } },
         { paymentStatus: 'failed', orderStatus: 'cancelled' }
-      ).catch((err) => console.error('[webhook] Cancel update failed:', err.message));
-      console.log(`[webhook] 🚫 PI ${pi.id} cancelled`);
+      ).catch((err) => log.error({ err, pi: pi.id }, 'Cancel update failed'));
+      log.info({ pi: pi.id }, 'Payment intent cancelled');
       break;
     }
 
@@ -89,9 +91,9 @@ export const handleProductWebhook = async (req, res) => {
           { paymentIntentId: charge.payment_intent },
           { paymentStatus: 'refunded', orderStatus: 'cancelled' }
         ).catch((err) =>
-          console.error('[webhook] Refund update failed:', err.message)
+          log.error({ err, pi: charge.payment_intent }, 'Refund update failed'),
         );
-        console.log(`[webhook] 💸 Order refunded for PI ${charge.payment_intent}`);
+        log.info({ pi: charge.payment_intent }, 'Order refunded');
       }
       break;
     }

@@ -1,10 +1,10 @@
-import OrderModel from '../models/orderModel.js';
+﻿import OrderModel from '../models/orderModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 const VALID_ORDER_STATUSES = ['pending', 'confirmed', 'backordered', 'processing', 'shipped', 'delivered', 'cancelled'];
 
-// ─── GET /api/admin/orders ────────────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Returns all orders, newest first, with full details.
 // Supports query params: ?page=1&limit=20&paymentStatus=paid&orderStatus=confirmed
 export const getAllOrders = async (req, res, next) => {
@@ -40,7 +40,7 @@ export const getAllOrders = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/admin/orders/:id ────────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/orders/:id â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getOrderById = async (req, res, next) => {
   try {
     const order = await OrderModel.findById(req.params.id).lean();
@@ -51,8 +51,8 @@ export const getOrderById = async (req, res, next) => {
   }
 };
 
-// ─── PATCH /api/admin/orders/:id/status ──────────────────────────────────────
-// Admin can update the delivery / order status (e.g. confirmed → shipped).
+// â”€â”€â”€ PATCH /api/admin/orders/:id/status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Admin can update the delivery / order status (e.g. confirmed â†’ shipped).
 // When status is "shipped", optionally accepts trackingNumber.
 export const updateOrderStatus = async (req, res, next) => {
   try {
@@ -94,7 +94,7 @@ export const updateOrderStatus = async (req, res, next) => {
   }
 };
 
-// ─── GET /api/admin/orders/stats ─────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/orders/stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Quick summary stats for the admin dashboard header.
 export const getOrderStats = async (req, res, next) => {
   try {

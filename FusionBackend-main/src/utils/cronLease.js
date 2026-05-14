@@ -12,6 +12,9 @@
  */
 
 import mongoose from 'mongoose';
+import logger from './logger.js';
+
+const log = logger.child({ component: 'cronLease' });
 
 const cronLeaseSchema = new mongoose.Schema({
   name:      { type: String, unique: true, required: true },
@@ -44,7 +47,7 @@ export async function acquireLease(name, ttlMs) {
   } catch (err) {
     // Duplicate key on upsert means another instance won the race
     if (err?.code === 11000) return false;
-    console.error(`[cronLease] acquire(${name}) failed:`, err.message);
+    log.error({ err, name }, 'acquire failed');
     return false;
   }
 }
@@ -53,6 +56,6 @@ export async function releaseLease(name) {
   try {
     await CronLeaseModel.deleteOne({ name, holder: HOLDER_ID });
   } catch (err) {
-    console.error(`[cronLease] release(${name}) failed:`, err.message);
+    log.error({ err, name }, 'release failed');
   }
 }

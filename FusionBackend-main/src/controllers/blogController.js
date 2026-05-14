@@ -1,6 +1,6 @@
-  import BlogModel from '../models/blogModel.js';
+﻿  import BlogModel from '../models/blogModel.js';
   import handleError from '../utils/errorHandler.js';
-  import handleSuccess from '../utils/sucessHandler.js';
+  import handleSuccess from '../utils/successHandler.js';
   import { getFileUrl } from '../middlewares/MulterMiddleware/multerMiddleware.js';
   import path from 'path'
   import fs from 'fs'
@@ -32,7 +32,7 @@
         date,
         category,
         isFeatured,
-        imageUrl: fullImageUrl, // ✅ correct key
+        imageUrl: fullImageUrl, // âœ… correct key
       };
 
       // Step 2: Validate using Joi

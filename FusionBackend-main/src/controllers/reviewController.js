@@ -1,6 +1,6 @@
-import ReviewModel from '../models/reviewModel.js';
+﻿import ReviewModel from '../models/reviewModel.js';
 import handleError from '../utils/errorHandler.js';
-import handleSuccess from '../utils/sucessHandler.js';
+import handleSuccess from '../utils/successHandler.js';
 
 // CREATE review (public)
 export const createReview = async (req, res, next) => {
@@ -12,7 +12,7 @@ export const createReview = async (req, res, next) => {
   }
 };
 
-// GET all reviews (admin — all statuses)
+// GET all reviews (admin â€” all statuses)
 export const getAllReviews = async (req, res, next) => {
   try {
     const { status, productId } = req.query;
@@ -66,7 +66,7 @@ export const updateReview = async (req, res, next) => {
   }
 };
 
-// DELETE review (admin — soft delete)
+// DELETE review (admin â€” soft delete)
 export const deleteReview = async (req, res, next) => {
   try {
     const review = await ReviewModel.findByIdAndUpdate(

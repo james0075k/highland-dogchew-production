@@ -5,8 +5,8 @@ import Link from 'next/link';
 import {
   FiPackage, FiStar, FiMail, FiLayers, FiGrid,
   FiArrowRight, FiAlertCircle, FiRefreshCw, FiShoppingBag,
-  FiTrendingUp, FiUsers, FiMessageCircle, FiAward,
-  FiCreditCard, FiRepeat, FiCheckCircle, FiClock, FiXCircle,
+  FiTrendingUp, FiTrendingDown, FiUsers, FiMessageCircle, FiAward,
+  FiCreditCard, FiRepeat, FiCheckCircle, FiClock, FiXCircle, FiDollarSign,
 } from 'react-icons/fi';
 import { GiDogBowl } from 'react-icons/gi';
 
@@ -196,6 +196,80 @@ function MiniSparkline({ vals, color }: { vals: number[]; color: string }) {
   );
 }
 
+/* ─── Money formatting ──────────────────────────────────────────────────── */
+
+const gbpFull = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const gbpCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', notation: 'compact', maximumFractionDigits: 1 });
+
+function formatMoney(v: number, compact = false): string {
+  if (!Number.isFinite(v)) return '£0.00';
+  return compact && Math.abs(v) >= 10000 ? gbpCompact.format(v) : gbpFull.format(v);
+}
+
+/* ─── SVG: Revenue bar chart ─────────────────────────────────────────────── */
+
+function RevenueBarChart({ buckets, color = '#16a34a' }: {
+  buckets: { label: string; value: number }[];
+  color?: string;
+}) {
+  const W = 720, H = 200;
+  const PAD = { top: 18, right: 14, bottom: 32, left: 56 };
+  const w = W - PAD.left - PAD.right;
+  const h = H - PAD.top - PAD.bottom;
+  const max = Math.max(...buckets.map(b => b.value), 1);
+  const n = Math.max(buckets.length, 1);
+  const slot = w / n;
+  const barW = Math.max(4, Math.min(slot * 0.6, 26));
+  const gridYs = [0, 0.25, 0.5, 0.75, 1].map(p => ({ y: h - p * h, v: p * max }));
+  // Show ≤ 8 x-axis labels evenly to avoid crowding
+  const labelEvery = Math.max(1, Math.ceil(n / 8));
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <defs>
+        <linearGradient id="rev-bar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.55" />
+        </linearGradient>
+      </defs>
+      <g transform={`translate(${PAD.left},${PAD.top})`}>
+        {gridYs.map((g, i) => (
+          <g key={i}>
+            <line x1={0} y1={g.y} x2={w} y2={g.y} stroke="#f1f5f9" strokeWidth={1} />
+            <text x={-8} y={g.y + 4} textAnchor="end" fill="#94a3b8" fontSize={9} fontFamily="DM Sans,sans-serif">
+              {formatMoney(g.v, true)}
+            </text>
+          </g>
+        ))}
+        {buckets.map((b, i) => {
+          const cx = i * slot + slot / 2;
+          const barH = (b.value / max) * h;
+          const y = h - barH;
+          return (
+            <g key={i}>
+              <rect
+                x={cx - barW / 2}
+                y={y}
+                width={barW}
+                height={Math.max(barH, 1)}
+                rx={3}
+                fill={b.value > 0 ? 'url(#rev-bar)' : '#e5e7eb'}
+              >
+                <title>{b.label}: {formatMoney(b.value)}</title>
+              </rect>
+              {i % labelEvery === 0 && (
+                <text x={cx} y={h + 18} textAnchor="middle" fill="#94a3b8" fontSize={9} fontFamily="DM Sans,sans-serif">
+                  {b.label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
 /* ─── Stars ──────────────────────────────────────────────────────────────── */
 
 function Stars({ rating }: { rating: number }) {
@@ -295,7 +369,9 @@ export default function AdminDashboard() {
   const [allProducts,  setAllProducts]  = useState<any[]>([]);
   const [allContacts,  setAllContacts]  = useState<any[]>([]);
   const [allReviews,   setAllReviews]   = useState<any[]>([]);
+  const [allOrders,    setAllOrders]    = useState<any[]>([]);
   const [activeTab,    setActiveTab]    = useState<'messages' | 'reviews'>('messages');
+  const [revPeriod,    setRevPeriod]    = useState<'7d' | '30d' | '90d' | 'ytd' | '12m' | 'all'>('30d');
   const now = useLiveClock();
   const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -307,12 +383,13 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [productsRes, reviewsRes, contactsRes, ordersRes, subsRes] = await Promise.allSettled([
+      const [productsRes, reviewsRes, contactsRes, ordersRes, subsRes, ordersListRes] = await Promise.allSettled([
         fetch(`${API}/products`).then(r => r.json()),
         fetch(`${API}/reviews`).then(r => r.json()),
         fetch(`${API}/contact`).then(r => r.json()),
         fetch(`${API}/admin/orders/stats`,        { headers: authHeaders() }).then(r => r.json()),
         fetch(`${API}/admin/subscriptions/stats`, { headers: authHeaders() }).then(r => r.json()),
+        fetch(`${API}/admin/orders?limit=1000`,   { headers: authHeaders() }).then(r => r.json()),
       ]);
 
       let totalProducts = 0, yakMilkCount = 0, puffTreatCount = 0, highlandMixCount = 0;
@@ -346,6 +423,10 @@ export default function AdminDashboard() {
 
       if (ordersRes.status === 'fulfilled' && ordersRes.value?.data) setOrderStats(ordersRes.value.data);
       if (subsRes.status   === 'fulfilled' && subsRes.value?.data)   setSubStats(subsRes.value.data);
+      if (ordersListRes.status === 'fulfilled' && ordersListRes.value?.data) {
+        const list = ordersListRes.value.data.orders ?? ordersListRes.value.data ?? [];
+        setAllOrders(Array.isArray(list) ? list : []);
+      }
 
       setStats({ totalProducts, yakMilkCount, puffTreatCount, highlandMixCount, totalReviews, totalContacts, newContacts, pendingReviews });
     } catch (e) {
@@ -400,6 +481,133 @@ export default function AdminDashboard() {
 
   const contactSparkline = monthlyData.map(d => d.contacts);
   const reviewSparkline  = monthlyData.map(d => d.reviews);
+
+  /* ── Revenue analytics ── */
+  const PERIOD_META: Record<typeof revPeriod, { label: string; days: number | null; bucket: 'day' | 'month' }> = {
+    '7d':  { label: 'Last 7 days',   days: 7,   bucket: 'day' },
+    '30d': { label: 'Last 30 days',  days: 30,  bucket: 'day' },
+    '90d': { label: 'Last 90 days',  days: 90,  bucket: 'day' },
+    'ytd': { label: 'This year',     days: null, bucket: 'month' },
+    '12m': { label: 'Last 12 months', days: 365, bucket: 'month' },
+    'all': { label: 'All time',      days: null, bucket: 'month' },
+  };
+
+  const paidOrders = useMemo(
+    () => allOrders.filter(o => o.paymentStatus === 'paid' && o.orderStatus !== 'cancelled'),
+    [allOrders],
+  );
+
+  const revenueData = useMemo(() => {
+    const meta = PERIOD_META[revPeriod];
+    const now = new Date();
+    let start: Date;
+    let prevStart: Date;
+    let prevEnd: Date;
+
+    if (revPeriod === 'ytd') {
+      start = new Date(now.getFullYear(), 0, 1);
+      prevStart = new Date(now.getFullYear() - 1, 0, 1);
+      prevEnd = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1);
+    } else if (revPeriod === 'all') {
+      // Span from first paid order to now
+      const earliest = paidOrders.reduce<Date | null>((min, o) => {
+        const d = new Date(o.createdAt);
+        return !min || d < min ? d : min;
+      }, null);
+      start = earliest ?? new Date(now.getFullYear(), 0, 1);
+      prevStart = new Date(start);
+      prevEnd = new Date(start);
+    } else {
+      const days = meta.days!;
+      start = new Date(now); start.setDate(now.getDate() - (days - 1)); start.setHours(0,0,0,0);
+      prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - days);
+      prevEnd = new Date(start);
+    }
+
+    const currentOrders = paidOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d >= start && d <= now;
+    });
+    const previousOrders = paidOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d >= prevStart && d < prevEnd;
+    });
+
+    const sumTotal = (list: any[]) => list.reduce((s, o) => s + (Number(o.grandTotal) || 0), 0);
+    const total = sumTotal(currentOrders);
+    const prevTotal = sumTotal(previousOrders);
+    const growthPct = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : (total > 0 ? 100 : 0);
+
+    // Build buckets
+    const buckets: { label: string; value: number; key: string }[] = [];
+    if (meta.bucket === 'day') {
+      const days = revPeriod === 'all' ? Math.max(1, Math.ceil((now.getTime() - start.getTime()) / 86400000)) : meta.days!;
+      for (let i = 0; i < days; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        const label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        buckets.push({ key, label, value: 0 });
+      }
+      for (const o of currentOrders) {
+        const d = new Date(o.createdAt);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        const b = buckets.find(x => x.key === key);
+        if (b) b.value += Number(o.grandTotal) || 0;
+      }
+    } else {
+      // Monthly buckets
+      let months = 12;
+      let cursor = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      if (revPeriod === 'ytd') {
+        months = now.getMonth() + 1;
+        cursor = new Date(now.getFullYear(), 0, 1);
+      } else if (revPeriod === 'all') {
+        const earliest = paidOrders.reduce<Date | null>((min, o) => {
+          const d = new Date(o.createdAt);
+          return !min || d < min ? d : min;
+        }, null);
+        if (earliest) {
+          cursor = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+          months = (now.getFullYear() - cursor.getFullYear()) * 12 + (now.getMonth() - cursor.getMonth()) + 1;
+          months = Math.max(1, Math.min(months, 36));
+        } else {
+          months = 1;
+        }
+      }
+      for (let i = 0; i < months; i++) {
+        const d = new Date(cursor.getFullYear(), cursor.getMonth() + i, 1);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const label = (months > 12)
+          ? d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })
+          : d.toLocaleDateString('en-GB', { month: 'short' });
+        buckets.push({ key, label, value: 0 });
+      }
+      for (const o of currentOrders) {
+        const d = new Date(o.createdAt);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const b = buckets.find(x => x.key === key);
+        if (b) b.value += Number(o.grandTotal) || 0;
+      }
+    }
+
+    const best = buckets.reduce<{ label: string; value: number } | null>(
+      (top, b) => (!top || b.value > top.value) ? { label: b.label, value: b.value } : top, null,
+    );
+
+    const aov = currentOrders.length > 0 ? total / currentOrders.length : 0;
+
+    return {
+      label: meta.label,
+      total,
+      prevTotal,
+      growthPct,
+      orderCount: currentOrders.length,
+      prevOrderCount: previousOrders.length,
+      aov,
+      best,
+      buckets,
+    };
+  }, [paidOrders, revPeriod]);
 
   const greeting = now ? getGreeting(now.getHours()) : { text: 'Welcome', emoji: '👋' };
   const timeStr  = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '--:--:--';
@@ -568,6 +776,120 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ══════════ REVENUE PANEL ══════════ */}
+          <div style={{ ...card, marginTop: 16, overflow: 'hidden' }}>
+            {/* Header + period selector */}
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ padding: 10, background: 'linear-gradient(135deg,#dcfce7,#bbf7d0)', borderRadius: 12 }}>
+                  <FiDollarSign size={18} style={{ color: '#15803d' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Revenue</p>
+                  <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Paid orders · {revenueData.label}</p>
+                </div>
+              </div>
+
+              {/* Period selector */}
+              <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: '#f1f5f9', borderRadius: 10 }}>
+                {([
+                  { k: '7d',  l: '7D' },
+                  { k: '30d', l: '30D' },
+                  { k: '90d', l: '90D' },
+                  { k: 'ytd', l: 'YTD' },
+                  { k: '12m', l: '12M' },
+                  { k: 'all', l: 'All' },
+                ] as const).map(p => (
+                  <button
+                    key={p.k}
+                    onClick={() => setRevPeriod(p.k)}
+                    style={{
+                      padding: '5px 11px',
+                      borderRadius: 7,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      fontFamily: 'DM Sans,sans-serif',
+                      transition: 'all 0.15s',
+                      background: revPeriod === p.k ? '#0c1e35' : 'transparent',
+                      color: revPeriod === p.k ? '#fff' : '#64748b',
+                    }}
+                  >
+                    {p.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* KPIs row */}
+            <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, borderBottom: '1px solid #f1f5f9' }} className="db-three-col">
+              {/* Total revenue */}
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total Revenue</p>
+                <p style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', fontVariantNumeric: 'tabular-nums', marginTop: 4, lineHeight: 1 }}>
+                  {formatMoney(revenueData.total)}
+                </p>
+                {revPeriod !== 'all' && (
+                  <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 99, background: revenueData.growthPct >= 0 ? '#dcfce7' : '#fee2e2' }}>
+                    {revenueData.growthPct >= 0 ? <FiTrendingUp size={11} style={{ color: '#15803d' }} /> : <FiTrendingDown size={11} style={{ color: '#b91c1c' }} />}
+                    <span style={{ fontSize: 11, fontWeight: 700, color: revenueData.growthPct >= 0 ? '#15803d' : '#b91c1c', fontVariantNumeric: 'tabular-nums' }}>
+                      {revenueData.growthPct >= 0 ? '+' : ''}{revenueData.growthPct.toFixed(1)}%
+                    </span>
+                    <span style={{ fontSize: 10, color: '#94a3b8' }}>vs prev.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Orders */}
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Paid Orders</p>
+                <p style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', fontVariantNumeric: 'tabular-nums', marginTop: 4, lineHeight: 1 }}>
+                  {revenueData.orderCount.toLocaleString('en-GB')}
+                </p>
+                {revPeriod !== 'all' && revenueData.prevOrderCount > 0 && (
+                  <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+                    vs {revenueData.prevOrderCount.toLocaleString('en-GB')} prev.
+                  </p>
+                )}
+              </div>
+
+              {/* AOV */}
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Avg. Order Value</p>
+                <p style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', fontVariantNumeric: 'tabular-nums', marginTop: 4, lineHeight: 1 }}>
+                  {formatMoney(revenueData.aov)}
+                </p>
+                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>across paid orders</p>
+              </div>
+
+              {/* Best period */}
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Best {PERIOD_META[revPeriod].bucket === 'day' ? 'Day' : 'Month'}
+                </p>
+                <p style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', fontVariantNumeric: 'tabular-nums', marginTop: 4, lineHeight: 1 }}>
+                  {revenueData.best && revenueData.best.value > 0 ? formatMoney(revenueData.best.value, true) : '—'}
+                </p>
+                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+                  {revenueData.best && revenueData.best.value > 0 ? revenueData.best.label : 'No paid orders'}
+                </p>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div style={{ padding: '14px 22px 20px' }}>
+              {revenueData.total === 0 ? (
+                <div style={{ padding: '40px 0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                  <FiDollarSign size={28} style={{ opacity: 0.25, margin: '0 auto 10px', display: 'block' }} />
+                  No paid orders in this period
+                </div>
+              ) : (
+                <RevenueBarChart buckets={revenueData.buckets} color="#16a34a" />
+              )}
+            </div>
+          </div>
+
           {/* ══════════ ROW 1: Orders + Subs | Activity Feed ══════════ */}
           <div className="db-two-col" style={{ display:'grid', gridTemplateColumns:'340px 1fr', gap:16, marginTop:16 }}>
 
@@ -599,12 +921,6 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
-                {orderStats?.grandTotal != null && (
-                  <div style={{ margin:'0 20px 16px', background:'linear-gradient(135deg,#f0fdf4,#dcfce7)', borderRadius:10, padding:'10px 14px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <span style={{ fontSize:12, color:'#166534', fontWeight:600 }}>Total Revenue</span>
-                    <span style={{ fontSize:16, fontWeight:800, color:'#15803d' }}>£{Number(orderStats.grandTotal).toFixed(2)}</span>
-                  </div>
-                )}
               </div>
 
               {/* Subscriptions card */}

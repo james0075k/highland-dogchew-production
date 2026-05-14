@@ -6,8 +6,9 @@ import {
   FiImage, FiMail, FiPhone, FiMapPin, FiGlobe,
   FiUploadCloud, FiHelpCircle, FiFileText,
   FiCheck, FiSettings, FiMessageCircle, FiAlertCircle,
-  FiTrash2, FiPlus, FiLock, FiEye, FiEyeOff, FiShield,
+  FiTrash2, FiPlus, FiLock, FiEye, FiEyeOff, FiShield, FiArrowLeft,
 } from "react-icons/fi";
+import Link from "next/link";
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter, FaTiktok } from "react-icons/fa";
 
 /* ─── types ──────────────────────────────────────────────────────────── */
@@ -109,6 +110,8 @@ export default function SettingsPage() {
   const [faqLoading, setFaqLoading] = useState(false);
   const [newFaq, setNewFaq] = useState({ question: "", answer: "" });
   const [faqSaving, setFaqSaving] = useState(false);
+  const [faqDeleteTarget, setFaqDeleteTarget] = useState<any | null>(null);
+  const [faqDeleting, setFaqDeleting] = useState(false);
 
   /* terms state */
   const [termsData, setTermsData] = useState({ _id: "", pageTitle: "Terms and Conditions", sections: [] as any[] });
@@ -282,14 +285,17 @@ export default function SettingsPage() {
     } catch { showAlert("error", "Failed to add FAQ"); } finally { setFaqSaving(false); }
   };
 
-  const deleteFaq = async (id: string) => {
-    if (!confirm("Delete this FAQ?")) return;
+  const confirmDeleteFaq = async () => {
+    if (!faqDeleteTarget?._id) return;
     const token = Cookies.get("token");
+    setFaqDeleting(true);
     try {
-      await fetch(`${API}/faqs/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      fetchFaqs();
+      await fetch(`${API}/faqs/${faqDeleteTarget._id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      setFaqs(prev => prev.filter(f => f._id !== faqDeleteTarget._id));
       showAlert("success", "FAQ deleted");
+      setFaqDeleteTarget(null);
     } catch { showAlert("error", "Failed to delete FAQ"); }
+    finally { setFaqDeleting(false); }
   };
 
   /* ── change password ── */
@@ -387,31 +393,36 @@ export default function SettingsPage() {
      RENDER
   ═══════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
+    <div className="min-h-screen bg-[#f5f7fa] p-5 md:p-7">
 
       {/* ── Page header ── */}
-      <div className="bg-gradient-to-r from-[#0c1e35] via-[#132f4f] to-[#0e2640] px-6 md:px-10 py-8">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-            <FiSettings className="text-amber-400" size={26} />
-            Site Settings
-          </h1>
-          <p className="text-blue-200/50 mt-1 text-sm">Manage your website branding, content, and security</p>
+      <div className="max-w-5xl mx-auto flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 transition-colors">
+            <FiArrowLeft size={16} />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <FiSettings className="text-amber-500" size={18} />
+              Site Settings
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5">Branding, content & security</p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 md:px-10 pb-16">
+      <div className="max-w-5xl mx-auto pb-16">
 
         {/* ── Tab bar ── */}
-        <div className="flex gap-1.5 -mt-[22px] relative z-10 overflow-x-auto pb-1">
+        <div className="flex gap-1 p-1 bg-white border border-gray-200 rounded-xl shadow-sm w-fit overflow-x-auto">
           {TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shrink-0 whitespace-nowrap
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap
                 ${activeTab === tab.key
-                  ? "bg-white text-gray-900 shadow-md border border-gray-100"
-                  : "bg-white/70 text-gray-500 hover:bg-white hover:text-gray-700 border border-transparent"
+                  ? "bg-[#0c1e35] text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                 }`}
             >
               <tab.icon size={14} />
@@ -706,7 +717,7 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{faq.answer}</p>
                       </div>
                       <button
-                        onClick={() => deleteFaq(faq._id)}
+                        onClick={() => setFaqDeleteTarget(faq)}
                         className="shrink-0 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100"
                         title="Delete"
                       >
@@ -897,6 +908,33 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* FAQ delete confirmation */}
+      {faqDeleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setFaqDeleteTarget(null)} />
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <FiTrash2 className="text-red-600" size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">Delete FAQ?</h3>
+                <p className="text-xs text-gray-500">This cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">
+              Permanently delete: <span className="font-semibold">{faqDeleteTarget.question || faqDeleteTarget.title}</span>?
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button onClick={() => setFaqDeleteTarget(null)} className="flex-1 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition">Cancel</button>
+              <button onClick={confirmDeleteFaq} disabled={faqDeleting} className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition disabled:opacity-60">
+                {faqDeleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fade-in {
