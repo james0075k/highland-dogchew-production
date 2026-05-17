@@ -4,6 +4,7 @@ import {
   validateCart,
   createPaymentIntent,
   updatePaymentIntentMeta,
+  checkoutFreeOrder,
 } from '../controllers/cartPaymentController.js';
 
 const cartPaymentRoute = Router();
@@ -33,5 +34,8 @@ cartPaymentRoute.post('/create-payment-intent', paymentLimiter, createPaymentInt
 
 // POST /api/cart-payments/update-meta
 cartPaymentRoute.post('/update-meta',           metaLimiter,    updatePaymentIntentMeta);
+
+// POST /api/cart-payments/checkout-free — used when grandTotal=0 (100% promo)
+cartPaymentRoute.post('/checkout-free',         paymentLimiter, checkoutFreeOrder);
 
 export default cartPaymentRoute;

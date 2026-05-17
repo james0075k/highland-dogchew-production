@@ -5,6 +5,7 @@ import PromoCodeModel from '../models/promoCodeModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/successHandler.js';
 import { cartValidationSchema } from '../validations/cartValidationSchema.js';
+import { createFreeOrder } from '../utils/createFreeOrder.js';
 
 const TAX_RATE        = 0.20; // 20% VAT
 const DELIVERY_CHARGE = 2.99; // flat per order (single delivery regardless of item count)
@@ -43,7 +44,10 @@ function chunkToMeta(json, prefix) {
 // Per Stripe docs, for PaymentIntent-based checkout the discount amount is
 // calculated server-side and applied by reducing the PaymentIntent amount.
 //
-async function resolvePromo(promoCode, subtotal) {
+// Discount is applied to the pre-discount grand total (subtotal + VAT + delivery),
+// not the subtotal alone. minOrderAmount is still gated by subtotal so it reflects
+// what the customer actually buys.
+async function resolvePromo(promoCode, subtotal, preDiscountTotal, { email = '', ip = '' } = {}) {
   if (!promoCode) return { discount: 0, promoData: null };
 
   const promo = await PromoCodeModel.findOne({ code: promoCode.toUpperCase() });
@@ -51,6 +55,18 @@ async function resolvePromo(promoCode, subtotal) {
   if (promo.expiryDate && new Date() > promo.expiryDate)                return { discount: 0, promoData: null };
   if (promo.usageLimit !== null && promo.usageCount >= promo.usageLimit) return { discount: 0, promoData: null };
   if (subtotal < promo.minOrderAmount)                                   return { discount: 0, promoData: null };
+
+  // Per-user (email + IP) defence-in-depth check. The /promo/verify endpoint
+  // does this too, but a client could skip verify and call create-payment-intent
+  // directly — so the same guard runs here against the same identifiers.
+  if (promo.perUserLimit !== null && promo.perUserLimit !== undefined) {
+    const emailLC = email ? String(email).toLowerCase() : '';
+    const emailHits = emailLC ? promo.redeemedEmails.filter((e) => e === emailLC).length : 0;
+    const ipHits    = ip      ? promo.redeemedIPs.filter((i) => i === ip).length         : 0;
+    if (emailHits >= promo.perUserLimit || ipHits >= promo.perUserLimit) {
+      return { discount: 0, promoData: null };
+    }
+  }
 
   // Stripe-level active check â€” catches codes deactivated via Stripe Dashboard
   if (promo.stripePromotionCodeId) {
@@ -64,8 +80,8 @@ async function resolvePromo(promoCode, subtotal) {
   }
 
   const discount = promo.discountType === 'percentage'
-    ? +(subtotal * (promo.discountValue / 100)).toFixed(2)
-    : +Math.min(promo.discountValue, subtotal).toFixed(2);
+    ? +(preDiscountTotal * (promo.discountValue / 100)).toFixed(2)
+    : +Math.min(promo.discountValue, preDiscountTotal).toFixed(2);
 
   return { discount, promoData: promo };
 }
@@ -75,7 +91,7 @@ async function resolvePromo(promoCode, subtotal) {
 // Price priority: size bulk tiers > size-specific price > base price
 // Security: amount is ALWAYS calculated server-side, never trusted from client.
 //
-async function resolveAndCalculate(items, promoCode) {
+async function resolveAndCalculate(items, promoCode, identity = {}) {
   const products = await ProductModel.find({
     _id: { $in: items.map((i) => i.productId) },
   }).lean();
@@ -165,11 +181,15 @@ async function resolveAndCalculate(items, promoCode) {
 
   subtotal = +subtotal.toFixed(2);
 
-  const { discount, promoData } = await resolvePromo(promoCode, subtotal);
-  const discountedSubtotal      = +(subtotal - discount).toFixed(2);
-  const totalTax                = +(discountedSubtotal * TAX_RATE).toFixed(2);
-  const totalDelivery           = +DELIVERY_CHARGE.toFixed(2); // one flat delivery for the whole cart
-  const grandTotal              = +(discountedSubtotal + totalTax + totalDelivery).toFixed(2);
+  // Tax + delivery are computed against the full subtotal first, then the promo
+  // discount is applied to the resulting pre-discount grand total. This matches
+  // customer expectations: "10% off" or "£2 off" reduces the final amount they pay.
+  const totalTax          = +(subtotal * TAX_RATE).toFixed(2);
+  const totalDelivery     = +DELIVERY_CHARGE.toFixed(2);
+  const preDiscountTotal  = +(subtotal + totalTax + totalDelivery).toFixed(2);
+
+  const { discount, promoData } = await resolvePromo(promoCode, subtotal, preDiscountTotal, identity);
+  const grandTotal        = +(preDiscountTotal - discount).toFixed(2);
 
   return { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal };
 }
@@ -180,7 +200,11 @@ export const validateCart = async (req, res, next) => {
     const { error, value } = cartValidationSchema.validate(req.body);
     if (error) return next(handleError(400, error.details[0].message));
 
-    const result = await resolveAndCalculate(value.items, value.promoCode);
+    const identity = {
+      email: req.body?.email || '',
+      ip:    req.ip || '',
+    };
+    const result = await resolveAndCalculate(value.items, value.promoCode, identity);
 
     return handleSuccess(res, 200, 'Cart validated successfully', {
       items:         result.lineItems,
@@ -204,8 +228,24 @@ export const createPaymentIntent = async (req, res, next) => {
 
     const { items, promoCode } = value;
 
+    const identity = {
+      email: req.body?.email || '',
+      ip:    req.ip || '',
+    };
+
     const { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal }
-      = await resolveAndCalculate(items, promoCode);
+      = await resolveAndCalculate(items, promoCode, identity);
+
+    // ── Free-order short-circuit ─────────────────────────────────────────────
+    // Stripe rejects charges under £0.30. When a 100%-off promo brings the total
+    // to £0 we skip PI creation and signal the client to use /checkout-free.
+    if (grandTotal <= 0) {
+      return handleSuccess(res, 200, 'Order is free — bypass Stripe', {
+        free: true,
+        amount: 0,
+        breakdown: { subtotal, discount, totalTax, totalDelivery, grandTotal: 0 },
+      });
+    }
 
     const amountInPence = Math.round(grandTotal * 100);
 
@@ -231,6 +271,10 @@ export const createPaymentIntent = async (req, res, next) => {
         itemCount:       String(items.length),
         promoCode:       promoData ? promoData.code : '',
         stripePromoId:   promoData?.stripePromotionCodeId || '',
+        promoDiscType:   promoData?.discountType  || '',
+        promoDiscValue:  promoData ? String(promoData.discountValue) : '',
+        promoEmail:      identity.email ? String(identity.email).toLowerCase().slice(0, 200) : '',
+        promoIP:         (identity.ip || '').slice(0, 60),
         discount:        String(discount),
         subtotal:        String(subtotal),
         totalTax:        String(totalTax),
@@ -322,6 +366,101 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
     if (err?.type?.startsWith('Stripe')) return next(handleError(400, err.message));
+    next(err);
+  }
+};
+
+// ─── POST /api/cart-payments/checkout-free ────────────────────────────────────
+//
+// Handles the £0 grand-total case (e.g. a 100% promo brings the total below
+// Stripe's £0.30 minimum charge). The server re-runs full pricing to confirm
+// the order really is free, then creates the order directly — no PI, no Stripe.
+//
+// Body shape:
+//   {
+//     items:     CartItem[],          // same shape as create-payment-intent
+//     promoCode: string,
+//     customer:  { firstName, lastName, email, phone },
+//     shipping:  { address, apartment, city, county, postcode, country },
+//   }
+//
+export const checkoutFreeOrder = async (req, res, next) => {
+  try {
+    const { error, value } = cartValidationSchema.validate({
+      items:     req.body?.items,
+      promoCode: req.body?.promoCode || '',
+    });
+    if (error) return next(handleError(400, error.details[0].message));
+
+    const customer = req.body?.customer || {};
+    const shipping = req.body?.shipping || {};
+
+    if (!customer.email || !customer.firstName || !customer.lastName) {
+      return next(handleError(400, 'customer.firstName, customer.lastName and customer.email are required'));
+    }
+    if (!shipping.address || !shipping.city || !shipping.postcode) {
+      return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
+    }
+
+    const identity = { email: customer.email, ip: req.ip || '' };
+    const { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal }
+      = await resolveAndCalculate(value.items, value.promoCode, identity);
+
+    // Guard: if server math disagrees that this is free, refuse to proceed.
+    // Prevents a client from forging a free-order request when the cart isn't
+    // actually free (e.g. someone removed the promo but kept calling this route).
+    if (grandTotal > 0) {
+      return next(handleError(400, 'Order is not free — use create-payment-intent instead'));
+    }
+
+    const { order } = await createFreeOrder({
+      lineItems,
+      totals:   { subtotal, discount, totalTax, totalDelivery },
+      customer: {
+        firstName: String(customer.firstName).slice(0, 100),
+        lastName:  String(customer.lastName).slice(0, 100),
+        email:     String(customer.email).toLowerCase().slice(0, 200),
+        phone:     String(customer.phone || '').slice(0, 30),
+      },
+      shipping: {
+        address:   String(shipping.address).slice(0, 200),
+        apartment: String(shipping.apartment || '').slice(0, 200),
+        city:      String(shipping.city).slice(0, 100),
+        county:    String(shipping.county || '').slice(0, 100),
+        postcode:  String(shipping.postcode).slice(0, 20),
+        country:   String(shipping.country || 'United Kingdom').slice(0, 100),
+      },
+      promoData,
+      clientIP: req.ip || '',
+    });
+
+    // Return enough data for the success page to render without an extra fetch.
+    const safeOrder = {
+      _id:           order._id,
+      orderNumber:   order.orderNumber,
+      items:         order.items,
+      shippingAddress: {
+        fullName:     order.shippingAddress.fullName,
+        addressLine1: order.shippingAddress.addressLine1,
+        addressLine2: order.shippingAddress.addressLine2,
+        city:         order.shippingAddress.city,
+        county:       order.shippingAddress.county,
+        postcode:     order.shippingAddress.postcode,
+        country:      order.shippingAddress.country,
+        email:        order.shippingAddress.email,
+      },
+      subtotal:      order.subtotal,
+      totalTax:      order.totalTax,
+      totalDelivery: order.totalDelivery,
+      totalDiscount: order.totalDiscount,
+      grandTotal:    order.grandTotal,
+      paymentStatus: order.paymentStatus,
+      orderStatus:   order.orderStatus,
+      createdAt:     order.createdAt,
+    };
+    return handleSuccess(res, 201, 'Free order created', { order: safeOrder });
+  } catch (err) {
+    if (err instanceof CartError) return next(handleError(err.status, err.message));
     next(err);
   }
 };

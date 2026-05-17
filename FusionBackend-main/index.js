@@ -45,6 +45,7 @@ import instagramRoute from './src/routes/instagramRoute.js';
 import galleryItemRoute from './src/routes/galleryItemRoute.js';
 import categoryRoute from './src/routes/categoryRoute.js';
 import customerSubscriptionRoute from './src/routes/customerSubscriptionRoute.js';
+import noSqlSanitize from './src/middlewares/sanitize/noSqlSanitize.js';
 
 // ─── Validate required environment variables at startup ──────────────────────
 // NOTE: dotenv.config() is called in entry.js BEFORE this module loads.
@@ -112,6 +113,11 @@ app.use(`/${api}/webhook`, productWebhookRoute);
 // Payment + API routes need at most a few KB; uploads use their own multer limits.
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ limit: '50kb', extended: true }));
+
+// Strip Mongo operator keys ($ne, $gt, $where, etc.) from req.body. Joi
+// schemas reject these on validated routes; this is a backstop for any
+// future endpoint that forgets validation.
+app.use(noSqlSanitize);
 
 // Structured HTTP request logging — pino-http picks up method, url, status,
 // response time, and the client's real IP (via trust proxy above).

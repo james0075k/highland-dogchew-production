@@ -154,6 +154,10 @@ export default function CheckoutSuccessPage() {
   const paymentIntent    = searchParams.get('payment_intent');
   const piClientSecret   = searchParams.get('payment_intent_client_secret');
   const redirectStatus   = searchParams.get('redirect_status');
+  // Free-order path: when grandTotal was £0 the checkout bypassed Stripe and
+  // stashed the full order in sessionStorage under hyk_free_order_<orderNumber>.
+  const freeOrderNumber  = searchParams.get('order');
+  const isFreeOrder      = searchParams.get('free') === '1' && !!freeOrderNumber;
   const { clearCart } = useCart();
   const { addSubscription } = useSubscriptionContext();
 
@@ -196,12 +200,21 @@ export default function CheckoutSuccessPage() {
   }, [paymentIntent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // Free-order path — pull the snapshot from sessionStorage written by checkout.
+    if (isFreeOrder && freeOrderNumber) {
+      try {
+        const raw = sessionStorage.getItem(`hyk_free_order_${freeOrderNumber}`);
+        if (raw) setOrder(JSON.parse(raw) as OrderData);
+      } catch { /* ignore */ }
+      setLoading(false);
+      return;
+    }
     if (!paymentIntent) { setLoading(false); return; }
     loadOrder(paymentIntent, process.env.NEXT_PUBLIC_API_URL!).then((result) => {
       if (result) setOrder(result);
       setLoading(false);
     });
-  }, [paymentIntent]);
+  }, [paymentIntent, isFreeOrder, freeOrderNumber]);
 
   // Create subscription records once order is confirmed
   useEffect(() => {

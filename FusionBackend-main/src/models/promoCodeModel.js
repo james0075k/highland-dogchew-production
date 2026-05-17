@@ -1,5 +1,12 @@
 import mongoose from 'mongoose';
 
+const redemptionSchema = new mongoose.Schema({
+  email:      { type: String, default: null }, // lowercased
+  ip:         { type: String, default: null },
+  orderId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+  redeemedAt: { type: Date,   default: Date.now },
+}, { _id: false });
+
 const promoCodeSchema = new mongoose.Schema({
   code: {
     type: String,
@@ -26,17 +33,40 @@ const promoCodeSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Global redemption cap across all customers (null = unlimited)
   usageLimit: {
     type: Number,
-    default: null, // null = unlimited
+    default: null,
   },
   usageCount: {
     type: Number,
     default: 0,
   },
+  // Per-customer cap, enforced by email AND IP. 1 = "one redemption per customer".
+  // null = unlimited per customer (only global usageLimit applies).
+  perUserLimit: {
+    type: Number,
+    default: 1,
+  },
   minOrderAmount: {
     type: Number,
     default: 0,
+  },
+  // Lowercased emails / source IPs of every successful redemption.
+  // Used for fast per-user limit checks; the audit trail lives in `redemptions`.
+  redeemedEmails: {
+    type: [String],
+    default: [],
+    index: true,
+  },
+  redeemedIPs: {
+    type: [String],
+    default: [],
+    index: true,
+  },
+  redemptions: {
+    type: [redemptionSchema],
+    default: [],
   },
   // Stripe Coupon/PromotionCode IDs — populated when admin creates the code
   stripeCouponId: {

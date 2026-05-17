@@ -180,11 +180,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setPromoCode('');
   }, []);
 
+  // Normalize a code the way the backend will: strip whitespace, uppercase,
+  // drop any character outside [A-Z0-9_-]. Doing this client-side means a
+  // paste with leading/trailing spaces or stray punctuation still hits the
+  // server in a form that can possibly validate.
+  const normalizeCode = (raw: string): string =>
+    raw.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24);
+
   // Apply promo code via backend
   const applyPromoCode = useCallback(async (): Promise<string | null> => {
-    if (!promoCode.trim()) return 'Please enter a promo code';
+    const code = normalizeCode(promoCode);
+    if (!code) return 'Please enter a promo code';
+    if (code.length < 3) return 'Promo code is too short';
 
     const currentSubtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    if (currentSubtotal <= 0) return 'Add an item to your cart before applying a code';
 
     try {
       const res = await fetch(
@@ -193,16 +203,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            code: promoCode.trim(),
+            code,
             subtotal: +currentSubtotal.toFixed(2),
           }),
         }
       );
 
-      const data = await res.json();
+      // Rate-limit and other non-JSON failures land here.
+      let data: { success?: boolean; message?: string; data?: PromoInfo } | null = null;
+      try { data = await res.json(); } catch { /* non-JSON body */ }
 
-      if (!data.success) {
-        return data.message || 'Invalid promo code';
+      if (res.status === 429) {
+        return 'Too many attempts — please wait a minute and try again.';
+      }
+      if (!res.ok || !data?.success || !data.data) {
+        return data?.message || 'This promo code is invalid or has expired.';
       }
 
       setPromoInfo({
@@ -212,7 +227,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         discount: data.data.discount,
       });
 
-      return null; // no error
+      return null;
     } catch {
       return 'Failed to verify promo code. Please try again.';
     }
@@ -223,22 +238,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setPromoCode('');
   }, []);
 
-  // Computed totals — mirrors backend resolveAndCalculate exactly
+  // Computed totals — mirrors backend resolveAndCalculate exactly.
+  // Tax + delivery are computed on the full subtotal, then the promo discount
+  // is applied to the resulting pre-discount grand total. "10% off" / "£X off"
+  // therefore reduces the final amount the customer pays.
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = +items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0).toFixed(2);
-  // Recompute discount from discountType/discountValue against the *current* subtotal,
-  // not the stale snapshot taken when applyPromoCode was called. Otherwise editing the
-  // cart after applying a promo leaves a stale discount that won't match the server PI.
+  const totalTax = +(subtotal * TAX_RATE).toFixed(2);
+  const totalDelivery = items.length > 0 ? +DELIVERY_FLAT.toFixed(2) : 0;
+  const preDiscountTotal = +(subtotal + totalTax + totalDelivery).toFixed(2);
+  // Recompute discount from discountType/discountValue against the *current*
+  // pre-discount total, not the stale snapshot taken when applyPromoCode ran.
   const discount = promoInfo
     ? (promoInfo.discountType === 'percentage'
-        ? +(subtotal * (promoInfo.discountValue / 100)).toFixed(2)
-        : +Math.min(promoInfo.discountValue, subtotal).toFixed(2))
+        ? +(preDiscountTotal * (promoInfo.discountValue / 100)).toFixed(2)
+        : +Math.min(promoInfo.discountValue, preDiscountTotal).toFixed(2))
     : 0;
-  const discountedSubtotal = +(subtotal - discount).toFixed(2);
-  const totalTax = +(discountedSubtotal * TAX_RATE).toFixed(2);
-  // Single flat delivery for the whole cart regardless of how many lines there are
-  const totalDelivery = items.length > 0 ? +DELIVERY_FLAT.toFixed(2) : 0;
-  const grandTotal = +(discountedSubtotal + totalTax + totalDelivery).toFixed(2);
+  const grandTotal = +(preDiscountTotal - discount).toFixed(2);
 
   return (
     <CartContext.Provider

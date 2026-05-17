@@ -93,8 +93,9 @@ const orderSchema = new mongoose.Schema({
   },
   paymentIntentId: {
     type: String,
-    unique: true,
-    sparse: true, // allows multiple orders with no paymentIntentId (manual/legacy)
+    // Uniqueness is enforced by a partial-filter index below — only when the
+    // field is a real (non-empty) Stripe PaymentIntent id. Free orders never
+    // get a PI and must be allowed to coexist with each other.
   },
   paymentStatus: {
     type: String,
@@ -122,7 +123,32 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+
+  // ── Promo code snapshot (taken at redemption time) ────────────────────────
+  // Stored so charge.refunded can roll back usageCount + redeemedEmails/IPs.
+  promoCode: {
+    code:                  { type: String, default: null },
+    discountType:          { type: String, default: null },
+    discountValue:         { type: Number, default: null },
+    discountAmount:        { type: Number, default: 0 },
+    stripePromotionCodeId: { type: String, default: null },
+    customerEmail:         { type: String, default: null }, // lowercased
+    customerIP:            { type: String, default: null },
+    raceLost:              { type: Boolean, default: false }, // true if atomic redeem failed
+    rolledBack:            { type: Boolean, default: false }, // idempotency for refund rollback
+  },
 }, { timestamps: true });
+
+// Unique only on actual Stripe PI ids — null / missing / "" are ignored.
+orderSchema.index(
+  { paymentIntentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      paymentIntentId: { $type: 'string', $gt: '' },
+    },
+  }
+);
 
 // Auto-generate order number using crypto.randomBytes (not Math.random)
 // 3 random bytes = 6 hex chars = ~16.7 million combinations per timestamp bucket

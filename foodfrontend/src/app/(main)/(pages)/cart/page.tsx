@@ -39,10 +39,8 @@ export default function CartPage() {
     clearCart,
     cartCount,
     subtotal,
-    discount,
     totalTax,
     totalDelivery,
-    grandTotal,
   } = useCart();
 
   const handleCheckout = () => {
@@ -50,8 +48,10 @@ export default function CartPage() {
     router.push('/checkout');
   };
 
-  /* mirrors backend math exactly — tax on (subtotal − discount) */
-  const discountedSubtotal = +(subtotal - discount).toFixed(2);
+  /* Cart total excludes any promo discount — the promo input lives on the
+   * checkout page, so showing a discount here would surprise the user. The
+   * checkout page reads the full breakdown (incl. discount) from CartContext. */
+  const cartTotal = +(subtotal + totalTax + totalDelivery).toFixed(2);
 
   /* ── pre-hydration: show nothing until localStorage cart is loaded
         (prevents a flash of "your cart is empty" on hard reload) ── */
@@ -342,28 +342,7 @@ export default function CartPage() {
                       </span>
                     </div>
 
-                    {/* Discount */}
-                    {discount > 0 && (
-                      <>
-                        <div className="flex justify-between items-center py-3 border-b border-dashed border-amber-100 dark:border-[#3a2c23] text-emerald-600 dark:text-emerald-400">
-                          <span className="text-sm flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5" />
-                            Promo discount
-                          </span>
-                          <span className="font-semibold">−£{discount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-3 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
-                          <span className="text-xs italic text-[#7A5C4F]/80 dark:text-[#c8b6a6]/70">
-                            After discount
-                          </span>
-                          <span className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">
-                            £{discountedSubtotal.toFixed(2)}
-                          </span>
-                        </div>
-                      </>
-                    )}
-
-                    {/* VAT — computed on discountedSubtotal, matching backend */}
+                    {/* VAT — computed on the full subtotal */}
                     <div className="flex justify-between items-center py-3 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
                       <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
                         VAT
@@ -390,7 +369,8 @@ export default function CartPage() {
                       </span>
                     </div>
 
-                    {/* Grand total */}
+                    {/* Grand total — promo discount is applied on the checkout page,
+                        not here, so the cart shows subtotal + VAT + delivery only. */}
                     <div className="pt-4 pb-1">
                       <div className="flex justify-between items-end">
                         <span className="text-base font-bold text-[#2f1e14] dark:text-[#f5e9dc]">
@@ -398,7 +378,7 @@ export default function CartPage() {
                         </span>
                         <div className="text-right">
                           <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 leading-none">
-                            £{grandTotal.toFixed(2)}
+                            £{cartTotal.toFixed(2)}
                           </div>
                           <div className="text-[10px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mt-0.5">
                             incl. VAT &amp; delivery

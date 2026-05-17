@@ -42,17 +42,40 @@ const adminSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Brute-force defence. Increment on every wrong password; clear on success.
+    // When the count crosses the threshold, lockedUntil is set and subsequent
+    // logins are short-circuited even with a correct password.
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    lockedUntil: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    // Used by authenticate middleware: tokens issued before this timestamp
+    // are rejected, so a password change forces re-login everywhere.
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// 🔐 Hash password before saving
+// 🔐 Hash password before saving and stamp passwordChangedAt so existing JWTs
+// issued before the change are invalidated by the authenticate middleware.
 adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
+  // -1s offset to make sure freshly-issued tokens (iat = now) still pass.
+  this.passwordChangedAt = new Date(Date.now() - 1000);
   next();
 });
 

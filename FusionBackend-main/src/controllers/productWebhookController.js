@@ -14,6 +14,8 @@ import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
+import { rollbackPromoRedemption } from '../utils/rollbackPromoRedemption.js';
+import { reverseSyncFromStripe } from '../utils/reverseSyncFromStripe.js';
 import logger from '../utils/logger.js';
 
 const log = logger.child({ component: 'webhook' });
@@ -87,14 +89,32 @@ export const handleProductWebhook = async (req, res) => {
     case 'charge.refunded': {
       const charge = event.data.object;
       if (charge.payment_intent) {
-        await OrderModel.findOneAndUpdate(
+        const order = await OrderModel.findOneAndUpdate(
           { paymentIntentId: charge.payment_intent },
-          { paymentStatus: 'refunded', orderStatus: 'cancelled' }
-        ).catch((err) =>
-          log.error({ err, pi: charge.payment_intent }, 'Refund update failed'),
-        );
+          { paymentStatus: 'refunded', orderStatus: 'cancelled' },
+          { new: true }
+        ).catch((err) => {
+          log.error({ err, pi: charge.payment_intent }, 'Refund update failed');
+          return null;
+        });
+
+        // Roll the promo redemption back so usageCount + per-user slots are freed.
+        if (order?.promoCode?.code) {
+          const result = await rollbackPromoRedemption(order);
+          log.info({ pi: charge.payment_intent, result }, 'Promo rollback attempted');
+        }
+
         log.info({ pi: charge.payment_intent }, 'Order refunded');
       }
+      break;
+    }
+
+    // ── Stripe-Dashboard-side promo changes (reverse sync) ───────────────────
+    case 'coupon.deleted':
+    case 'coupon.updated':
+    case 'promotion_code.updated': {
+      const result = await reverseSyncFromStripe(event);
+      log.info({ type: event.type, result }, 'Reverse sync from Stripe');
       break;
     }
 

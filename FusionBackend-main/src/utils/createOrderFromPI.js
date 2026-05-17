@@ -286,29 +286,129 @@ export async function createOrderFromPI(pi, customerOverride = null) {
     throw err;
   }
 
-  // ── Step 3: Promo code usage increment (awaited — not fire-and-forget) ────────
+  // ── Step 3: Atomic promo redemption ───────────────────────────────────────────
   //
-  // Previously this was a detached promise; a DB failure would silently leave
-  // usageCount stale. Now we await and log on error so the admin can reconcile.
+  // Single conditional findOneAndUpdate that:
+  //   1. only matches when the code is active AND usageLimit not yet reached
+  //      (guards a read-then-write race between concurrent payments)
+  //   2. AND when neither email nor IP has hit perUserLimit
+  //   3. increments usageCount and appends email/IP/redemption snapshot atomically
+  //
+  // If the query matches nothing, the slot was lost mid-flight. Stripe has already
+  // charged the customer — we still create the order, but flag promoCode.raceLost
+  // so an admin can reconcile (manual refund or honour the discount).
+  //
+  // The promo snapshot is also written to order.promoCode so charge.refunded can
+  // roll the redemption back later.
   //
   if (meta.promoCode) {
+    const codeUC = meta.promoCode.toUpperCase();
+    const emailLC = (meta.promoEmail || meta.c_email || '').toLowerCase();
+    const promoIP = meta.promoIP || '';
+
+    // Filter clause: usageLimit not yet reached
+    const usageGuard = {
+      $or: [
+        { usageLimit: null },
+        { $expr: { $lt: ['$usageCount', '$usageLimit'] } },
+      ],
+    };
+
+    // Filter clause: this email/IP hasn't already hit perUserLimit. Only check
+    // identifiers we actually have — guest orders with no email or no IP skip
+    // that half of the test rather than colliding via empty strings.
+    const perUserChecks = [];
+    if (emailLC) {
+      perUserChecks.push({
+        $lt: [
+          { $size: { $filter: { input: '$redeemedEmails', as: 'e', cond: { $eq: ['$$e', emailLC] } } } },
+          '$perUserLimit',
+        ],
+      });
+    }
+    if (promoIP) {
+      perUserChecks.push({
+        $lt: [
+          { $size: { $filter: { input: '$redeemedIPs', as: 'i', cond: { $eq: ['$$i', promoIP] } } } },
+          '$perUserLimit',
+        ],
+      });
+    }
+
+    const perUserGuard = perUserChecks.length === 0
+      ? {} // nothing to enforce
+      : {
+          $or: [
+            { perUserLimit: null },
+            { $expr: { $and: perUserChecks } },
+          ],
+        };
+
+    // Only push identifiers we have, so empty-string sentinels never poison
+    // the redeemedEmails/redeemedIPs arrays.
+    const pushOps = {
+      redemptions: {
+        email:      emailLC || null,
+        ip:         promoIP || null,
+        orderId:    order._id,
+        redeemedAt: new Date(),
+      },
+    };
+    if (emailLC) pushOps.redeemedEmails = emailLC;
+    if (promoIP) pushOps.redeemedIPs    = promoIP;
+
+    const matchFilter = {
+      code:     codeUC,
+      isActive: true,
+      ...usageGuard,
+    };
+    if (perUserChecks.length > 0) {
+      matchFilter.$and = [perUserGuard];
+    }
+
+    let atomicRedeem = null;
     try {
-      const promoResult = await PromoCodeModel.findOneAndUpdate(
-        { code: meta.promoCode.toUpperCase() },
-        { $inc: { usageCount: 1 } }
+      atomicRedeem = await PromoCodeModel.findOneAndUpdate(
+        matchFilter,
+        {
+          $inc:  { usageCount: 1 },
+          $push: pushOps,
+        },
+        { new: true }
       );
-      if (!promoResult) {
-        console.warn(
-          `[order] Promo code "${meta.promoCode}" not found — usageCount not incremented (order ${order.orderNumber})`
-        );
-      }
     } catch (err) {
-      // Non-fatal but the admin should reconcile manually if this fires repeatedly
       console.error(
-        `[order] ⚠️  Promo usageCount increment failed for "${meta.promoCode}" on order ${order.orderNumber}:`,
+        `[order] Promo atomic-redeem failed for "${meta.promoCode}" on order ${order.orderNumber}:`,
         err.message
       );
     }
+
+    const raceLost = !atomicRedeem;
+    if (raceLost) {
+      console.warn(
+        `[order] Promo "${meta.promoCode}" race lost on order ${order.orderNumber} — Stripe already charged. Manual reconciliation needed.`
+      );
+    }
+
+    // Snapshot promo into the order so refund webhook can roll it back later.
+    await OrderModel.updateOne(
+      { _id: order._id },
+      {
+        $set: {
+          promoCode: {
+            code:                  codeUC,
+            discountType:          meta.promoDiscType  || null,
+            discountValue:         meta.promoDiscValue ? Number(meta.promoDiscValue) : null,
+            discountAmount:        parseFloat(meta.discount || '0'),
+            stripePromotionCodeId: meta.stripePromoId  || null,
+            customerEmail:         emailLC || null,
+            customerIP:            promoIP || null,
+            raceLost,
+            rolledBack:            false,
+          },
+        },
+      }
+    ).catch((err) => console.error('[order] Promo snapshot save failed:', err.message));
   }
 
   // ── Step 4: Confirmation emails (fire-and-forget) ─────────────────────────────

@@ -641,6 +641,9 @@ export default function CheckoutPage() {
   const [clientSecret,  setClientSecret]  = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [updateToken,   setUpdateToken]   = useState<string | null>(null);
+  // True when grandTotal=0 (100%-off promo). Stripe rejects sub-£0.30 charges,
+  // so the checkout switches to a direct "place order" flow against /checkout-free.
+  const [freeOrder,     setFreeOrder]     = useState(false);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState<string | null>(null);
   const [promoError,    setPromoError]    = useState<string | null>(null);
@@ -682,7 +685,15 @@ export default function CheckoutPage() {
           }),
         });
         const data = await res.json();
-        if (data.success && data.data?.clientSecret) {
+        if (data.success && data.data?.free) {
+          // 100%-off promo path — Stripe is bypassed entirely.
+          setFreeOrder(true);
+          setClientSecret(null);
+          setPaymentIntentId(null);
+          setUpdateToken(null);
+          setServerBreakdown(data.data.breakdown);
+        } else if (data.success && data.data?.clientSecret) {
+          setFreeOrder(false);
           setClientSecret(data.data.clientSecret);
           setPaymentIntentId(data.data.paymentIntentId);
           setUpdateToken(data.data.updateToken);
@@ -706,11 +717,19 @@ export default function CheckoutPage() {
   };
 
   const handleApplyPromo = async () => {
+    if (promoLoading) return; // guard against double-submit (Enter + click)
     setPromoLoading(true);
     setPromoError(null);
     const err = await applyPromoCode();
     if (err) setPromoError(err);
     setPromoLoading(false);
+  };
+
+  // Mirror the server-side charset so the user sees exactly the value that
+  // will be sent. Strips whitespace/punctuation paste artefacts, caps at 24.
+  const handlePromoChange = (raw: string) => {
+    setPromoCode(raw.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24));
+    if (promoError) setPromoError(null);
   };
 
   if (!hydrated || items.length === 0) {
@@ -723,7 +742,7 @@ export default function CheckoutPage() {
 
   const breakdown = serverBreakdown || { subtotal, discount, totalTax, totalDelivery, grandTotal };
   const isDark    = mounted && resolvedTheme === 'dark';
-  const discountedSubtotal = +(breakdown.subtotal - breakdown.discount).toFixed(2);
+  const preDiscountTotal = +(breakdown.subtotal + breakdown.totalTax + breakdown.totalDelivery).toFixed(2);
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col-reverse lg:flex-row overflow-y-auto lg:overflow-hidden bg-white dark:bg-[#1a1410] transition-colors duration-300">
@@ -755,6 +774,21 @@ export default function CheckoutPage() {
               <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
               <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">Setting up secure checkout…</span>
             </div>
+          ) : freeOrder ? (
+            <FreeCheckoutForm
+              shipping={shipping}
+              onShippingChange={handleShippingChange}
+              breakdown={breakdown}
+              promoCode={promoKey}
+              step={step}
+              onStepChange={setStep}
+              onSuccess={(orderNumber, orderPayload) => {
+                try {
+                  sessionStorage.setItem(`hyk_free_order_${orderNumber}`, JSON.stringify(orderPayload));
+                } catch { /* storage unavailable */ }
+                router.push(`/checkout/success?free=1&order=${encodeURIComponent(orderNumber)}`);
+              }}
+            />
           ) : clientSecret && paymentIntentId && updateToken ? (
             <StripeProvider key={paymentIntentId} clientSecret={clientSecret} theme={isDark ? 'night' : 'stripe'}>
               <CheckoutForm
@@ -859,20 +893,35 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
+                    onChange={(e) => handlePromoChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!promoLoading && promoCode.trim().length >= 3) handleApplyPromo();
+                      }
+                    }}
                     placeholder="Discount or gift card code"
-                    className="flex-1 bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] transition-all"
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={24}
+                    inputMode="text"
+                    aria-label="Promo code"
+                    aria-invalid={!!promoError}
+                    aria-describedby={promoError ? 'promo-error' : undefined}
+                    disabled={promoLoading}
+                    className="flex-1 bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] font-mono tracking-wide border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] placeholder:normal-case disabled:opacity-60 transition-all"
                   />
                   <button
+                    type="button"
                     onClick={handleApplyPromo}
-                    disabled={promoLoading || !promoCode.trim()}
-                    className="px-5 py-2.5 bg-[#2f1e14] dark:bg-amber-600 text-white text-sm font-semibold rounded-xl hover:bg-[#4a2f1e] dark:hover:bg-amber-500 disabled:opacity-40 transition-all"
+                    disabled={promoLoading || promoCode.trim().length < 3}
+                    className="px-5 py-2.5 bg-[#2f1e14] dark:bg-amber-600 text-white text-sm font-semibold rounded-xl hover:bg-[#4a2f1e] dark:hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                   </button>
                 </div>
                 {promoError && (
-                  <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 pl-1">{promoError}</p>
+                  <p id="promo-error" role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1.5 pl-1">{promoError}</p>
                 )}
               </div>
             )}
@@ -884,21 +933,6 @@ export default function CheckoutPage() {
               <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">Subtotal</span>
               <span className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">£{breakdown.subtotal.toFixed(2)}</span>
             </div>
-
-            {breakdown.discount > 0 && (
-              <>
-                <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23] text-emerald-600 dark:text-emerald-400">
-                  <span className="text-sm flex items-center gap-1.5">
-                    <Tag className="w-3 h-3" /> Discount
-                  </span>
-                  <span className="text-sm font-semibold">−£{breakdown.discount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
-                  <span className="text-xs italic text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">After discount</span>
-                  <span className="text-xs font-medium text-[#2f1e14] dark:text-[#f5e9dc]">£{discountedSubtotal.toFixed(2)}</span>
-                </div>
-              </>
-            )}
 
             <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
               <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
@@ -914,6 +948,21 @@ export default function CheckoutPage() {
               </span>
               <span className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">£{breakdown.totalDelivery.toFixed(2)}</span>
             </div>
+
+            {breakdown.discount > 0 && (
+              <>
+                <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
+                  <span className="text-xs italic text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">Total before discount</span>
+                  <span className="text-xs font-medium text-[#2f1e14] dark:text-[#f5e9dc]">£{preDiscountTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23] text-emerald-600 dark:text-emerald-400">
+                  <span className="text-sm flex items-center gap-1.5">
+                    <Tag className="w-3 h-3" /> Discount
+                  </span>
+                  <span className="text-sm font-semibold">−£{breakdown.discount.toFixed(2)}</span>
+                </div>
+              </>
+            )}
 
             {/* Grand total */}
             <div className="pt-4 flex items-end justify-between">
@@ -947,6 +996,226 @@ export default function CheckoutPage() {
             <span>256-bit SSL · Powered by Stripe</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Free-checkout form (no Stripe — used when grandTotal=0) ─────────────────
+//
+// Mirrors CheckoutForm's two-step UX (information → payment) but the "Payment"
+// step contains no card field. The user confirms and we POST directly to
+// /cart-payments/checkout-free; the server re-validates that the order really
+// is free before creating it.
+
+function FreeCheckoutForm({
+  shipping,
+  onShippingChange,
+  breakdown,
+  promoCode,
+  step,
+  onStepChange,
+  onSuccess,
+}: {
+  shipping: ShippingForm;
+  onShippingChange: (field: keyof ShippingForm, value: string | boolean) => void;
+  breakdown: { subtotal: number; discount: number; totalTax: number; totalDelivery: number; grandTotal: number };
+  promoCode: string;
+  step: 'information' | 'payment';
+  onStepChange: (s: 'information' | 'payment') => void;
+  onSuccess: (orderNumber: string, orderPayload: unknown) => void;
+}) {
+  const { items, clearCart } = useCart();
+  const [placing, setPlacing] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  const inputClass =
+    'w-full bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 dark:focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] transition-all duration-200';
+
+  const validateInformation = () => {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!shipping.email.trim() || !emailRe.test(shipping.email.trim())) return 'A valid email address is required.';
+    if (!shipping.firstName.trim()) return 'First name is required.';
+    if (!shipping.lastName.trim())  return 'Last name is required.';
+    if (!shipping.address.trim())   return 'Address is required.';
+    if (!shipping.city.trim())      return 'City is required.';
+    if (!shipping.postcode.trim())  return 'Postcode is required.';
+    const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
+    if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
+      return 'Please enter a valid UK postcode (e.g. SW1A 1AA).';
+    }
+    return null;
+  };
+
+  const handleContinue = () => {
+    const err = validateInformation();
+    if (err) { setError(err); return; }
+    setError(null);
+    onStepChange('payment');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePlaceOrder = async () => {
+    setPlacing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/checkout-free`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            productId:            i.productId,
+            size:                 i.size,
+            quantity:             i.quantity,
+            unitPrice:            i.unitPrice,
+            isSubscription:       i.isSubscription       || false,
+            subscriptionInterval: i.subscriptionInterval || null,
+          })),
+          promoCode,
+          customer: {
+            firstName: shipping.firstName,
+            lastName:  shipping.lastName,
+            email:     shipping.email,
+            phone:     shipping.phone,
+          },
+          shipping: {
+            address:   shipping.address,
+            apartment: shipping.apartment,
+            city:      shipping.city,
+            county:    shipping.county,
+            postcode:  shipping.postcode,
+            country:   shipping.country,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to place order');
+      }
+      const order = data.data?.order;
+      if (!order?.orderNumber) throw new Error('Order created but no order number returned');
+      clearCart();
+      onSuccess(order.orderNumber, order);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to place order');
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  return (
+    <div>
+      {/* STEP 1 — Information */}
+      <div className={step === 'information' ? 'block' : 'hidden'}>
+        <div className="mb-5 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          Your promo code makes this order free. No payment required.
+        </div>
+
+        {error && (
+          <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="mb-6">
+          <h2 className="font-antique text-base text-[#2f1e14] dark:text-[#f5e9dc] mb-3">Contact</h2>
+          <Field label="Email address" required>
+            <input type="email" placeholder="you@example.com" value={shipping.email}
+              onChange={(e) => onShippingChange('email', e.target.value)} className={inputClass} />
+          </Field>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="font-antique text-base text-[#2f1e14] dark:text-[#f5e9dc] mb-3">Shipping address</h2>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="First name" required>
+                <input type="text" value={shipping.firstName}
+                  onChange={(e) => onShippingChange('firstName', e.target.value)} className={inputClass} />
+              </Field>
+              <Field label="Last name" required>
+                <input type="text" value={shipping.lastName}
+                  onChange={(e) => onShippingChange('lastName', e.target.value)} className={inputClass} />
+              </Field>
+            </div>
+            <Field label="Address" required>
+              <input type="text" value={shipping.address}
+                onChange={(e) => onShippingChange('address', e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="Apartment, suite, etc.">
+              <input type="text" value={shipping.apartment}
+                onChange={(e) => onShippingChange('apartment', e.target.value)} className={inputClass} />
+            </Field>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="City" required>
+                <input type="text" value={shipping.city}
+                  onChange={(e) => onShippingChange('city', e.target.value)} className={inputClass} />
+              </Field>
+              <Field label="County">
+                <input type="text" value={shipping.county}
+                  onChange={(e) => onShippingChange('county', e.target.value)} className={inputClass} />
+              </Field>
+              <Field label="Postcode" required>
+                <input type="text" value={shipping.postcode}
+                  onChange={(e) => onShippingChange('postcode', e.target.value)} className={inputClass} />
+              </Field>
+            </div>
+            <Field label="Phone">
+              <input type="tel" value={shipping.phone}
+                onChange={(e) => onShippingChange('phone', e.target.value)} className={inputClass} />
+            </Field>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleContinue}
+          className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow hover:from-amber-600 hover:to-orange-600 transition-all"
+        >
+          Continue to confirmation <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* STEP 2 — Place free order */}
+      <div className={step === 'payment' ? 'block' : 'hidden'}>
+        <button
+          type="button"
+          onClick={() => onStepChange('information')}
+          className="inline-flex items-center gap-1 text-sm text-[#7A5C4F] dark:text-[#c8b6a6] hover:text-amber-600 dark:hover:text-amber-400 mb-5"
+        >
+          <ChevronLeft className="w-4 h-4" /> Back to information
+        </button>
+
+        <div className="mb-5 px-4 py-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-semibold mb-1">
+            <Tag className="w-4 h-4" /> 100% off — total £0.00
+          </div>
+          <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70">
+            Your promo covers the full order. Click below to confirm — we&apos;ll send your confirmation to {shipping.email}.
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handlePlaceOrder}
+          disabled={placing}
+          className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow hover:from-amber-600 hover:to-orange-600 disabled:opacity-60 transition-all"
+        >
+          {placing
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Placing order…</>
+            : <><Lock className="w-4 h-4" /> Place order — £0.00</>}
+        </button>
+
+        <p className="mt-3 text-[11px] text-center text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">
+          Breakdown: subtotal £{breakdown.subtotal.toFixed(2)} · VAT £{breakdown.totalTax.toFixed(2)} · delivery £{breakdown.totalDelivery.toFixed(2)} · discount −£{breakdown.discount.toFixed(2)}
+        </p>
       </div>
     </div>
   );
