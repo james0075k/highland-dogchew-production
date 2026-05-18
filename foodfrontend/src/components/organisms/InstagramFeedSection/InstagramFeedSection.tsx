@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { Play, Instagram, Image as ImageIcon, Film, Grid3X3 } from 'lucide-react';
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
@@ -117,12 +118,13 @@ function PostCard({ post, index }: { post: Post; index: number }) {
         boxShadow: '0 2px 12px rgba(46, 31, 20, 0.08)',
       }}
     >
-      {/* Thumbnail */}
-      <img
+      {/* Thumbnail — next/image emits AVIF/WebP + responsive srcset */}
+      <Image
         src={post.image}
         alt={post.caption}
-        loading="lazy"
-        className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110"
+        fill
+        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        className="object-cover transition-all duration-700 ease-out group-hover:scale-110"
       />
 
       {/* Warm vignette overlay (always visible, subtle) */}
@@ -185,7 +187,6 @@ export default function InstagramFeedSection() {
   const [loading, setLoading]       = useState(true);
   const [igUrl, setIgUrl]           = useState('https://www.instagram.com/highlanddogchew/');
   const [handle, setHandle]         = useState('highlanddogchew');
-  const [sectionEnabled, setEnabled] = useState<boolean | null>(null);
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
@@ -205,19 +206,14 @@ export default function InstagramFeedSection() {
     const base = API();
 
     const run = async () => {
-      const [settingsRes, contactRes] = await Promise.allSettled([
-        fetch(`${base}/instagram/settings`).then(r => r.json()).catch(() => null),
+      const [contactRes, manualRes] = await Promise.allSettled([
         fetch(`${base}/info`).then(r => r.json()).catch(() => null),
+        fetch(`${base}/instagram-posts`).then(r => r.json()).catch(() => null),
       ]);
 
       if (cancelled) return;
 
-      const settings = settingsRes.status === 'fulfilled' ? settingsRes.value?.data : null;
-      const contact  = contactRes.status  === 'fulfilled' ? contactRes.value?.data  : null;
-
-      const enabled = settings?.isEnabled !== false;
-      setEnabled(enabled);
-
+      const contact = contactRes.status === 'fulfilled' ? contactRes.value?.data : null;
       const savedIgUrl: string = contact?.socialLinks?.instagram || '';
       if (savedIgUrl) {
         const h = extractHandle(savedIgUrl);
@@ -227,32 +223,20 @@ export default function InstagramFeedSection() {
         }
       }
 
-      if (!enabled) { setLoading(false); return; }
+      const manualJson = manualRes.status === 'fulfilled' ? manualRes.value : null;
+      const manualPosts: any[] = Array.isArray(manualJson?.data)
+        ? manualJson.data
+        : Array.isArray(manualJson)
+          ? manualJson
+          : [];
 
-      try {
-        const liveRes = await fetch(`${base}/instagram/feed`);
-        const liveJson = await liveRes.json();
-        if (cancelled) return;
-        const livePosts: any[] = Array.isArray(liveJson.data) ? liveJson.data : [];
-        if (livePosts.length > 0) { setPosts(livePosts.map(normalisePost)); setLoading(false); return; }
-      } catch { /* fall through */ }
-
-      try {
-        const manualRes = await fetch(`${base}/instagram-posts`);
-        const manualJson = await manualRes.json();
-        if (cancelled) return;
-        const manualPosts: any[] = Array.isArray(manualJson.data) ? manualJson.data : Array.isArray(manualJson) ? manualJson : [];
-        if (manualPosts.length > 0) { setPosts(manualPosts.map(normalisePost)); setLoading(false); return; }
-      } catch { /* fall through */ }
-
-      if (!cancelled) { setPosts(FALLBACK); setLoading(false); }
+      setPosts(manualPosts.length > 0 ? manualPosts.map(normalisePost) : FALLBACK);
+      setLoading(false);
     };
 
     run();
     return () => { cancelled = true; };
   }, []);
-
-  if (sectionEnabled === false) return null;
 
   return (
     <section

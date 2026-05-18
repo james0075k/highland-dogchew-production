@@ -1,6 +1,6 @@
 ﻿// layout.tsx
 import { Metadata } from "next";
-import { DM_Sans, Playfair_Display, Cormorant_Garamond, DM_Serif_Display } from "next/font/google";
+import { DM_Sans, DM_Serif_Display } from "next/font/google";
 
 import "../../app/globals.css";
 import Footer from "@/components/organisms/Footer";
@@ -13,9 +13,17 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import CookieConsent from "@/components/organisms/CookieConsent/CookieConsent";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
-const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
-const cormorant = Cormorant_Garamond({ variable: "--font-cormorant", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
-const dmSerifDisplay = DM_Serif_Display({ variable: "--font-antique-serif", subsets: ["latin"], weight: "400", display: "swap" });
+const dmSerifDisplay = DM_Serif_Display({
+  variable: "--font-antique-serif",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+/*
+  Playfair + Cormorant were each loading separate Google Font requests.
+  Both are aliased to DM Serif Display so existing var(--font-playfair) /
+  var(--font-cormorant) usages keep working without a 2nd/3rd font download.
+*/
 
 const BASE_URL = 'https://highlanddogchew.co.uk';
 
@@ -312,7 +320,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en-GB"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${playfair.variable} ${cormorant.variable} ${dmSerifDisplay.variable}`}
+      className={`${dmSans.variable} ${dmSerifDisplay.variable}`}
+      style={{
+        // Alias removed fonts to the same serif so existing usages keep working
+        ['--font-playfair' as string]: 'var(--font-antique-serif)',
+        ['--font-cormorant' as string]: 'var(--font-antique-serif)',
+      }}
     >
       <head>
         {/* Structured Data / JSON-LD */}

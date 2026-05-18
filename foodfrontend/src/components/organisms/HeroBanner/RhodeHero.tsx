@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
+import { useEffect, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -11,10 +12,10 @@ import {
 } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
-const videos = [
-  "/videos/video1.mp4",
-  "/videos/video2.mp4",
-  "/videos/video3.mp4",
+const slides = [
+  "/videos/video1.jpeg",
+  "/videos/video2.jpeg",
+  "/videos/video3.jpeg",
 ];
 
 const heroContent = [
@@ -24,7 +25,6 @@ const heroContent = [
 ];
 
 export default function RhodeHero() {
-  const videoRef   = useRef<HTMLVideoElement>(null);
   const [current,    setCurrent]    = useState(0);
   const [isPlaying,  setIsPlaying]  = useState(true);
   const [opacity,    setOpacity]    = useState(1);
@@ -38,7 +38,7 @@ export default function RhodeHero() {
     [0, 700],
     prefersReduced ? [1, 1] : [1.0, 1.12]
   );
-  const videoScale = useSpring(rawScale, {
+  const imageScale = useSpring(rawScale, {
     stiffness: 55,
     damping:   22,
     mass:      0.4,
@@ -47,31 +47,20 @@ export default function RhodeHero() {
 
   useEffect(() => { setIsMounted(true); }, []);
 
-  const switchVideo = useCallback((nextIndex: number) => {
+  const switchSlide = useCallback((nextIndex: number) => {
     setOpacity(0);
     setTimeout(() => { setCurrent(nextIndex); setOpacity(1); }, 350);
   }, []);
 
   useEffect(() => {
-    if (isPlaying) return;
-    videoRef.current?.pause();
-  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     if (!isPlaying) return;
-    const timer = setTimeout(() => switchVideo((current + 1) % videos.length), 12000);
+    const timer = setTimeout(() => switchSlide((current + 1) % slides.length), 6000);
     return () => clearTimeout(timer);
-  }, [current, isPlaying, switchVideo]);
+  }, [current, isPlaying, switchSlide]);
 
-  const handlePrev       = () => switchVideo((current - 1 + videos.length) % videos.length);
-  const handleNext       = () => switchVideo((current + 1) % videos.length);
-  const handleVideoEnded = () => switchVideo((current + 1) % videos.length);
-  const handlePlayPause  = () => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    isPlaying ? vid.pause() : vid.play().catch(() => {});
-    setIsPlaying(!isPlaying);
-  };
+  const handlePrev      = () => switchSlide((current - 1 + slides.length) % slides.length);
+  const handleNext      = () => switchSlide((current + 1) % slides.length);
+  const handlePlayPause = () => setIsPlaying(!isPlaying);
 
   // SSR placeholder — matches responsive height
   if (!isMounted) {
@@ -85,25 +74,26 @@ export default function RhodeHero() {
     */
     <section className="relative h-[52vw] min-h-[280px] max-h-[520px] md:h-screen md:max-h-none w-full overflow-hidden bg-black">
 
-      {/* Video with parallax (desktop only, reduced on mobile for perf) */}
-      <motion.video
-        key={videos[current]}
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        preload={current === 0 ? "auto" : "metadata"}
-        onEnded={handleVideoEnded}
+      {/* Image with parallax — next/image emits AVIF/WebP + responsive srcset */}
+      <motion.div
+        key={slides[current]}
         style={{
           opacity,
-          scale: videoScale,
+          scale: imageScale,
           willChange: "transform",
           transition: "opacity 0.7s ease-in-out",
         }}
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        className="absolute inset-0 z-0"
       >
-        <source src={videos[current]} type="video/mp4" />
-      </motion.video>
+        <Image
+          src={slides[current]}
+          alt=""
+          fill
+          priority={current === 0}
+          sizes="100vw"
+          className="object-cover"
+        />
+      </motion.div>
 
       {/* Overlay — lighter on mobile so text is readable */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-black/20 to-black/10 md:from-black/50 md:via-black/15 md:to-transparent" />
@@ -111,14 +101,14 @@ export default function RhodeHero() {
       {/* Prev / Next arrows — desktop only */}
       <button
         onClick={handlePrev}
-        aria-label="Previous video"
+        aria-label="Previous slide"
         className="hidden md:flex absolute left-5 top-1/2 -translate-y-1/2 z-20 text-white opacity-50 hover:opacity-100 transition-opacity duration-300 cursor-pointer"
       >
         <ChevronLeft size={40} strokeWidth={1.5} />
       </button>
       <button
         onClick={handleNext}
-        aria-label="Next video"
+        aria-label="Next slide"
         className="hidden md:flex absolute right-5 top-1/2 -translate-y-1/2 z-20 text-white opacity-50 hover:opacity-100 transition-opacity duration-300 cursor-pointer"
       >
         <ChevronRight size={40} strokeWidth={1.5} />
@@ -145,11 +135,11 @@ export default function RhodeHero() {
 
       {/* Dot indicators */}
       <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 md:gap-2">
-        {videos.map((_, i) => (
+        {slides.map((_, i) => (
           <button
             key={i}
-            onClick={() => switchVideo(i)}
-            aria-label={`Go to video ${i + 1}`}
+            onClick={() => switchSlide(i)}
+            aria-label={`Go to slide ${i + 1}`}
             className={`h-1 md:h-1.5 rounded-full transition-all duration-300 ${i === current ? "bg-white w-3 md:w-4" : "bg-white/40 w-1 md:w-1.5"}`}
           />
         ))}

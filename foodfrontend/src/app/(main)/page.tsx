@@ -27,18 +27,24 @@ export const metadata: Metadata = {
     ],
   },
 };
+import dynamic from "next/dynamic";
+
+// Above-the-fold: render eagerly for fast LCP + SEO
 import RhodeHero from "@/components/organisms/HeroBanner/RhodeHero";
-import VarietiesSection from "@/components/organisms/Varitites/VarietiesSection";
-import HimalayanDelightHero from "@/components/organisms/ThirdSection/HimalayanDelightHero";
-import TeamSection from "@/components/organisms/TeamSection/TeamSection";
-import DogChewHeroBanner from "@/components/organisms/DogChewHeroBanner/DogChewHeroBanner";
-import TestimonialSection from "@/components/organisms/Testimonial/TestimonialSection";
 import YakMilkSection from "@/components/organisms/YakMilkSection/YakMilkSection";
-import InstagramFeedSection from "@/components/organisms/InstagramFeedSection/InstagramFeedSection";
-import PuffTreatsSection from "@/components/organisms/puffTreats/puffTreats";
-import HimalayanStorySection from "@/components/organisms/HimalayanStorySection/HimalayanStorySection";
-import SizeGuideSection from "@/components/organisms/SizeGuideSection/SizeGuideSection";
-import HighlandMixChewSection from "@/components/organisms/HighlandMixChewSection/HighlandMixChewSection";
+
+// Below-the-fold: code-split. SSR stays on (default) for SEO; JS is fetched only
+// when the chunk is needed, cutting initial bundle on the homepage.
+const SectionSkeleton = () => <div className="w-full h-[60vh] md:h-[80vh]" aria-hidden="true" />;
+const dyn = (loader: () => Promise<any>) => dynamic(loader, { loading: () => <SectionSkeleton /> });
+
+const PuffTreatsSection       = dyn(() => import("@/components/organisms/puffTreats/puffTreats"));
+const HighlandMixChewSection  = dyn(() => import("@/components/organisms/HighlandMixChewSection/HighlandMixChewSection"));
+const VarietiesSection        = dyn(() => import("@/components/organisms/Varitites/VarietiesSection"));
+const HimalayanStorySection   = dyn(() => import("@/components/organisms/HimalayanStorySection/HimalayanStorySection"));
+const SizeGuideSection        = dyn(() => import("@/components/organisms/SizeGuideSection/SizeGuideSection"));
+const InstagramFeedSection    = dyn(() => import("@/components/organisms/InstagramFeedSection/InstagramFeedSection"));
+const TestimonialSection      = dyn(() => import("@/components/organisms/Testimonial/TestimonialSection"));
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
 
