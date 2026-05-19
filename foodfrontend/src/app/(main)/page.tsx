@@ -35,17 +35,18 @@ import YakMilkSection from "@/components/organisms/YakMilkSection/YakMilkSection
 
 // Below-the-fold: code-split. SSR stays on (default) for SEO; JS is fetched only
 // when the chunk is needed, cutting initial bundle on the homepage.
-// Each dynamic() is inlined so TypeScript can infer each component's prop types.
-const SectionSkeleton = () => <div className="w-full h-[60vh] md:h-[80vh]" aria-hidden="true" />;
-const loading = () => <SectionSkeleton />;
+// No skeleton: the dynamic chunk is fetched + streamed in alongside the parent
+// HTML when SSR is on, so a placeholder would only cause an unnecessary layout
+// jump when the real content arrives at a different height (was the main CLS
+// source measured at 0.6 on WebPageTest).
 
-const PuffTreatsSection      = dynamic(() => import("@/components/organisms/puffTreats/puffTreats"),                                { loading });
-const HighlandMixChewSection = dynamic(() => import("@/components/organisms/HighlandMixChewSection/HighlandMixChewSection"),       { loading });
-const VarietiesSection       = dynamic(() => import("@/components/organisms/Varitites/VarietiesSection"),                          { loading });
-const HimalayanStorySection  = dynamic(() => import("@/components/organisms/HimalayanStorySection/HimalayanStorySection"),         { loading });
-const SizeGuideSection       = dynamic(() => import("@/components/organisms/SizeGuideSection/SizeGuideSection"),                   { loading });
-const InstagramFeedSection   = dynamic(() => import("@/components/organisms/InstagramFeedSection/InstagramFeedSection"),           { loading });
-const TestimonialSection     = dynamic(() => import("@/components/organisms/Testimonial/TestimonialSection"),                      { loading });
+const PuffTreatsSection      = dynamic(() => import("@/components/organisms/puffTreats/puffTreats"));
+const HighlandMixChewSection = dynamic(() => import("@/components/organisms/HighlandMixChewSection/HighlandMixChewSection"));
+const VarietiesSection       = dynamic(() => import("@/components/organisms/Varitites/VarietiesSection"));
+const HimalayanStorySection  = dynamic(() => import("@/components/organisms/HimalayanStorySection/HimalayanStorySection"));
+const SizeGuideSection       = dynamic(() => import("@/components/organisms/SizeGuideSection/SizeGuideSection"));
+const InstagramFeedSection   = dynamic(() => import("@/components/organisms/InstagramFeedSection/InstagramFeedSection"));
+const TestimonialSection     = dynamic(() => import("@/components/organisms/Testimonial/TestimonialSection"));
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
 

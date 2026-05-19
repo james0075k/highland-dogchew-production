@@ -478,7 +478,7 @@ export default function HimalayanStorySection() {
           </div>
 
           <div className="lg:col-span-7">
-            <ParallaxVideo src="/videos/video4new.mp4" poster="/videos/video1.jpeg" />
+            <ParallaxVideo src="/videos/video4new.mp4" poster="/videos/video1.webp" />
           </div>
         </div>
 

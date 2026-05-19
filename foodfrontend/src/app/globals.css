@@ -161,3 +161,12 @@ html.dark .fade-out-mask:after {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
 }
+
+/* Hero carousel slide transitions — controlled by HeroCarouselControls
+   via direct style.opacity, so the LCP image renders SSR and reflows zero. */
+.hero-slide {
+  transition: opacity 0.7s ease-in-out;
+}
+.hero-text-slide {
+  transition: opacity 0.6s ease-in-out;
+}

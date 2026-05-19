@@ -3,6 +3,10 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  // Smaller production server bundle for VPS deployment.
+  // After `next build`, copy .next/standalone + .next/static + public to the server
+  // and run `node server.js`. Reduces node_modules footprint by ~80%.
+  output: 'standalone',
   experimental: {
     optimizePackageImports: ['react-icons', 'lucide-react', 'framer-motion'],
   },

@@ -3,14 +3,20 @@ import { Metadata } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
 
 import "../../app/globals.css";
+import dynamic from "next/dynamic";
 import Footer from "@/components/organisms/Footer";
 import Navbar from "@/components/organisms/NavBar";
-import GoToTop from "@/components/organisms/GoToTop/GoToTop";
-import WhatsappWidget from "@/components/organisms/WhatsappWidget/WhatsappWidget";
 import { CartProvider } from "@/context/CartContext";
 import { SubscriptionProvider } from "@/context/SubscriptionContext";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import CookieConsent from "@/components/organisms/CookieConsent/CookieConsent";
+
+// Below-the-fold floating widgets — code-split so their JS doesn't compete
+// with LCP-critical work. (Next 15 forbids ssr:false in server components,
+// but it's not needed here: these are already 'use client' with useEffect-gated
+// rendering, so SSR yields an empty initial state regardless.)
+const GoToTop        = dynamic(() => import("@/components/organisms/GoToTop/GoToTop"));
+const WhatsappWidget = dynamic(() => import("@/components/organisms/WhatsappWidget/WhatsappWidget"));
+const CookieConsent  = dynamic(() => import("@/components/organisms/CookieConsent/CookieConsent"));
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
 const dmSerifDisplay = DM_Serif_Display({
@@ -352,6 +358,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Preconnect to API */}
         <link rel="preconnect" href="https://highlanddogchew.co.uk" />
         <link rel="dns-prefetch" href="https://highlanddogchew.co.uk" />
+
+        {/* The first hero image carries `priority` + `fetchPriority="high"` on its
+            <Image> tag — Next/image emits its own responsive preload <link> with
+            imagesrcset/imagesizes so the browser pulls the correctly-sized variant
+            (AVIF on modern browsers). A manual preload here would race that and
+            cause a double download. */}
       </head>
       <body className="antialiased">
         <ThemeProvider>
