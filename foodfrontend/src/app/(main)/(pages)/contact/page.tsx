@@ -280,7 +280,7 @@ export default function ContactPage() {
       <div ref={heroRef} className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
         <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
           <img
-            src="/images/dog-6.jpeg"
+            src="/images/dog-6.webp"
             alt="Friendly dog waiting to hear from you"
             className="h-full w-full object-cover"
           />
@@ -559,7 +559,7 @@ export default function ContactPage() {
       {/* ═══════ DOG PHOTO STRIP ═══════ */}
       <FadeUp className="max-w-6xl mx-auto px-4 md:px-6 pb-8">
         <div className="grid grid-cols-3 gap-3 md:gap-5">
-          {['/images/dog-2.jpeg', '/images/dog-16.jpeg', '/images/dog-27.jpeg'].map((src, i) => (
+          {['/images/dog-2.webp', '/images/dog-16.webp', '/images/dog-27.webp'].map((src, i) => (
             <motion.div
               key={src}
               initial={{ opacity: 0, scale: 0.92 }}

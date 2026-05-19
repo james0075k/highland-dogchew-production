@@ -52,8 +52,11 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // --- Constants ---
-const TAX_RATE = 0.20;           // 20% VAT
-const DELIVERY_FLAT = 2.99;      // single flat delivery for the entire cart
+// VAT is already baked into product catalogue prices, so we don't add it again
+// at the cart level. The field stays in the schema (set to 0) so existing
+// orders and webhook payloads keep their shape.
+const TAX_RATE = 0;
+const DELIVERY_FLAT = 1.99;      // single flat delivery for the entire cart
 const STORAGE_KEY = 'highland-dogchew-cart';
 // Bump CART_SCHEMA_VERSION whenever the CartItem shape changes in a way that
 // would break old localStorage payloads (renaming/required fields, etc.).

@@ -1,9 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  compress: true,
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  experimental: {
+    optimizePackageImports: ['react-icons', 'lucide-react', 'framer-motion'],
+  },
   images: {
     // Serve Cloudinary images at original quality (Cloudinary handles its own optimisation)
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 3600, // 1 hour cache for product images
+    minimumCacheTTL: 31536000, // 1 year — product images rarely change
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 64, 96, 128, 256, 384],
     remotePatterns: [
       // ── Cloudinary CDN (primary — works on localhost & production) ──────────
       {

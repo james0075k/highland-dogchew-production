@@ -101,7 +101,6 @@ function pricingRows(order) {
   const rows = [
     ['Subtotal', `&pound;${order.subtotal.toFixed(2)}`],
     order.totalDiscount > 0 ? ['Discount', `&minus;&pound;${order.totalDiscount.toFixed(2)}`] : null,
-    ['VAT (20%)', `&pound;${order.totalTax.toFixed(2)}`],
     ['Shipping', `&pound;${order.totalDelivery.toFixed(2)}`],
   ]
     .filter(Boolean)

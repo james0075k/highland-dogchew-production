@@ -20,7 +20,7 @@ export const blogPosts: BlogPost[] = [
     category: 'Dog Health',
     date: '2026-03-25',
     readTime: '5 min read',
-    image: '/images/dog-34.jpeg',
+    image: '/images/dog-34.webp',
     imageAlt: 'Happy dog enjoying a natural yak milk chew with total contentment',
     author: 'Highland Yakchew Team',
     content: `
@@ -93,7 +93,7 @@ If you are seeing these signs in your dog, you have found something genuinely wo
     category: 'Our Story',
     date: '2026-03-18',
     readTime: '6 min read',
-    image: '/images/dog-35.jpeg',
+    image: '/images/dog-35.webp',
     imageAlt: 'Contented dog relaxing after enjoying a natural Highland Yak Chew',
     author: 'Highland Yakchew Team',
     content: `
@@ -164,7 +164,7 @@ We source every chew directly from Himalayan farming cooperatives, ensuring fair
     category: 'Dog Health',
     date: '2026-03-10',
     readTime: '5 min read',
-    image: '/images/dog-28.jpeg',
+    image: '/images/dog-28.webp',
     imageAlt: 'Golden Retriever happily chewing a natural yak milk chew on grass',
     author: 'Highland Yakchew Team',
     content: `
@@ -212,7 +212,7 @@ Yak chews are one of the safest, most nutritious long-lasting treats available f
     category: 'Our Story',
     date: '2026-03-04',
     readTime: '6 min read',
-    image: '/images/dog-5.jpeg',
+    image: '/images/dog-5.webp',
     imageAlt: 'Husky standing in a snowy highland landscape, evoking Himalayan origins',
     author: 'Highland Yakchew Team',
     content: `
@@ -257,7 +257,7 @@ Not all "yak chews" are genuine. Some mass-produced alternatives use mostly cow 
     category: 'Dog Health',
     date: '2026-02-20',
     readTime: '5 min read',
-    image: '/images/dog-17.jpeg',
+    image: '/images/dog-17.webp',
     imageAlt: 'Smiling golden retriever enjoying the outdoors at sunset',
     author: 'Highland Yakchew Team',
     content: `
@@ -318,7 +318,7 @@ Browse our [Yak Milk Chews](/products/yak-chews), [Himalayan Puff Treats](/produ
     category: 'Buying Guide',
     date: '2026-02-10',
     readTime: '4 min read',
-    image: '/images/dog-31.jpeg',
+    image: '/images/dog-31.webp',
     imageAlt: 'Multiple dog breeds of different sizes looking upward together',
     author: 'Highland Yakchew Team',
     content: `
@@ -371,7 +371,7 @@ If you are unsure which size is right for your dog, [contact us](/contact) and o
     category: 'Product Guide',
     date: '2026-01-28',
     readTime: '4 min read',
-    image: '/images/dog-15.jpeg',
+    image: '/images/dog-15.webp',
     imageAlt: 'Adorable golden retriever puppy sitting happily in a flower meadow',
     author: 'Highland Yakchew Team',
     content: `

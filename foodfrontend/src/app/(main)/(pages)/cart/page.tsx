@@ -39,7 +39,6 @@ export default function CartPage() {
     clearCart,
     cartCount,
     subtotal,
-    totalTax,
     totalDelivery,
   } = useCart();
 
@@ -51,7 +50,7 @@ export default function CartPage() {
   /* Cart total excludes any promo discount — the promo input lives on the
    * checkout page, so showing a discount here would surprise the user. The
    * checkout page reads the full breakdown (incl. discount) from CartContext. */
-  const cartTotal = +(subtotal + totalTax + totalDelivery).toFixed(2);
+  const cartTotal = +(subtotal + totalDelivery).toFixed(2);
 
   /* ── pre-hydration: show nothing until localStorage cart is loaded
         (prevents a flash of "your cart is empty" on hard reload) ── */
@@ -281,7 +280,7 @@ export default function CartPage() {
                             {/* Line total label */}
                             <div className="mt-3 flex items-center justify-between">
                               <span className="text-[11px] text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60 italic">
-                                {item.isSubscription ? 'Per delivery · excl. VAT &amp; delivery' : 'Line total · excl. VAT &amp; delivery'}
+                                {item.isSubscription ? 'Per delivery · excl. delivery' : 'Line total · excl. delivery'}
                               </span>
                               <div className="text-right">
                                 <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400">
@@ -325,6 +324,7 @@ export default function CartPage() {
                     <p className="text-amber-200/70 text-xs mt-1">
                       All prices in GBP · VAT included
                     </p>
+                    {/* VAT is baked into product prices; no separate VAT line below */}
                   </div>
 
                   {/* Price rows */}
@@ -339,17 +339,6 @@ export default function CartPage() {
                       </span>
                       <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">
                         £{subtotal.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* VAT — computed on the full subtotal */}
-                    <div className="flex justify-between items-center py-3 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
-                      <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
-                        VAT
-                        <span className="ml-1 text-[10px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">(20%)</span>
-                      </span>
-                      <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">
-                        £{totalTax.toFixed(2)}
                       </span>
                     </div>
 
@@ -381,7 +370,7 @@ export default function CartPage() {
                             £{cartTotal.toFixed(2)}
                           </div>
                           <div className="text-[10px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mt-0.5">
-                            incl. VAT &amp; delivery
+                            incl. delivery
                           </div>
                         </div>
                       </div>

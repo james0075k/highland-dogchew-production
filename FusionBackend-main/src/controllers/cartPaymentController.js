@@ -7,8 +7,11 @@ import handleSuccess from '../utils/successHandler.js';
 import { cartValidationSchema } from '../validations/cartValidationSchema.js';
 import { createFreeOrder } from '../utils/createFreeOrder.js';
 
-const TAX_RATE        = 0.20; // 20% VAT
-const DELIVERY_CHARGE = 2.99; // flat per order (single delivery regardless of item count)
+// VAT is already included in product catalogue prices, so we don't apply it
+// again here. Kept as a field (0) so existing order documents and Stripe PI
+// metadata keep their existing shape.
+const TAX_RATE        = 0;
+const DELIVERY_CHARGE = 1.99; // flat per order (single delivery regardless of item count)
 const CHUNK_SIZE      = 480;  // safely under Stripe's 500-char metadata value limit
 
 class CartError extends Error {

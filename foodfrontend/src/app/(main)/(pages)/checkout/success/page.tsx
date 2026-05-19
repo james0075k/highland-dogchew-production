@@ -492,7 +492,6 @@ export default function CheckoutSuccessPage() {
                     green
                   />
                 )}
-                <PriceRow label="VAT (20%)"  value={`£${order.totalTax.toFixed(2)}`} />
                 <PriceRow label="Shipping"   value={`£${order.totalDelivery.toFixed(2)}`} />
                 <div className="flex justify-between items-baseline pt-3 mt-1 border-t-2 border-dashed border-amber-200 dark:border-amber-900/40">
                   <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">Total</span>
@@ -754,10 +753,6 @@ export default function CheckoutSuccessPage() {
                 </td>
               </tr>
             )}
-            <tr>
-              <td style={{ color: '#888', paddingBottom: '5px' }}>VAT (20%)</td>
-              <td style={{ textAlign: 'right', paddingBottom: '5px' }}>£{order.totalTax.toFixed(2)}</td>
-            </tr>
             <tr>
               <td style={{ color: '#888', paddingBottom: '5px' }}>Shipping</td>
               <td style={{ textAlign: 'right', paddingBottom: '5px' }}>£{order.totalDelivery.toFixed(2)}</td>

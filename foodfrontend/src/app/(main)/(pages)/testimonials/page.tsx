@@ -505,7 +505,7 @@ const Testimonials = () => {
       <div ref={heroRef} className="relative w-full h-[55vh] md:h-[65vh] overflow-hidden">
         <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
           <img
-            src="/images/dog-7.jpeg"
+            src="/images/dog-7.webp"
             alt="Happy dog with Highland Yak Chew"
             className="h-full w-full object-cover"
           />
@@ -633,7 +633,7 @@ const Testimonials = () => {
       {/* ═══════ DOG PHOTO STRIP ═══════ */}
       <FadeUp className="max-w-6xl mx-auto px-4 md:px-6 pb-10">
         <div className="grid grid-cols-4 gap-2 md:gap-4">
-          {["/images/dog-10.jpeg", "/images/dog-19.jpeg", "/images/dog-24.jpeg", "/images/dog-28.jpeg"].map(
+          {["/images/dog-10.webp", "/images/dog-19.webp", "/images/dog-24.webp", "/images/dog-28.webp"].map(
             (src, i) => (
               <motion.div
                 key={src}
@@ -735,8 +735,8 @@ const Testimonials = () => {
         </FadeUp>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <InfoPosterCard title="SHIPPING" items={shippingItems} imageSrc="/images/dog-14.jpeg" index={0} />
-          <InfoPosterCard title="PRODUCTS" items={productItems} imageSrc="/images/dog-21.jpeg" index={1} />
+          <InfoPosterCard title="SHIPPING" items={shippingItems} imageSrc="/images/dog-14.webp" index={0} />
+          <InfoPosterCard title="PRODUCTS" items={productItems} imageSrc="/images/dog-21.webp" index={1} />
         </div>
       </section>
 

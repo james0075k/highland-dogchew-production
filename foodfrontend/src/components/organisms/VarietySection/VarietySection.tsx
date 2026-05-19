@@ -23,10 +23,10 @@ const VarietySection = () => {
     TURMERIC: {
       name: 'Turmeric',
       images: [
-        '/images/dog-17.jpeg',
-        '/images/dog-28.jpeg',
-        '/images/dog-12.jpeg',
-        '/images/dog-32.jpeg'
+        '/images/dog-17.webp',
+        '/images/dog-28.webp',
+        '/images/dog-12.webp',
+        '/images/dog-32.webp'
       ],
       description: 'Churpi is a flavorful dog chew infused with the benefits of turmeric. This chew is perfect for addressing wounds, cuts, and mouth issues, and is especially effective for healing cuts on a dog\'s gums and tongue.',
       benefits: 'Turmeric Churpi not only provides the natural antibiotic properties of turmeric but also offers anti-inflammatory and antioxidant benefits. It helps reduce swelling, fight infections, and support overall oral health, making it a valuable addition to your pet\'s care routine.'
@@ -34,9 +34,9 @@ const VarietySection = () => {
     MINT: {
       name: 'Mint',
       images: [
-        '/images/dog-22.jpeg',
-        '/images/dog-13.jpeg',
-        '/images/dog-3.jpeg'
+        '/images/dog-22.webp',
+        '/images/dog-13.webp',
+        '/images/dog-3.webp'
       ],
       description: 'Mint flavored Churpi provides a refreshing and cooling experience for your dog while maintaining all the natural benefits of yak milk.',
       benefits: 'Mint Churpi helps freshen breath naturally while providing long-lasting chewing satisfaction. The natural mint flavor makes it particularly appealing to dogs while supporting dental health.'
@@ -44,9 +44,9 @@ const VarietySection = () => {
     BLUEBERRY: {
       name: 'Blueberry',
       images: [
-        '/images/dog-15.jpeg',
-        '/images/dog-25.jpeg',
-        '/images/dog-21.jpeg'
+        '/images/dog-15.webp',
+        '/images/dog-25.webp',
+        '/images/dog-21.webp'
       ],
       description: 'Blueberry Churpi combines the nutritional power of antioxidant-rich blueberries with premium yak milk for a healthy, delicious treat.',
       benefits: 'Rich in antioxidants, Blueberry Churpi supports immune system health and provides cognitive benefits while offering a naturally sweet flavor dogs love.'
@@ -54,9 +54,9 @@ const VarietySection = () => {
     STRAWBERRY: {
       name: 'Strawberry',
       images: [
-        '/images/dog-16.jpeg',
-        '/images/dog-33.jpeg',
-        '/images/dog-27.jpeg'
+        '/images/dog-16.webp',
+        '/images/dog-33.webp',
+        '/images/dog-27.webp'
       ],
       description: 'Strawberry flavored Churpi offers a sweet, fruity taste that dogs adore while maintaining the high-quality protein content of traditional yak chews.',
       benefits: 'Strawberry Churpi is packed with vitamin C and natural sweetness, making it an irresistible treat that also supports your dog\'s overall health.'
@@ -64,9 +64,9 @@ const VarietySection = () => {
     PUMPKIN: {
       name: 'Pumpkin',
       images: [
-        '/images/dog-19.jpeg',
-        '/images/dog-20.jpeg',
-        '/images/dog-1.jpeg'
+        '/images/dog-19.webp',
+        '/images/dog-20.webp',
+        '/images/dog-1.webp'
       ],
       description: 'Pumpkin Churpi combines the digestive benefits of pumpkin with the protein-rich goodness of yak milk for optimal pet health.',
       benefits: 'Rich in fiber and nutrients, Pumpkin Churpi supports healthy digestion and is gentle on sensitive stomachs while providing long-lasting chewing satisfaction.'
@@ -74,9 +74,9 @@ const VarietySection = () => {
     HONEY: {
       name: 'Honey',
       images: [
-        '/images/dog-10.jpeg',
-        '/images/dog-26.jpeg',
-        '/images/dog-2.jpeg'
+        '/images/dog-10.webp',
+        '/images/dog-26.webp',
+        '/images/dog-2.webp'
       ],
       description: 'Honey flavored Churpi offers natural sweetness and antibacterial properties combined with premium yak milk protein.',
       benefits: 'Honey Churpi provides natural energy and supports immune health with its antibacterial properties while offering a delicious taste dogs love.'
@@ -84,9 +84,9 @@ const VarietySection = () => {
     PEANUT: {
       name: 'Peanut',
       images: [
-        '/images/dog-24.jpeg',
-        '/images/dog-23.jpeg',
-        '/images/dog-30.jpeg'
+        '/images/dog-24.webp',
+        '/images/dog-23.webp',
+        '/images/dog-30.webp'
       ],
       description: 'Peanut Churpi combines the classic flavor dogs crave with the nutritional benefits of yak milk for a protein-packed treat.',
       benefits: 'High in protein and healthy fats, Peanut Churpi provides sustained energy and supports muscle health while offering irresistible flavor.'
@@ -94,9 +94,9 @@ const VarietySection = () => {
     COCONUT: {
       name: 'Coconut',
       images: [
-        '/images/dog-7.jpeg',
-        '/images/dog-11.jpeg',
-        '/images/dog-4.jpeg'
+        '/images/dog-7.webp',
+        '/images/dog-11.webp',
+        '/images/dog-4.webp'
       ],
       description: 'Coconut Churpi offers tropical flavor with the added benefits of coconut\'s natural oils for skin and coat health.',
       benefits: 'Coconut Churpi supports healthy skin and a shiny coat while providing medium-chain fatty acids for sustained energy and overall wellness.'
@@ -104,9 +104,9 @@ const VarietySection = () => {
     FLAXSEED: {
       name: 'Flaxseed',
       images: [
-        '/images/dog-9.jpeg',
-        '/images/dog-5.jpeg',
-        '/images/dog-8.jpeg'
+        '/images/dog-9.webp',
+        '/images/dog-5.webp',
+        '/images/dog-8.webp'
       ],
       description: 'Flaxseed Churpi is enriched with omega-3 fatty acids for optimal health benefits combined with traditional yak milk protein.',
       benefits: 'Rich in omega-3 fatty acids, Flaxseed Churpi supports heart health, reduces inflammation, and promotes a healthy, glossy coat.'

@@ -24,8 +24,9 @@ import {
   subscriptionPaymentFailedEmailHtml,
 } from '../utils/emailTemplates.js';
 
-const TAX_RATE        = 0.20;
-const DELIVERY_CHARGE = 2.99;
+// VAT is included in product catalogue prices — see cartPaymentController.js
+const TAX_RATE        = 0;
+const DELIVERY_CHARGE = 1.99;
 const MAX_FAILURES    = 3;
 const BATCH_SIZE      = 100;
 

@@ -73,7 +73,7 @@ const categories = [
     faqs: [
       {
         q: "How much does delivery cost?",
-        a: "Standard UK delivery is £2.99. Orders over £30 qualify for free standard delivery. Express delivery options are available at checkout.",
+        a: "Standard UK delivery is £1.99. Orders over £30 qualify for free standard delivery. Express delivery options are available at checkout.",
       },
       {
         q: "How long does delivery take?",

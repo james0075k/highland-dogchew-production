@@ -121,8 +121,9 @@ export const verifyPromoCode = async (req, res, next) => {
       }
     }
 
-    const TAX_RATE = 0.20;
-    const DELIVERY = 2.99;
+    // VAT is included in product catalogue prices — see cartPaymentController.js
+    const TAX_RATE = 0;
+    const DELIVERY = 1.99;
     const preDiscountTotal = +(subtotal + subtotal * TAX_RATE + DELIVERY).toFixed(2);
 
     const discount = promo.discountType === 'percentage'

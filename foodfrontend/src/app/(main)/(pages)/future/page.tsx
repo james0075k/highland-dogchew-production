@@ -189,7 +189,7 @@ const PillarsSection = () => {
       <div ref={heroRef} className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden mt-16">
         <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
           <img
-            src="/images/dog-5.jpeg"
+            src="/images/dog-5.webp"
             alt="Happy dog enjoying Highland Yak Chew"
             className="h-full w-full object-cover"
           />
@@ -275,7 +275,7 @@ const PillarsSection = () => {
       <FadeUp delay={0.1}>
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
           <div className="grid grid-cols-3 gap-3 md:gap-5">
-            {["/images/dog-12.jpeg", "/images/dog-18.jpeg", "/images/dog-25.jpeg"].map((src, i) => (
+            {["/images/dog-12.webp", "/images/dog-18.webp", "/images/dog-25.webp"].map((src, i) => (
               <motion.div
                 key={src}
                 initial={{ opacity: 0, scale: 0.92 }}

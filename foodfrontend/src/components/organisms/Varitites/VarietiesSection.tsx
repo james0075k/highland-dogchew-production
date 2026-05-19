@@ -307,7 +307,7 @@ const VarietiesSection = () => {
       {/* ═══════ HERO ═══════ */}
       <div ref={heroRef} className="relative w-full h-[50vh] md:h-[62vh] overflow-hidden mt-16">
         <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
-          <Image src="/images/dog-11.jpeg" alt="Dogs enjoying Highland Yak Chew varieties" fill className="object-cover" />
+          <Image src="/images/dog-11.webp" alt="Dogs enjoying Highland Yak Chew varieties" fill className="object-cover" />
         </motion.div>
         <motion.div className="absolute inset-0 bg-[#1a1410]" style={{ opacity: overlayFade }} />
 
@@ -444,7 +444,7 @@ const VarietiesSection = () => {
       {/* ═══════ DOG PHOTO STRIP ═══════ */}
       <FadeUp className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-3 gap-3 md:gap-5">
-          {['/images/dog-9.jpeg', '/images/dog-20.jpeg', '/images/dog-31.jpeg'].map((src, i) => (
+          {['/images/dog-9.webp', '/images/dog-20.webp', '/images/dog-31.webp'].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0, scale: 0.92 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: i * 0.1 }} className="relative aspect-[4/3] rounded-2xl overflow-hidden group">
               <Image src={src} alt="Dog enjoying flavoured yak chew" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a1410]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

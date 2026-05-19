@@ -935,13 +935,6 @@ export default function CheckoutPage() {
             </div>
 
             <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
-              <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6]">
-                VAT <span className="text-[10px] opacity-70">(20%)</span>
-              </span>
-              <span className="text-sm font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">£{breakdown.totalTax.toFixed(2)}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2.5 border-b border-dashed border-amber-100 dark:border-[#3a2c23]">
               <span className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] flex items-center gap-1.5">
                 <Truck className="w-3.5 h-3.5 text-amber-500" />
                 Delivery · UK Standard
@@ -972,7 +965,7 @@ export default function CheckoutPage() {
                   £{breakdown.grandTotal.toFixed(2)}
                 </div>
                 <div className="text-[10px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mt-0.5">
-                  GBP · incl. VAT &amp; delivery
+                  GBP · incl. delivery
                 </div>
               </div>
             </div>
@@ -1214,7 +1207,7 @@ function FreeCheckoutForm({
         </button>
 
         <p className="mt-3 text-[11px] text-center text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">
-          Breakdown: subtotal £{breakdown.subtotal.toFixed(2)} · VAT £{breakdown.totalTax.toFixed(2)} · delivery £{breakdown.totalDelivery.toFixed(2)} · discount −£{breakdown.discount.toFixed(2)}
+          Breakdown: subtotal £{breakdown.subtotal.toFixed(2)} · delivery £{breakdown.totalDelivery.toFixed(2)} · discount −£{breakdown.discount.toFixed(2)}
         </p>
       </div>
     </div>

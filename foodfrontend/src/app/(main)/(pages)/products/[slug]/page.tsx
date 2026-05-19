@@ -315,7 +315,7 @@ export default function ProductDetailPage() {
             '@type': 'OfferShippingDetails',
             shippingRate: {
               '@type': 'MonetaryAmount',
-              value: '2.99',
+              value: '1.99',
               currency: 'GBP',
             },
             shippingDestination: {

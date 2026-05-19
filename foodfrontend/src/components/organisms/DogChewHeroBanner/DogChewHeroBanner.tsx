@@ -9,7 +9,7 @@ const DogChewHeroBanner = () => {
       {/* Decorative Dog Items - Top Left */}
       <div className="absolute top-8 left-8 md:top-12 md:left-16 animate-float">
         <Image
-          src="/images/dog-12.jpeg"
+          src="/images/dog-12.webp"
           alt="Golden Retriever Puppy"
           width={112}
           height={112}
@@ -20,7 +20,7 @@ const DogChewHeroBanner = () => {
       {/* Dog Bone - Left Side */}
       <div className="absolute bottom-16 left-8 md:bottom-24 md:left-12 animate-float-delayed">
         <Image
-          src="/images/dog-22.jpeg"
+          src="/images/dog-22.webp"
           alt="Happy Husky on Beach"
           width={128}
           height={80}
@@ -32,7 +32,7 @@ const DogChewHeroBanner = () => {
       <div className="absolute top-8 right-8 md:top-12 md:right-16 animate-float">
         <div className="relative">
           <Image
-            src="/images/dog-32.jpeg"
+            src="/images/dog-32.webp"
             alt="Golden Retriever Portrait"
             width={160}
             height={160}
@@ -48,7 +48,7 @@ const DogChewHeroBanner = () => {
       {/* Dog Toy - Bottom Right */}
       <div className="absolute bottom-16 right-8 md:bottom-24 md:right-16 animate-float-delayed">
         <Image
-          src="/images/dog-24.jpeg"
+          src="/images/dog-24.webp"
           alt="Jack Russell Running"
           width={96}
           height={96}

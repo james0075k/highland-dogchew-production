@@ -485,10 +485,6 @@ function TrackResult({ result }: { result: TrackResult }) {
               <span>£{result.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
-              <span>VAT (20%)</span>
-              <span>£{result.totalTax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
               <span>Delivery</span>
               <span>£{result.totalDelivery.toFixed(2)}</span>
             </div>

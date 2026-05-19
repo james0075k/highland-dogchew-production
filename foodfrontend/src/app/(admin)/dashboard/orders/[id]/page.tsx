@@ -542,7 +542,6 @@ export default function OrderDetailPage() {
                   (order.totalDiscount ?? 0) > 0
                     ? { label: 'Discount',  value: -(order.totalDiscount ?? 0), negative: true }
                     : null,
-                  { label: 'VAT (20%)',  value: order.totalTax ?? 0 },
                   { label: 'Shipping',   value: order.totalDelivery ?? 0 },
                 ]
                   .filter(Boolean)

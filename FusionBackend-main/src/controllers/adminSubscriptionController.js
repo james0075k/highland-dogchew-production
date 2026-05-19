@@ -31,9 +31,10 @@ export const getSubscriptionStats = async (req, res, next) => {
       SubscriptionModel.countDocuments({ status: 'cancelled' }),
     ]);
 
-    // MRR = sum of (unitPrice Ã— qty Ã— 1.20 VAT + Â£2.99 delivery) for all active subs
-    const TAX_RATE = 0.20;
-    const DELIVERY = 2.99;
+    // MRR = sum of (unitPrice x qty + £1.99 delivery) for all active subs.
+    // VAT is already baked into the unit price, so we don't multiply by 1.20.
+    const TAX_RATE = 0;
+    const DELIVERY = 1.99;
     const mrrResult = await SubscriptionModel.aggregate([
       { $match: { status: 'active' } },
       {

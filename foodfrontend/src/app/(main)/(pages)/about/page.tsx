@@ -300,7 +300,7 @@ const AboutPage = () => {
           {/* Background image */}
           <div className="absolute inset-0">
             <Image
-              src="/images/dog-5.jpeg"
+              src="/images/dog-5.webp"
               alt="Highland dog in the mountains"
               fill
               className="object-cover object-center"
@@ -377,7 +377,7 @@ const AboutPage = () => {
                   {/* Main image */}
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/10 aspect-[4/5]">
                     <Image
-                      src="/images/dog-2.jpeg"
+                      src="/images/dog-2.webp"
                       alt="Happy dog with a yak chew"
                       fill
                       className="object-cover"
@@ -387,7 +387,7 @@ const AboutPage = () => {
                   {/* Floating accent image */}
                   <div className="absolute -bottom-6 -right-6 w-36 h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden shadow-xl border-4 border-[var(--surface-page)] animate-[float_6s_ease-in-out_infinite]">
                     <Image
-                      src="/images/dog-15.jpeg"
+                      src="/images/dog-15.webp"
                       alt="Playful golden puppy"
                       fill
                       className="object-cover"
@@ -573,7 +573,7 @@ const AboutPage = () => {
                 <div className="relative">
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/10 aspect-[4/5]">
                     <Image
-                      src="/images/dog-12.jpeg"
+                      src="/images/dog-12.webp"
                       alt="Golden retriever in nature"
                       fill
                       className="object-cover"
@@ -583,7 +583,7 @@ const AboutPage = () => {
                   {/* Accent image */}
                   <div className="absolute -top-6 -left-6 w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-xl border-4 border-[var(--surface-page)] animate-[float_7s_ease-in-out_infinite_1s]">
                     <Image
-                      src="/images/dog-25.jpeg"
+                      src="/images/dog-25.webp"
                       alt="Adorable cavalier pup"
                       fill
                       className="object-cover"
@@ -625,12 +625,12 @@ const AboutPage = () => {
             {/* Masonry grid */}
             <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 reveal ${gallery.visible ? "reveal-visible" : "reveal-hidden"}`} style={{ transitionDelay: "200ms" }}>
               {[
-                { src: "/images/dog-1.jpeg", alt: "Husky relaxing", span: "md:row-span-2", aspect: "aspect-[3/4]" },
-                { src: "/images/dog-8.jpeg", alt: "Snowy husky", span: "", aspect: "aspect-square" },
-                { src: "/images/dog-30.jpeg", alt: "Puppy in wooden box", span: "", aspect: "aspect-square" },
-                { src: "/images/dog-7.jpeg", alt: "Husky close-up", span: "md:row-span-2", aspect: "aspect-[3/4]" },
-                { src: "/images/dog-3.jpeg", alt: "Blue-eyed husky", span: "", aspect: "aspect-square" },
-                { src: "/images/dog-20.jpeg", alt: "Rottweiler at golden hour", span: "", aspect: "aspect-square" },
+                { src: "/images/dog-1.webp", alt: "Husky relaxing", span: "md:row-span-2", aspect: "aspect-[3/4]" },
+                { src: "/images/dog-8.webp", alt: "Snowy husky", span: "", aspect: "aspect-square" },
+                { src: "/images/dog-30.webp", alt: "Puppy in wooden box", span: "", aspect: "aspect-square" },
+                { src: "/images/dog-7.webp", alt: "Husky close-up", span: "md:row-span-2", aspect: "aspect-[3/4]" },
+                { src: "/images/dog-3.webp", alt: "Blue-eyed husky", span: "", aspect: "aspect-square" },
+                { src: "/images/dog-20.webp", alt: "Rottweiler at golden hour", span: "", aspect: "aspect-square" },
               ].map((img, i) => (
                 <div
                   key={img.src}

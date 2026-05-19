@@ -6,7 +6,7 @@ const LAST_UPDATED  = "19 March 2026";
 const COMPANY_EMAIL = "hello@highlanddogchew.co.uk";
 
 const shippingOptions = [
-  { name: "Standard UK Delivery", time: "3–5 business days", cost: "£2.99", note: "Free on orders over £30" },
+  { name: "Standard UK Delivery", time: "3–5 business days", cost: "£1.99", note: "Free on orders over £30" },
   { name: "Express UK Delivery",  time: "1–2 business days", cost: "£5.99", note: "Order before 1 PM" },
   { name: "Next Day Delivery",    time: "Next business day",  cost: "£7.99", note: "Order before 12 PM Mon–Thu" },
 ];

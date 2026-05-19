@@ -140,7 +140,7 @@ const OurPromiseCards = () => {
   const cards: PromiseCard[] = [
     {
       title: "RESPONSIBLE PACKAGING",
-      image: "/images/dog-8.jpeg",
+      image: "/images/dog-8.webp",
       intro: "Our care doesn't stop with the product.",
       bullets: [
         "Minimal, recyclable packaging",
@@ -153,7 +153,7 @@ const OurPromiseCards = () => {
     },
     {
       title: "NATURAL, SIMPLE, AND DOG-APPROVED",
-      image: "/images/dog-15.jpeg",
+      image: "/images/dog-15.webp",
       bullets: [
         "Made using yak and cow milk",
         "High protein, low fat",
@@ -168,7 +168,7 @@ const OurPromiseCards = () => {
     },
     {
       title: "MADE FOR SMARTER CHEWING",
-      image: "/images/dog-22.jpeg",
+      image: "/images/dog-22.webp",
       paragraphs: [
         "Chewing plays an important role in a dog's health. It helps keep teeth cleaner, strengthens jaws, and provides mental stimulation.",
         "Highland Yak Chews are firm and durable without splintering like bones. When the chew becomes small, it can be microwaved into a light, crunchy snack, reducing waste and extending enjoyment.",
@@ -188,7 +188,7 @@ const OurPromiseCards = () => {
           style={{ y: heroY, scale: heroScale }}
         >
           <Image
-            src="/images/dog-28.jpeg"
+            src="/images/dog-28.webp"
             alt="Happy dog enjoying a Highland Yak Chew"
             fill
             priority
@@ -286,7 +286,7 @@ const OurPromiseCards = () => {
         <div className="relative max-w-5xl mx-auto px-6 py-12 md:py-16">
           <div className="relative overflow-hidden rounded-2xl md:rounded-3xl">
             <Image
-              src="/images/dog-30.jpeg"
+              src="/images/dog-30.webp"
               alt="Happy dogs with Highland Yak Chews"
               width={1000}
               height={300}

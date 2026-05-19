@@ -30,7 +30,7 @@ const HimalayanDelightHero = () => {
         style={{ willChange: 'transform' }}
       >
         <Image
-          src="/images/dog-9.jpeg"
+          src="/images/dog-9.webp"
           alt="Husky standing on Himalayan mountain rocks"
           fill
           className="object-cover"
@@ -42,19 +42,19 @@ const HimalayanDelightHero = () => {
 
       {/* Decorative floating cheese pieces */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12 w-32 h-32 md:w-40 md:h-40 opacity-90 animate-float relative">
-        <Image src="/images/dog-2.jpeg" alt="Malamute with stick"
+        <Image src="/images/dog-2.webp" alt="Malamute with stick"
           fill className="object-cover rounded-lg transform -rotate-12" />
       </div>
       <div className="absolute top-8 right-8 md:top-12 md:right-12 w-32 h-32 md:w-48 md:h-32 opacity-90 animate-float-delayed relative">
-        <Image src="/images/dog-7.jpeg" alt="Husky side profile"
+        <Image src="/images/dog-7.webp" alt="Husky side profile"
           fill className="object-cover rounded-lg transform rotate-6" />
       </div>
       <div className="absolute bottom-8 left-4 md:bottom-12 md:left-8 w-28 h-28 md:w-36 md:h-36 opacity-90 animate-float relative">
-        <Image src="/images/dog-19.jpeg" alt="Bernese Mountain Dog"
+        <Image src="/images/dog-19.webp" alt="Bernese Mountain Dog"
           fill className="object-cover rounded-lg transform rotate-12" />
       </div>
       <div className="absolute bottom-8 right-4 md:bottom-12 md:right-12 w-36 h-24 md:w-48 md:h-32 opacity-90 animate-float-delayed relative">
-        <Image src="/images/dog-20.jpeg" alt="Rottweiler at sunset"
+        <Image src="/images/dog-20.webp" alt="Rottweiler at sunset"
           fill className="object-cover rounded-lg transform -rotate-6" />
       </div>
 
