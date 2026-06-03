@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = blogPosts.find((p) => p.slug === slug);
   if (!post) return {};
   return {
-    title: `${post.title} | Highland Yakchew Blog`,
+    title: `${post.title} | Highland Yak Chew Blog`,
     description: post.excerpt,
     alternates: { canonical: `${BASE_URL}/blog/${post.slug}` },
     openGraph: {
@@ -147,10 +147,10 @@ export default async function BlogPostPage({ params }: Props) {
     headline: post.title,
     description: post.excerpt,
     datePublished: post.date,
-    author: { '@type': 'Organization', name: 'Highland Yakchew', url: BASE_URL },
+    author: { '@type': 'Organization', name: 'Highland Yak Chew', url: BASE_URL },
     publisher: {
       '@type': 'Organization',
-      name: 'Highland Yakchew',
+      name: 'Highland Yak Chew',
       logo: { '@type': 'ImageObject', url: `${BASE_URL}/images/logos.png` },
     },
     image: `${BASE_URL}${post.image}`,
@@ -207,7 +207,7 @@ export default async function BlogPostPage({ params }: Props) {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--color-gold-light)', color: 'var(--color-dark-brown)' }}>
                   HY
                 </div>
-                <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{post.author || 'Highland Yakchew'}</span>
+                <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{post.author || 'Highland Yak Chew'}</span>
               </div>
               <span className="w-1 h-1 rounded-full" style={{ background: 'var(--color-gold)' }} />
               <time dateTime={post.date}>

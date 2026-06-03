@@ -11,7 +11,7 @@ export default function NotFound() {
           <div className="flex justify-center mb-8">
             <Image
               src="/images/logos.jpeg"
-              alt="Highland Yakchew"
+              alt="Highland Yak Chew"
               width={90}
               height={90}
               className="rounded-full"

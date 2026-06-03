@@ -576,7 +576,7 @@ const Testimonials = () => {
             className="mt-5 text-center text-white/75 text-[15px] md:text-[17px] max-w-lg"
             style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif" }}
           >
-            Join thousands of happy dog owners across the UK who trust Highland Yakchew
+            Join thousands of happy dog owners across the UK who trust Highland Yak Chew
           </motion.p>
         </div>
 
@@ -862,7 +862,7 @@ const Testimonials = () => {
               className="text-[#c8b6a6] mb-8 max-w-md mx-auto text-sm md:text-base leading-relaxed"
               style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif" }}
             >
-              Join thousands of UK pup parents and try Highland Yakchew. Natural, long-lasting, and
+              Join thousands of UK pup parents and try Highland Yak Chew. Natural, long-lasting, and
               tail-waggingly good.
             </p>
 

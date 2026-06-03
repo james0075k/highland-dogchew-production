@@ -85,7 +85,7 @@ const LogoComponent = ({ width = 75, height = 30, index = 0, imgClassName, onLoa
       <div className="flex justify-start">
         <Image
           src="/images/logo11.png"
-          alt="Highland Yakchew"
+          alt="Highland Yak Chew"
           width={width}
           height={height}
           className={`${baseImgClass} object-contain drop-shadow-[0_1px_2px_rgba(46,31,20,0.3)]`}

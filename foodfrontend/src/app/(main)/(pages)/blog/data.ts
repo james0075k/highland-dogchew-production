@@ -22,7 +22,7 @@ export const blogPosts: BlogPost[] = [
     readTime: '5 min read',
     image: '/images/dog-34.webp',
     imageAlt: 'Happy dog enjoying a natural yak milk chew with total contentment',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## 5 Signs Your Dog Is Absolutely Loving Their Highland Yak Chew
 
@@ -95,11 +95,11 @@ If you are seeing these signs in your dog, you have found something genuinely wo
     readTime: '6 min read',
     image: '/images/dog-35.webp',
     imageAlt: 'Contented dog relaxing after enjoying a natural Highland Yak Chew',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## A Calmer, Happier Dog: How Highland Yak Chews Transform the Daily Routine
 
-We started Highland Yakchew because we believed the best things for dogs are almost always the simplest. No artificial additives, no complicated formulas, no ingredients you cannot pronounce. Just a centuries-old Himalayan recipe made from three natural ingredients — yak milk, cow milk, lime juice — that has been trusted by mountain communities for generations.
+We started Highland Yak Chew because we believed the best things for dogs are almost always the simplest. No artificial additives, no complicated formulas, no ingredients you cannot pronounce. Just a centuries-old Himalayan recipe made from three natural ingredients — yak milk, cow milk, lime juice — that has been trusted by mountain communities for generations.
 
 What we did not fully anticipate when we launched was how many dog owners would tell us the same thing, unprompted, in messages and reviews:
 
@@ -147,11 +147,11 @@ There is something else that happens over time — something harder to measure b
 
 This association builds trust. It builds routine. It builds the small, repeated moments of joy that form the foundation of a truly good relationship between a dog and their owner.
 
-That is what we set out to create at Highland Yakchew. Not just a treat, but a ritual. Not just a product, but a daily moment of genuine connection.
+That is what we set out to create at Highland Yak Chew. Not just a treat, but a ritual. Not just a product, but a daily moment of genuine connection.
 
 ---
 
-We source every chew directly from Himalayan farming cooperatives, ensuring fair wages and traditional methods are preserved. When you choose Highland Yakchew, you are supporting a centuries-old craft and giving your dog the most honest, natural treat available in the UK.
+We source every chew directly from Himalayan farming cooperatives, ensuring fair wages and traditional methods are preserved. When you choose Highland Yak Chew, you are supporting a centuries-old craft and giving your dog the most honest, natural treat available in the UK.
 
 [Explore our full range](/products/yak-chews) and find the size that is right for your dog.
     `.trim(),
@@ -166,7 +166,7 @@ We source every chew directly from Himalayan farming cooperatives, ensuring fair
     readTime: '5 min read',
     image: '/images/dog-28.webp',
     imageAlt: 'Golden Retriever happily chewing a natural yak milk chew on grass',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## Are Yak Chews Safe for Dogs?
 
@@ -214,7 +214,7 @@ Yak chews are one of the safest, most nutritious long-lasting treats available f
     readTime: '6 min read',
     image: '/images/dog-5.webp',
     imageAlt: 'Husky standing in a snowy highland landscape, evoking Himalayan origins',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## From the Himalayas to Your Dog's Bowl
 
@@ -242,11 +242,11 @@ The high altitude and cold mountain air allow the chews to dry slowly and natura
 
 ### Our Commitment to Fair Trade
 
-At Highland Yakchew, we work directly with Himalayan farming cooperatives, ensuring fair wages and sustainable practices. Every chew you buy supports rural livelihoods in some of the most remote communities on Earth.
+At Highland Yak Chew, we work directly with Himalayan farming cooperatives, ensuring fair wages and sustainable practices. Every chew you buy supports rural livelihoods in some of the most remote communities on Earth.
 
 ### Why Authenticity Matters
 
-Not all "yak chews" are genuine. Some mass-produced alternatives use mostly cow milk, add binding agents, or skip the traditional smoking and drying process. At Highland Yakchew, we guarantee that every chew is authentically Himalayan-made using the original recipe — because your dog deserves the real thing.
+Not all "yak chews" are genuine. Some mass-produced alternatives use mostly cow milk, add binding agents, or skip the traditional smoking and drying process. At Highland Yak Chew, we guarantee that every chew is authentically Himalayan-made using the original recipe — because your dog deserves the real thing.
     `.trim(),
   },
   {
@@ -259,7 +259,7 @@ Not all "yak chews" are genuine. Some mass-produced alternatives use mostly cow 
     readTime: '5 min read',
     image: '/images/dog-17.webp',
     imageAlt: 'Smiling golden retriever enjoying the outdoors at sunset',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## Top 5 Benefits of Yak Milk Chews for Dogs
 
@@ -320,7 +320,7 @@ Browse our [Yak Milk Chews](/products/yak-chews), [Himalayan Puff Treats](/produ
     readTime: '4 min read',
     image: '/images/dog-31.webp',
     imageAlt: 'Multiple dog breeds of different sizes looking upward together',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## Choosing the Right Size Yak Chew
 
@@ -373,7 +373,7 @@ If you are unsure which size is right for your dog, [contact us](/contact) and o
     readTime: '4 min read',
     image: '/images/dog-15.webp',
     imageAlt: 'Adorable golden retriever puppy sitting happily in a flower meadow',
-    author: 'Highland Yakchew Team',
+    author: 'Highland Yak Chew Team',
     content: `
 ## What Are Himalayan Puff Treats?
 

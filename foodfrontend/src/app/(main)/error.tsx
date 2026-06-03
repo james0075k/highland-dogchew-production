@@ -21,7 +21,7 @@ export default function Error({
         <div className="flex justify-center mb-8">
           <Image
             src="/images/logos.jpeg"
-            alt="Highland Yakchew"
+            alt="Highland Yak Chew"
             width={80}
             height={80}
             className="rounded-full opacity-90"

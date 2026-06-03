@@ -261,7 +261,7 @@ export default function BlogPage() {
             className="text-xs font-medium tracking-[0.25em] uppercase mt-4 mb-3"
             style={{ color: 'var(--color-gold)' }}
           >
-            Highland Yakchew Blog
+            Highland Yak Chew Blog
           </p>
           <h1
             className="text-4xl md:text-5xl font-bold mb-5 leading-tight"

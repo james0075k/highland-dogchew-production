@@ -35,7 +35,7 @@ const WhatsappWidget = () => {
   const [message, setMessage] = useState('');
 
   const whatsappNumber = '9779851254578';
-  const businessName = 'Highland Yakchew';
+  const businessName = 'Highland Yak Chew';
   const avatar = '/images/logos.jpeg';
 
   const handleSendMessage = (messageText = message) => {
