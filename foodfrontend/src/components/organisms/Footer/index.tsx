@@ -2,9 +2,11 @@
 
 import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiPhone, FiMapPin, FiCheck, FiLoader } from "react-icons/fi";
+import Link from "next/link";
 import Logo from "@/components/atoms/Logo";
 import PawBackground from "@/components/atoms/PawBackground";
 import { ContactInfo } from "@/types";
+import { toWhatsAppNumber } from "@/utils/phone";
 import { useState, useEffect } from "react";
 
 const companyLinks = [
@@ -33,8 +35,7 @@ interface FooterProps {
 }
 
 function toWhatsAppUrl(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  return `https://wa.me/${digits}`;
+  return `https://wa.me/${toWhatsAppNumber(phone)}`;
 }
 
 function toGmailComposeUrl(email: string): string {
@@ -289,8 +290,8 @@ export default function Footer({ destinations = [], activities = [], contactInfo
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-6 py-5 gap-3">
           <div className="flex flex-wrap justify-center gap-4 text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
             <p>&copy; 2026 Highland Yak Chew. All rights reserved.</p>
-            <a href="/about/terms" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Terms & Conditions</a>
-            <a href="/site-map" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Site Map</a>
+            <Link href="/about/terms" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Terms & Conditions</Link>
+            <Link href="/site-map" className="hover:text-[#2E1F14] dark:hover:text-[#f5e9dc] transition-colors">Site Map</Link>
           </div>
           <span className="text-xs text-[#7A5C4F]/60 dark:text-[#c8b6a6]/60 hover:text-[#7A5C4F] dark:hover:text-[#c8b6a6] transition-colors cursor-default">
             Designed by JAMES.00.7

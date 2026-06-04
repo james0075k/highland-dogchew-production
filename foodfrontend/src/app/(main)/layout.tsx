@@ -1,5 +1,6 @@
 // layout.tsx
 import { Metadata } from "next";
+import Script from "next/script";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
 
 import "../../app/globals.css";
@@ -32,6 +33,10 @@ const dmSerifDisplay = DM_Serif_Display({
 */
 
 const BASE_URL = 'https://highlanddogchew.co.uk';
+
+// Google Analytics 4 — set NEXT_PUBLIC_GA_ID in the env to enable site tracking.
+// Without it the gtag scripts are skipped entirely (clean dev builds).
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -378,6 +383,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </SubscriptionProvider>
           </CartProvider>
         </ThemeProvider>
+
+        {/* Google Analytics 4 — loaded after hydration so it never competes with LCP.
+            Powers the Realtime "Live Visitors" widget on the admin dashboard. */}
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}', { anonymize_ip: true });
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

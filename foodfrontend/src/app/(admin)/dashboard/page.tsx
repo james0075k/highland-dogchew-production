@@ -345,12 +345,156 @@ function BreakdownBar({ label, count, total, color }: { label: string; count: nu
   );
 }
 
+/* ─── Live Visitors panel (GA4 Realtime) ─────────────────────────────────── */
+
+function prettyPage(p: string): string {
+  if (!p || p === '(unknown)') return 'Unknown';
+  if (p === '/' || p.toLowerCase() === 'home') return 'Home';
+  return p.length > 34 ? p.slice(0, 33) + '…' : p;
+}
+
+function LiveVisitorsPanel({ live, samples, now }: {
+  live: LiveData | null; samples: number[]; now: Date | null;
+}) {
+  const count = live?.activeUsers ?? 0;
+  const animated = useCountUp(count, 700);
+  const card: React.CSSProperties = {
+    background: '#fff', borderRadius: 16, border: '1px solid #f1f5f9',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden',
+  };
+
+  /* Header is shared across all states */
+  const header = (sub: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ padding: 10, background: 'linear-gradient(135deg,#cffafe,#a5f3fc)', borderRadius: 12 }}>
+        <FiUsers size={18} style={{ color: '#0e7490' }} />
+      </div>
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Live Visitors</p>
+        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{sub}</p>
+      </div>
+    </div>
+  );
+
+  /* ── Loading ── */
+  if (live === null) {
+    return (
+      <div style={{ ...card, marginTop: 16, padding: '18px 22px' }}>
+        {header('Connecting to Google Analytics…')}
+        <div style={{ marginTop: 18, height: 40, width: 90, borderRadius: 8, background: '#f1f5f9', animation: 'db-pulse 1.4s ease-in-out infinite' }} />
+      </div>
+    );
+  }
+
+  /* ── Not configured ── */
+  if (!live.configured) {
+    return (
+      <div style={{ ...card, marginTop: 16, padding: '18px 22px' }}>
+        {header('Google Analytics not connected')}
+        <div style={{ marginTop: 16, display: 'flex', alignItems: 'flex-start', gap: 12, background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, padding: '14px 16px' }}>
+          <FiAlertCircle size={16} style={{ color: '#64748b', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>Connect Google Analytics to see live visitors</p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 1.6 }}>
+              Add your GA4 Measurement ID to the site and the service-account keys to the backend
+              <code style={{ background: '#eef2f7', padding: '1px 5px', borderRadius: 4, margin: '0 4px' }}>.env</code>
+              to start tracking real-time activity.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Configured ── */
+  const devices = live.devices ?? { mobile: 0, desktop: 0, tablet: 0 };
+  const deviceTotal = devices.mobile + devices.desktop + devices.tablet;
+  const topPages = (live.topPages ?? []).filter(p => p.users > 0);
+
+  let updatedLabel = 'just now';
+  if (live.fetchedAt && now) {
+    const secs = Math.max(0, Math.round((now.getTime() - new Date(live.fetchedAt).getTime()) / 1000));
+    updatedLabel = secs < 5 ? 'just now' : `${secs}s ago`;
+  }
+
+  return (
+    <div style={{ ...card, marginTop: 16 }}>
+      {/* Header */}
+      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        {header('Active on the site now · via Google Analytics')}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 99, padding: '5px 12px' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', animation: 'db-pulse 1.6s ease-in-out infinite' } as React.CSSProperties} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#047857', letterSpacing: '0.04em' }}>LIVE</span>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="db-analytics-grid" style={{ display: 'grid', gridTemplateColumns: '0.9fr 1.1fr', gap: 0 }}>
+        {/* Left: big count + sparkline */}
+        <div style={{ padding: '22px', borderRight: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ fontSize: 52, fontWeight: 800, color: '#0f172a', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{animated}</span>
+              <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600 }}>{count === 1 ? 'visitor' : 'visitors'}</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#64748b', marginTop: 8 }}>right now on the website</p>
+          </div>
+          <div style={{ marginTop: 18 }}>
+            {samples.length > 1
+              ? <div style={{ width: '100%' }}>
+                  <MiniSparkline vals={samples} color="#06b6d4" />
+                  <p style={{ fontSize: 10, color: '#cbd5e1', marginTop: 4 }}>last {samples.length} samples · updated {updatedLabel}</p>
+                </div>
+              : <p style={{ fontSize: 11, color: '#cbd5e1' }}>collecting trend… · updated {updatedLabel}</p>}
+          </div>
+        </div>
+
+        {/* Right: top pages + device split */}
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Top active pages</p>
+            {topPages.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {topPages.map((p, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ flex: 1, fontSize: 12, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.page}>{prettyPage(p.page)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', fontVariantNumeric: 'tabular-nums' }}>{p.users}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, color: '#cbd5e1' }}>No active pages right now.</p>
+            )}
+          </div>
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Device split</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <BreakdownBar label="Mobile"  count={devices.mobile}  total={deviceTotal} color="#06b6d4" />
+              <BreakdownBar label="Desktop" count={devices.desktop} total={deviceTotal} color="#6366f1" />
+              <BreakdownBar label="Tablet"  count={devices.tablet}  total={deviceTotal} color="#f59e0b" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
 interface DashboardStats {
   totalProducts: number; yakMilkCount: number; puffTreatCount: number;
   highlandMixCount: number; totalReviews: number; totalContacts: number;
   newContacts: number; pendingReviews: number;
+}
+
+interface LiveData {
+  configured: boolean;
+  activeUsers?: number;
+  topPages?: { page: string; users: number }[];
+  devices?: { mobile: number; desktop: number; tablet: number };
+  fetchedAt?: string;
+  error?: boolean;
 }
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
@@ -372,6 +516,8 @@ export default function AdminDashboard() {
   const [allOrders,    setAllOrders]    = useState<any[]>([]);
   const [activeTab,    setActiveTab]    = useState<'messages' | 'reviews'>('messages');
   const [revPeriod,    setRevPeriod]    = useState<'7d' | '30d' | '90d' | 'ytd' | '12m' | 'all'>('30d');
+  const [live,         setLive]         = useState<LiveData | null>(null);
+  const [liveSamples,  setLiveSamples]  = useState<number[]>([]);
   const now = useLiveClock();
   const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -437,6 +583,28 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  /* ── Live visitors (GA4 Realtime) — own poll loop, independent of the heavy fetch ── */
+  const fetchLive = async () => {
+    try {
+      const res = await fetch(`${API}/admin/analytics/live`, { headers: authHeaders() });
+      const json = await res.json();
+      const data: LiveData = json?.data ?? { configured: false };
+      setLive(data);
+      if (data.configured && !data.error) {
+        setLiveSamples(prev => [...prev, data.activeUsers ?? 0].slice(-20));
+      }
+    } catch {
+      setLive(prev => prev ?? { configured: false });
+    }
+  };
+
+  useEffect(() => {
+    fetchLive();
+    const id = setInterval(fetchLive, 20000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ── Derived data ── */
   const monthlyData = useMemo(() => {
@@ -721,6 +889,14 @@ export default function AdminDashboard() {
                     <span style={{ width:7, height:7, borderRadius:'50%', background:'#34d399', animation:'db-pulse 2s ease-in-out infinite', flexShrink:0 } as React.CSSProperties} />
                     <span style={{ color:'#6ee7b7', fontSize:12, fontWeight:600 }}>Store Online</span>
                   </div>
+                  {live?.configured && !live.error && (
+                    <div style={{ background:'rgba(56,189,248,0.12)', border:'1px solid rgba(56,189,248,0.28)', borderRadius:10, padding:'8px 14px', display:'flex', alignItems:'center', gap:7 }}>
+                      <FiUsers size={13} style={{ color:'#7dd3fc' }} />
+                      <span style={{ color:'#bae6fd', fontSize:12, fontWeight:600 }}>
+                        {live.activeUsers ?? 0} live now
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -747,6 +923,9 @@ export default function AdminDashboard() {
             <StatCard icon={FiStar}    label="Reviews"      value={stats.totalReviews}     accentColor="linear-gradient(90deg,#eab308,#f59e0b)" iconBg="#fefce8" iconColor="#ca8a04" sparkVals={reviewSparkline.length ? reviewSparkline : [0,0,0,0,0,stats.totalReviews]} sparkColor="#eab308" />
             <StatCard icon={FiMail}    label="Messages"     value={stats.totalContacts}    accentColor="linear-gradient(90deg,#f43f5e,#e11d48)" iconBg="#fff1f2" iconColor="#e11d48" sparkVals={contactSparkline.length ? contactSparkline : [0,0,0,0,0,stats.totalContacts]} sparkColor="#f43f5e" sub={stats.newContacts > 0 ? `${stats.newContacts} unread` : undefined} />
           </div>
+
+          {/* ══════════ LIVE VISITORS ══════════ */}
+          <LiveVisitorsPanel live={live} samples={liveSamples} now={now} />
 
           {/* ══════════ ALERTS ══════════ */}
           {(stats.newContacts > 0 || stats.pendingReviews > 0) && (

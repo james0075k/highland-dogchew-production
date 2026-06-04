@@ -1,7 +1,11 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send } from 'lucide-react';
 import Image from 'next/image';
+import { toWhatsAppNumber } from '@/utils/phone';
+
+// Fallback used only if the admin contact number can't be fetched.
+const FALLBACK_WHATSAPP_NUMBER = '9779851254578';
 
 /* ── Paw Chat Icon ─────────────────────────────────────────────────── */
 function PawChatIcon({ className }: { className?: string }) {
@@ -34,9 +38,27 @@ const WhatsappWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
 
-  const whatsappNumber = '9779851254578';
+  // WhatsApp number comes from the admin Contact Info (Dashboard → Settings),
+  // the same source the public Contact page uses, so they always match.
+  const [whatsappNumber, setWhatsappNumber] = useState(FALLBACK_WHATSAPP_NUMBER);
   const businessName = 'Highland Yak Chew';
   const avatar = '/images/logos.jpeg';
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) return;
+    fetch(`${apiUrl}/info`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success && d?.data) {
+          // Prefer the dedicated WhatsApp field, fall back to the first phone.
+          const raw = d.data.whatsappNumber || d.data.phones?.[0] || '';
+          const number = toWhatsAppNumber(raw); // normalizes UK 0... -> 44...
+          if (number) setWhatsappNumber(number);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSendMessage = (messageText = message) => {
     if (messageText.trim() === '') return;

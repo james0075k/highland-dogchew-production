@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa6';
 import { FaXTwitter } from 'react-icons/fa6';
 import { apiRequest } from '@/utils/apiService';
+import { toWhatsAppNumber } from '@/utils/phone';
 import {
   motion,
   useInView,
@@ -108,7 +109,7 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
    HELPERS
    ═══════════════════════════════════════════════ */
 function toWhatsApp(phone: string) {
-  return `https://wa.me/${phone.replace(/\D/g, '')}`;
+  return `https://wa.me/${toWhatsAppNumber(phone)}`;
 }
 
 /* ═══════════════════════════════════════════════
