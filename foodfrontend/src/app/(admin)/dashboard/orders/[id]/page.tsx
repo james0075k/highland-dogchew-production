@@ -7,10 +7,11 @@ import {
   FiArrowLeft, FiUser, FiMapPin, FiShoppingBag, FiDollarSign,
   FiTruck, FiCreditCard, FiCopy, FiCheck, FiRefreshCw,
   FiChevronDown, FiPackage, FiCalendar, FiPhone, FiMail,
-  FiExternalLink,
+  FiExternalLink, FiPrinter,
 } from 'react-icons/fi';
 import { formatMoney } from '@/lib/format';
 import { authHeader, getAuthToken } from '@/lib/auth';
+import ReceiptModal from './ReceiptModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -168,6 +169,7 @@ export default function OrderDetailPage() {
   const [linkedSubs, setLinkedSubs]       = useState<LinkedSubscription[]>([]);
   const [subsLoading, setSubsLoading]     = useState(false);
   const [subsError,   setSubsError]       = useState(false);
+  const [showReceipt, setShowReceipt]     = useState(false);
 
   // ── Fetch order ──────────────────────────────────────────────────────────
   const fetchOrder = useCallback(async () => {
@@ -333,13 +335,22 @@ export default function OrderDetailPage() {
             </div>
           </div>
         </div>
-        <button
-          onClick={fetchOrder}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
-        >
-          <FiRefreshCw size={14} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowReceipt(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+          >
+            <FiPrinter size={14} />
+            Print Receipt
+          </button>
+          <button
+            onClick={fetchOrder}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
+          >
+            <FiRefreshCw size={14} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* ── Body ───────────────────────────────────────────────────────── */}
@@ -754,6 +765,11 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ══════ Print-preview modal — only the receipt prints ══════ */}
+      {showReceipt && (
+        <ReceiptModal order={order} onClose={() => setShowReceipt(false)} />
+      )}
     </div>
   );
 }

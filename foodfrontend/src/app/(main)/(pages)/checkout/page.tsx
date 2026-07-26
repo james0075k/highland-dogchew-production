@@ -11,6 +11,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
 import {
   Loader2, Tag, X, ChevronRight, ChevronLeft, Lock,
   RefreshCcw, Truck, ShieldCheck, CheckCircle2, Package,
@@ -46,6 +47,29 @@ const initialShipping: ShippingForm = {
   county: '',
   postcode: '',
   phone: '',
+};
+
+// Wallet (Apple/Google/Amazon/Link) addresses use 2-letter ISO country codes,
+// but our DB + the country <select> use full names. Map the supported set;
+// fall back to the raw value for anything outside it.
+const COUNTRY_CODE_TO_NAME: Record<string, string> = {
+  GB: 'United Kingdom',
+  US: 'United States',
+  CA: 'Canada',
+  AU: 'Australia',
+  IE: 'Ireland',
+  DE: 'Germany',
+  FR: 'France',
+  NL: 'Netherlands',
+  SE: 'Sweden',
+  NO: 'Norway',
+  DK: 'Denmark',
+  BE: 'Belgium',
+};
+
+const countryName = (code?: string | null): string => {
+  if (!code) return 'United Kingdom';
+  return COUNTRY_CODE_TO_NAME[code.toUpperCase()] || code;
 };
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
@@ -215,36 +239,70 @@ function CheckoutForm({
     } catch { /* storage unavailable */ }
   };
 
-  const handleExpressConfirm = async (event: {
-    billingDetails?: {
-      name?: string; email?: string; phone?: string;
-      address?: { line1?: string; city?: string; postal_code?: string; country?: string };
-    };
-  }) => {
+  // Wallet path (Apple/Google/Amazon Pay, Link). Details come from the wallet
+  // sheet — the ExpressCheckoutElement is configured to require email, phone and
+  // billing+shipping address, so they arrive here rather than from the empty
+  // Step-1 form. We validate completeness AND require the PI metadata save to
+  // succeed BEFORE confirming — otherwise the payment is rejected via
+  // event.paymentFailed() and no charge/order is created.
+  const handleExpressConfirm = async (event: StripeExpressCheckoutElementConfirmEvent) => {
     if (!stripe || !elements) return;
     setPaying(true);
     setError(null);
     try {
-      const bd   = event.billingDetails || {};
-      const addr = bd.address || {};
-      const nameParts = (bd.name || '').trim().split(' ');
-      const firstName    = nameParts[0]              || shipping.firstName;
+      // Express is only reachable on the payment step, so the information form
+      // is already filled & validated. Prefer the wallet's own details (they are
+      // authoritative for the charge), falling back to the entered form values.
+      const bd       = event.billingDetails;
+      const shipTo   = event.shippingAddress;
+      const addr     = shipTo?.address || bd?.address;   // prefer ship-to, fall back to billing
+      const rawName  = (shipTo?.name || bd?.name || '').trim();
+      const nameParts = rawName.split(/\s+/).filter(Boolean);
+      const firstName    = nameParts[0]                 || shipping.firstName;
       const lastName     = nameParts.slice(1).join(' ') || shipping.lastName;
-      const email        = bd.email                  || shipping.email;
-      const phone        = bd.phone                  || shipping.phone;
-      const addressLine1 = addr.line1                || shipping.address;
-      const city         = addr.city                 || shipping.city;
-      const postcode     = addr.postal_code          || shipping.postcode;
-      const country      = addr.country              || shipping.country;
+      const email        = (bd?.email || '').trim()      || shipping.email;
+      const phone        = (bd?.phone || '').trim()      || shipping.phone;
+      const addressLine1 = addr?.line1 || shipping.address;
+      const addressLine2 = addr?.line2 || shipping.apartment;
+      const city         = addr?.city || shipping.city;
+      const county       = addr?.state || shipping.county;
+      const postcode     = addr?.postal_code || shipping.postcode;
+      const country      = addr?.country ? countryName(addr.country) : shipping.country;
+
+      // ── Guard: complete, valid details required before we charge ────────────
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRe.test(email)) {
+        event.paymentFailed({ reason: 'fail', message: 'A valid email address is required.' });
+        setError('A valid email address is required to complete your order.');
+        return;
+      }
+      if (!firstName || !addressLine1 || !city || !postcode) {
+        event.paymentFailed({ reason: 'invalid_shipping_address', message: 'A complete shipping address is required.' });
+        setError('A complete name and shipping address are required to complete your order.');
+        return;
+      }
 
       saveShippingToSession({
         firstName, lastName, email, phone,
-        addressLine1, addressLine2: shipping.apartment,
-        city, county: shipping.county, postcode, country,
+        addressLine1, addressLine2,
+        city, county, postcode, country,
       });
-      await attachMetaToPaymentIntent({
-        firstName, lastName, email, phone, address: addressLine1, city, postcode, country,
-      }).catch((err: unknown) => { console.error('[checkout] metadata update failed:', err); });
+
+      // ── Persist details to the PaymentIntent — must succeed before charging ──
+      let metaData: { success?: boolean; message?: string } | null = null;
+      try {
+        metaData = await attachMetaToPaymentIntent({
+          firstName, lastName, email, phone,
+          address: addressLine1, city, postcode, country,
+        });
+      } catch {
+        metaData = null;
+      }
+      if (!metaData?.success) {
+        event.paymentFailed({ reason: 'fail', message: 'We could not save your order details. Please try again.' });
+        setError(metaData?.message || 'We could not save your order details. Please try again.');
+        return;
+      }
 
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
@@ -253,8 +311,12 @@ function CheckoutForm({
           receipt_email: email,
         },
       });
-      if (stripeError) setError(stripeError.message || 'Payment failed. Please try again.');
+      if (stripeError) {
+        event.paymentFailed({ reason: 'fail', message: stripeError.message });
+        setError(stripeError.message || 'Payment failed. Please try again.');
+      }
     } catch {
+      event.paymentFailed({ reason: 'fail' });
       setError('Something went wrong. Please try again.');
     } finally {
       setPaying(false);
@@ -264,6 +326,17 @@ function CheckoutForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+
+    // Defense-in-depth: re-validate before charging even though Step 1 already
+    // gated the transition. Prevents any bypass of the information step.
+    const validationError = validateInformation();
+    if (validationError) {
+      setError(validationError);
+      onStepChange('information');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setPaying(true);
     setError(null);
     try {
@@ -274,9 +347,21 @@ function CheckoutForm({
         city: shipping.city, county: shipping.county,
         postcode: shipping.postcode,   country:   shipping.country,
       });
-      await attachMetaToPaymentIntent().catch(
-        (err: unknown) => { console.error('[checkout] metadata update failed:', err); }
-      );
+
+      // The PI metadata is the source of truth used to build the order — if this
+      // save fails we must NOT charge, or the order would be created blank.
+      let metaData: { success?: boolean; message?: string } | null = null;
+      try {
+        metaData = await attachMetaToPaymentIntent();
+      } catch {
+        metaData = null;
+      }
+      if (!metaData?.success) {
+        setError(metaData?.message || 'We could not save your order details. Please try again.');
+        setPaying(false);
+        return;
+      }
+
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -296,27 +381,6 @@ function CheckoutForm({
     <div>
       {/* ══════════ STEP 1 — Information ══════════ */}
       <div className={step === 'information' ? 'block' : 'hidden'}>
-
-        {/* Express checkout */}
-        <div className="mb-6">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-center text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mb-3 font-semibold">
-            Express checkout
-          </p>
-          <ExpressCheckoutElement
-            onConfirm={handleExpressConfirm}
-            options={{
-              buttonType: { applePay: 'buy', googlePay: 'buy' },
-              layout: { maxColumns: 3, maxRows: 1, overflow: 'auto' },
-            }}
-          />
-        </div>
-
-        {/* OR divider */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
-          <span className="text-[10px] uppercase tracking-[0.22em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 font-semibold">or</span>
-          <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
-        </div>
 
         {/* ── Contact section ── */}
         <div className="mb-6">
@@ -555,6 +619,33 @@ function CheckoutForm({
                 £{breakdown.totalDelivery.toFixed(2)}
               </span>
             </div>
+          </div>
+
+          {/* Express checkout — shown here (after details are filled) so wallet
+              payments can never bypass the information step. */}
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-center text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mb-3 font-semibold">
+              Express checkout
+            </p>
+            <ExpressCheckoutElement
+              onConfirm={handleExpressConfirm}
+              onShippingAddressChange={(e) => e.resolve()}
+              options={{
+                buttonType: { applePay: 'buy', googlePay: 'buy' },
+                layout: { maxColumns: 3, maxRows: 1, overflow: 'auto' },
+                emailRequired: true,
+                phoneNumberRequired: true,
+                billingAddressRequired: true,
+                shippingAddressRequired: true,
+              }}
+            />
+          </div>
+
+          {/* OR divider */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
+            <span className="text-[10px] uppercase tracking-[0.22em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 font-semibold">or pay with card</span>
+            <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
           </div>
 
           {/* Payment section */}

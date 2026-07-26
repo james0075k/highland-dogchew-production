@@ -328,6 +328,12 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
     if (!customer?.email || !customer?.firstName || !customer?.lastName) {
       return next(handleError(400, 'customer.firstName, customer.lastName and customer.email are required'));
     }
+    // Server-side email-format check — the client can be bypassed, so "valid
+    // details" is enforced here where it actually gates the charge.
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(String(customer.email).trim())) {
+      return next(handleError(400, 'A valid customer.email is required'));
+    }
     if (!shipping?.address || !shipping?.city || !shipping?.postcode) {
       return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
     }
