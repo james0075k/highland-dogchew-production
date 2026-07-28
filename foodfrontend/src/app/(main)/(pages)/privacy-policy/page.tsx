@@ -205,7 +205,7 @@ export default function PrivacyPolicyPage() {
             <div className="bg-[#F4EDE4] dark:bg-[#241b16] rounded-xl p-4 space-y-2">
               <p><strong>{COMPANY_NAME}</strong></p>
               <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-[#C4A882]" /><a href={`mailto:${COMPANY_EMAIL}`} className="underline text-[#8B5E3C] dark:text-amber-400">{COMPANY_EMAIL}</a></p>
-              <p className="flex items-center gap-2"><Globe className="w-4 h-4 text-[#C4A882]" /><a href="/contact" className="underline text-[#8B5E3C] dark:text-amber-400">Contact Form</a></p>
+              <p className="flex items-center gap-2"><Globe className="w-4 h-4 text-[#C4A882]" /><Link href="/contact" className="underline text-[#8B5E3C] dark:text-amber-400">Contact Form</Link></p>
             </div>
             <p className="mt-3">You also have the right to lodge a complaint with the UK Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer" className="underline text-[#8B5E3C] dark:text-amber-400">ico.org.uk</a>.</p>
           </SectionBlock>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Cookies from 'js-cookie';
 import {
   FiTag, FiRefreshCw, FiSearch, FiPlus, FiX, FiCheckCircle,
@@ -272,9 +273,9 @@ export default function PromoCodesPage() {
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <a href="/dashboard" className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-white">
+            <Link href="/dashboard" className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-white">
               <FiArrowLeft size={18} />
-            </a>
+            </Link>
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow">
               <FiTag className="text-white" size={20} />
             </div>
