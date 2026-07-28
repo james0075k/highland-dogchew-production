@@ -39,7 +39,8 @@ export default function StripeProvider({
             colorIconTabHover: isDark ? '#f5e9dc' : '#2f1e14',
             colorIconCheckmark: isDark ? '#f5e9dc' : '#ffffff',
             colorDanger: '#ef4444',
-            borderRadius: '4px',
+            // Matches the `rounded-xl` inputs used throughout checkout.
+            borderRadius: '12px',
             fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
             fontSizeBase: '14px',
             spacingUnit: '4px',
@@ -90,6 +91,40 @@ export default function StripeProvider({
             },
             '.TabIcon--selected': {
               fill: isDark ? '#f5e9dc' : '#2f1e14',
+            },
+            // ── Accordion layout (Card / Klarna / Pay by Bank / Revolut / Amazon Pay) ──
+            // The element renders as spaced radio rows, so these mirror the
+            // `.Tab` treatment above to keep both layouts visually identical.
+            '.AccordionItem': {
+              border: `1px solid ${isDark ? '#3a2c23' : '#d8ccba'}`,
+              backgroundColor: isDark ? '#241b16' : '#ffffff',
+              color: isDark ? '#f5e9dc' : '#2f1e14',
+              boxShadow: 'none',
+              padding: '14px 16px',
+              transition: 'border-color 150ms ease, background-color 150ms ease',
+            },
+            '.AccordionItem:hover': {
+              backgroundColor: isDark ? '#2d221c' : '#fffaf3',
+              borderColor: isDark ? '#5a4436' : '#c2a882',
+            },
+            '.AccordionItem--selected': {
+              border: `1px solid ${isDark ? '#d97706' : '#d97706'}`,
+              backgroundColor: isDark ? '#2d221c' : '#fffbf4',
+              color: isDark ? '#f5e9dc' : '#2f1e14',
+              boxShadow: `0 0 0 1px ${isDark ? '#d97706' : '#d97706'}`,
+            },
+            '.RadioIcon': {
+              width: '18px',
+            },
+            '.RadioIconOuter': {
+              stroke: isDark ? '#5a4436' : '#c2a882',
+              strokeWidth: '1.5',
+            },
+            '.RadioIconOuter--checked': {
+              stroke: '#d97706',
+            },
+            '.RadioIconInner': {
+              fill: '#d97706',
             },
             '.Block': {
               backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9',

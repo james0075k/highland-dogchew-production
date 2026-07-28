@@ -268,7 +268,9 @@ export const createPaymentIntent = async (req, res, next) => {
     const piParams = {
       amount:   amountInPence,
       currency: 'gbp',
-      automatic_payment_methods: { enabled: true },
+      // Klarna and Pay by Bank are redirect-based, so allow_redirects is pinned
+      // explicitly rather than left to Stripe's default.
+      automatic_payment_methods: { enabled: true, allow_redirects: 'always' },
       metadata: {
         type:            'product-purchase',
         itemCount:       String(items.length),

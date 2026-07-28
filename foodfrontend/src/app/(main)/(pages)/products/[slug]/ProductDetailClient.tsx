@@ -10,6 +10,7 @@ import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
 import FancySelect, { type FancyOption } from '@/components/molecules/FancySelect/FancySelect';
 import { getProductFaqs } from './faqData';
+import PaymentMethodStrip from '@/components/atoms/PaymentMarks';
 
 const categoryBackLinks: Record<string, { href: string; label: string }> = {
   'yak-milk': { href: '/products/yak-chews', label: 'Yak Milk Chews' },
@@ -17,68 +18,6 @@ const categoryBackLinks: Record<string, { href: string; label: string }> = {
   'highland-mix': { href: '/products/highland-mix', label: 'Highland Mix Chews' },
 };
 
-function PaymentIcon({ method }: { method: string }) {
-  if (method === 'Apple Pay') {
-    return (
-      <span className="inline-flex items-center justify-center bg-black text-white text-[11px] font-semibold px-3 py-1.5 rounded-md tracking-tight">
-         Pay
-      </span>
-    );
-  }
-  if (method === 'Google Pay') {
-    return (
-      <span className="inline-flex items-center justify-center bg-white dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] text-gray-800 dark:text-[#c8b6a6] text-[11px] font-semibold px-3 py-1.5 rounded-md">
-        G Pay
-      </span>
-    );
-  }
-  if (method === 'Visa') {
-    return (
-      <span className="inline-flex items-center justify-center bg-[#1a1f71] text-white text-[11px] font-bold italic px-3 py-1.5 rounded-md tracking-widest">
-        VISA
-      </span>
-    );
-  }
-  if (method === 'Mastercard') {
-    return (
-      <span className="inline-flex items-center justify-center bg-white dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] px-2 py-1.5 rounded-md">
-        <svg viewBox="0 0 38 24" width="38" height="18">
-          <circle cx="15" cy="12" r="9" fill="#eb001b" />
-          <circle cx="23" cy="12" r="9" fill="#f79e1b" />
-          <path d="M19 5.8a9 9 0 0 1 0 12.4A9 9 0 0 1 19 5.8z" fill="#ff5f00" />
-        </svg>
-      </span>
-    );
-  }
-  if (method === 'Amex') {
-    return (
-      <span className="inline-flex items-center justify-center bg-[#007bc1] text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md tracking-tight leading-tight text-center">
-        AMERICAN<br />EXPRESS
-      </span>
-    );
-  }
-  if (method === 'Discover') {
-    return (
-      <span className="inline-flex items-center justify-center bg-white dark:bg-[#2d221c] border border-gray-200 dark:border-[#3a2c23] px-2 py-1.5 rounded-md">
-        <svg viewBox="0 0 60 24" width="52" height="18">
-          <rect width="60" height="24" rx="3" fill="#fff" />
-          <text x="4" y="16" fontSize="10" fontWeight="700" fill="#231f20" fontFamily="Arial">DISCOVER</text>
-          <circle cx="52" cy="12" r="8" fill="#f76f20" />
-        </svg>
-      </span>
-    );
-  }
-  if (method === 'Link') {
-    return (
-      <span className="inline-flex items-center justify-center bg-[#00d66b] text-white text-[11px] font-bold px-3 py-1.5 rounded-md tracking-tight">
-        Link
-      </span>
-    );
-  }
-  return null;
-}
-
-const PAYMENT_METHODS = ['Apple Pay', 'Google Pay', 'Visa', 'Mastercard', 'Amex', 'Discover', 'Link'];
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: any }) {
   const { addToCart } = useCart();
@@ -797,11 +736,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             {/* Payment methods */}
             <div className="pt-4 border-t border-gray-100 dark:border-[#2a2018]">
               <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mb-2 font-medium tracking-wide uppercase">Secure payment via</p>
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                {PAYMENT_METHODS.map((method) => (
-                  <PaymentIcon key={method} method={method} />
-                ))}
-              </div>
+              <PaymentMethodStrip size="sm" className="justify-center" />
             </div>
           </div>
         </div>

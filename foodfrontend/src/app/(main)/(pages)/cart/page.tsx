@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import PaymentMethodStrip from '@/components/atoms/PaymentMarks';
 import {
   Trash2,
   ShoppingBag,
@@ -399,6 +400,8 @@ export default function CartPage() {
                       Proceed to Checkout
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                     </button>
+
+                    <PaymentMethodStrip size="sm" className="mt-4 justify-center" />
 
                     <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[11px] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50">
                       <ShieldCheck className="w-3.5 h-3.5" />

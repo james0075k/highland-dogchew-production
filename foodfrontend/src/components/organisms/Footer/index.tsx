@@ -1,9 +1,10 @@
 "use client"
 
-import { FaInstagram, FaFacebookF, FaYoutube, FaCcVisa, FaCcMastercard, FaCcAmex, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiPhone, FiMapPin, FiCheck, FiLoader } from "react-icons/fi";
 import Link from "next/link";
 import Logo from "@/components/atoms/Logo";
+import PaymentMethodStrip from "@/components/atoms/PaymentMarks";
 import PawBackground from "@/components/atoms/PawBackground";
 import { ContactInfo } from "@/types";
 import { toWhatsAppNumber } from "@/utils/phone";
@@ -270,17 +271,7 @@ export default function Footer({ destinations = [], activities = [], contactInfo
             </div>
 
             <p className="text-sm font-bold text-[#2E1F14] dark:text-[#f5e9dc] uppercase tracking-[0.15em] mb-3">We Accept</p>
-            <div className="flex gap-2">
-              <div className="w-12 h-8 rounded bg-white dark:bg-[#241b16] border border-[#2E1F14]/10 dark:border-[#3a2c23] flex items-center justify-center">
-                <FaCcVisa className="w-8 h-5 text-[#1A1F71]" aria-label="Visa" />
-              </div>
-              <div className="w-12 h-8 rounded bg-white dark:bg-[#241b16] border border-[#2E1F14]/10 dark:border-[#3a2c23] flex items-center justify-center">
-                <FaCcMastercard className="w-8 h-5 text-[#EB001B]" aria-label="Mastercard" />
-              </div>
-              <div className="w-12 h-8 rounded bg-white dark:bg-[#241b16] border border-[#2E1F14]/10 dark:border-[#3a2c23] flex items-center justify-center">
-                <FaCcAmex className="w-8 h-5 text-[#2E77BC]" aria-label="Amex" />
-              </div>
-            </div>
+            <PaymentMethodStrip className="max-w-[16rem]" />
           </div>
         </div>
       </div>

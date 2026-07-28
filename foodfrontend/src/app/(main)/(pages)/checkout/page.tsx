@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import PaymentMethodStrip from '@/components/atoms/PaymentMarks';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +72,16 @@ const countryName = (code?: string | null): string => {
   if (!code) return 'United Kingdom';
   return COUNTRY_CODE_TO_NAME[code.toUpperCase()] || code;
 };
+
+// Inverse of the above. Stripe's billing_details wants ISO codes, but our form
+// stores full names — used to prefill Klarna / Pay by Bank so they don't re-ask
+// for an address the customer already typed in step 1.
+const COUNTRY_NAME_TO_CODE: Record<string, string> = Object.fromEntries(
+  Object.entries(COUNTRY_CODE_TO_NAME).map(([code, name]) => [name, code]),
+);
+
+const countryCode = (name?: string | null): string =>
+  (name && COUNTRY_NAME_TO_CODE[name]) || 'GB';
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -167,6 +178,29 @@ function CheckoutForm({
   const { items } = useCart();
   const [paying, setPaying] = useState(false);
   const [error,  setError]  = useState<string | null>(null);
+  // Null until the ExpressCheckoutElement reports in. Empty array = no wallet is
+  // available on this device, so the whole express section is hidden rather than
+  // leaving a blank gap above the payment list.
+  const [expressMethods, setExpressMethods] = useState<string[] | null>(null);
+
+  const hasSubscriptionItem = items.some((i) => i.isSubscription);
+
+  // The Payment Element is configured with `fields.billingDetails: 'never'` (see
+  // below), so these must be supplied at confirm time instead. Sourced from the
+  // step-1 form, which is validated before payment can be reached.
+  const billingDetailsFromForm = () => ({
+    name:  `${shipping.firstName} ${shipping.lastName}`.trim(),
+    email: shipping.email.trim(),
+    phone: shipping.phone.trim() || undefined,
+    address: {
+      line1:       shipping.address.trim(),
+      line2:       shipping.apartment.trim() || undefined,
+      city:        shipping.city.trim(),
+      state:       shipping.county.trim() || undefined,
+      postal_code: shipping.postcode.trim(),
+      country:     countryCode(shipping.country),
+    },
+  });
 
   const inputClass =
     'w-full bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 dark:focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] transition-all duration-200';
@@ -309,6 +343,25 @@ function CheckoutForm({
         confirmParams: {
           return_url:    `${window.location.origin}/checkout/success?payment_intent=${paymentIntentId}`,
           receipt_email: email,
+          // Belt-and-braces: the wallet supplies its own billing details and
+          // Stripe gives those precedence, but the Payment Element mounted in
+          // the same Elements group declares `fields.billingDetails: 'never'`.
+          // Passing these too means the confirm is valid either way.
+          payment_method_data: {
+            billing_details: {
+              name: `${firstName} ${lastName}`.trim(),
+              email,
+              phone: phone || undefined,
+              address: {
+                line1:       addressLine1,
+                line2:       addressLine2 || undefined,
+                city,
+                state:       county || undefined,
+                postal_code: postcode,
+                country:     countryCode(country),
+              },
+            },
+          },
         },
       });
       if (stripeError) {
@@ -367,6 +420,9 @@ function CheckoutForm({
         confirmParams: {
           return_url:    `${window.location.origin}/checkout/success?payment_intent=${paymentIntentId}`,
           receipt_email: shipping.email,
+          // Required because the Payment Element hides these fields — Klarna and
+          // Pay by Bank need them, and re-asking would duplicate step 1.
+          payment_method_data: { billing_details: billingDetailsFromForm() },
         },
       });
       if (stripeError) setError(stripeError.message || 'Payment failed. Please try again.');
@@ -622,17 +678,37 @@ function CheckoutForm({
           </div>
 
           {/* Express checkout — shown here (after details are filled) so wallet
-              payments can never bypass the information step. */}
-          <div className="mb-6">
+              payments can never bypass the information step. Apple Pay renders
+              on Safari/iOS only (and only once the domain is registered with
+              Stripe); Google Pay renders on Chrome. The whole block collapses
+              when the device supports neither. */}
+          <div className={expressMethods !== null && expressMethods.length === 0 ? 'hidden' : 'mb-6'}>
             <p className="text-[10px] uppercase tracking-[0.22em] text-center text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 mb-3 font-semibold">
               Express checkout
             </p>
             <ExpressCheckoutElement
               onConfirm={handleExpressConfirm}
               onShippingAddressChange={(e) => e.resolve()}
+              onReady={(e) => setExpressMethods(
+                Object.entries(e.availablePaymentMethods ?? {})
+                  .filter(([, available]) => available)
+                  .map(([name]) => name),
+              )}
               options={{
-                buttonType: { applePay: 'buy', googlePay: 'buy' },
-                layout: { maxColumns: 3, maxRows: 1, overflow: 'auto' },
+                buttonType:   { applePay: 'buy', googlePay: 'buy' },
+                buttonTheme:  { applePay: 'black', googlePay: 'black' },
+                buttonHeight: 48,
+                // Klarna is deliberately excluded here — it appears as a row in
+                // the payment list below instead, keeping this strip to wallets.
+                paymentMethods: {
+                  applePay:  'auto',
+                  googlePay: 'auto',
+                  amazonPay: 'auto',
+                  link:      'auto',
+                  klarna:    'never',
+                  paypal:    'never',
+                },
+                layout: { maxColumns: 2, maxRows: 2, overflow: 'auto' },
                 emailRequired: true,
                 phoneNumberRequired: true,
                 billingAddressRequired: true,
@@ -642,9 +718,9 @@ function CheckoutForm({
           </div>
 
           {/* OR divider */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className={`items-center gap-3 mb-6 ${expressMethods !== null && expressMethods.length === 0 ? 'hidden' : 'flex'}`}>
             <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
-            <span className="text-[10px] uppercase tracking-[0.22em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 font-semibold">or pay with card</span>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 font-semibold">or choose a payment method</span>
             <div className="flex-1 h-px bg-[#e8ddd0] dark:bg-[#3a2c23]" />
           </div>
 
@@ -656,7 +732,58 @@ function CheckoutForm({
                 <Lock className="w-3 h-3 text-amber-500" />
                 All transactions are secure and encrypted
               </div>
-              <PaymentElement />
+              <PaymentElement
+                options={{
+                  // Spaced radio rows: no single expanded method can push the
+                  // rest of the list below the fold.
+                  layout: {
+                    type: 'accordion',
+                    defaultCollapsed: false,
+                    radios: true,
+                    spacedAccordionItems: true,
+                  },
+                  // Explicit order. Anything enabled in Stripe but not listed
+                  // here still renders, just after these.
+                  paymentMethodOrder: ['card', 'klarna', 'pay_by_bank', 'revolut_pay', 'amazon_pay'],
+                  business: { name: 'Highland Yak Chew' },
+                  // Already collected in step 1 — supplied at confirm time via
+                  // `payment_method_data.billing_details` instead of re-asking.
+                  fields: {
+                    billingDetails: {
+                      name: 'never',
+                      email: 'never',
+                      phone: 'never',
+                      address: 'never',
+                    },
+                  },
+                  wallets: { applePay: 'never', googlePay: 'never' },
+                }}
+              />
+            </div>
+
+            {/* Method explainer */}
+            <p className="mt-3 text-[11px] leading-relaxed text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">
+              <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">Klarna</span> — pay in 3 interest-free instalments.{' '}
+              <span className="font-semibold text-[#2f1e14] dark:text-[#f5e9dc]">Pay by Bank</span> — pay straight from your bank account, no card needed.
+            </p>
+
+            {hasSubscriptionItem && (
+              <p className="mt-2 text-[11px] leading-relaxed text-emerald-700 dark:text-emerald-400 flex items-start gap-1.5">
+                <RefreshCcw className="w-3 h-3 mt-0.5 shrink-0" />
+                <span>
+                  Your basket includes a subscription, so only methods that can be charged
+                  automatically on renewal are shown — Pay by Bank isn&apos;t available for
+                  recurring orders.
+                </span>
+              </p>
+            )}
+
+            {/* Accepted methods */}
+            <div className="mt-4 pt-4 border-t border-[#e8ddd0] dark:border-[#3a2c23]">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#7A5C4F]/60 dark:text-[#c8b6a6]/50 font-semibold mb-2">
+                We accept
+              </p>
+              <PaymentMethodStrip size="sm" />
             </div>
           </div>
 
