@@ -20,8 +20,19 @@ const lookupLimiter = rateLimit({
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
 
+// Higher ceiling than lookupLimiter: the success page legitimately calls /sync
+// on every load, and a customer refreshing their receipt must not be blocked.
+// Still bounded, because the endpoint takes a PaymentIntent id and talks to Stripe.
+const syncLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please try again later.' },
+});
+
 // POST /api/orders/sync — create order from Stripe PI (works without webhook)
-orderRoute.post('/sync', syncOrderFromPaymentIntent);
+orderRoute.post('/sync', syncLimiter, syncOrderFromPaymentIntent);
 
 // POST /api/orders/track — public parcel tracking (orderNumber + email)
 orderRoute.post('/track', lookupLimiter, trackOrder);

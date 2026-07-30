@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+// Imported for its side effect of registering the model, so createIndexes below
+// can never hit a MissingSchemaError depending on import order.
+import SubscriptionModel from '../models/subscriptionModel.js';
 
 // ─── Startup migration: paymentIntentId index ────────────────────────────────
 //
@@ -45,6 +48,81 @@ async function migratePaymentIntentIndex() {
   }
 }
 
+// ─── Startup migration: subscription origin keys ─────────────────────────────
+//
+// subscriptionModel.js now declares a unique index on
+// { originPaymentIntentId, originItemKey } so the webhook and /orders/sync can
+// never both insert a subscription for the same payment. Documents created
+// before those fields existed have neither, so they are backfilled here from
+// the first billingHistory entry — which is, by definition, the payment that
+// created them.
+//
+// This function NEVER deletes or merges anything. If real duplicates exist the
+// unique index build fails; we log loudly and carry on booting, because a
+// billing record must only be consolidated by a human running
+// scripts/auditDuplicateSubscriptions.js.
+//
+async function migrateSubscriptionOriginKeys() {
+  const subs = mongoose.connection.db.collection('subscriptions');
+
+  try {
+    const pending = await subs.find(
+      {
+        $or: [
+          { originPaymentIntentId: { $exists: false } },
+          { originPaymentIntentId: '' },
+          { originItemKey: { $exists: false } },
+          { originItemKey: '' },
+        ],
+      },
+      { projection: { billingHistory: 1, product: 1, productName: 1, size: 1 } },
+    ).toArray();
+
+    let filled = 0;
+    for (const doc of pending) {
+      const originPI = doc.billingHistory?.[0]?.paymentIntentId;
+      if (!originPI) continue; // nothing authoritative to key on — leave unindexed
+
+      const itemKey = `${doc.product ? String(doc.product) : (doc.productName || '')}::${doc.size || 'Default'}`;
+      await subs.updateOne(
+        { _id: doc._id },
+        { $set: { originPaymentIntentId: originPI, originItemKey: itemKey } },
+      );
+      filled += 1;
+    }
+
+    if (filled > 0) {
+      console.log(`[DB migration] Backfilled origin keys on ${filled} subscription(s)`);
+    }
+    const skipped = pending.length - filled;
+    if (skipped > 0) {
+      console.warn(
+        `[DB migration] ${skipped} subscription(s) have no billingHistory PaymentIntent — ` +
+        'left without an origin key, so the unique index does not cover them.',
+      );
+    }
+  } catch (err) {
+    console.warn('[DB migration] Subscription origin-key backfill failed:', err.message);
+  }
+
+  // createIndexes (not syncIndexes) — it only adds what's missing and never drops
+  // an existing index. Called explicitly so a blocked build is reported here
+  // rather than as a background index error that is easy to miss.
+  try {
+    await SubscriptionModel.createIndexes();
+  } catch (err) {
+    if (err.code === 11000 || /duplicate key/i.test(err.message)) {
+      console.error(
+        '[DB migration] ⚠️  Duplicate subscriptions block the uniqueness index — the same ' +
+        'payment created more than one subscription record, so a customer may be billed twice. ' +
+        'Run: node scripts/auditDuplicateSubscriptions.js',
+      );
+    } else {
+      console.warn('[DB migration] Subscription index sync failed:', err.message);
+    }
+  }
+}
+
 const Connection = async () => {
   try {
     if (!process.env.mongoConnectionString) {
@@ -54,6 +132,7 @@ const Connection = async () => {
     await mongoose.connect(process.env.mongoConnectionString);
     console.log('[DB] Connected to MongoDB Atlas successfully');
     await migratePaymentIntentIndex();
+    await migrateSubscriptionOriginKeys();
   } catch (err) {
     console.error('[DB] Failed to connect to MongoDB:', err.message);
     process.exit(1);

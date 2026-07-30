@@ -62,6 +62,14 @@ const fakeStripe = {
       if (params.receipt_email) pi.receipt_email = params.receipt_email;
       return pi;
     }),
+    // Insertion-ordered page, mirroring Stripe's cursor semantics closely enough
+    // for the reconciliation sweep (starting_after + has_more).
+    list: vi.fn(async ({ limit = 100, starting_after: startingAfter } = {}) => {
+      const all = [...stripeMockState.paymentIntents.values()];
+      const from = startingAfter ? all.findIndex((p) => p.id === startingAfter) + 1 : 0;
+      const page = all.slice(from, from + limit);
+      return { data: page, has_more: from + page.length < all.length };
+    }),
   },
   promotionCodes: {
     retrieve: vi.fn(async (id) => {
@@ -75,6 +83,16 @@ const fakeStripe = {
       const c = { id: newId('cus'), ...params };
       stripeMockState.customers.set(c.id, c);
       return c;
+    }),
+    update: vi.fn(async (id, params) => {
+      const c = stripeMockState.customers.get(id);
+      if (!c) throw new Error(`No such customer: ${id}`);
+      Object.assign(c, params);
+      return c;
+    }),
+    del: vi.fn(async (id) => {
+      stripeMockState.customers.delete(id);
+      return { id, deleted: true };
     }),
   },
   paymentMethods: {

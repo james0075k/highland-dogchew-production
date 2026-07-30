@@ -244,7 +244,7 @@ export default function ContactPage() {
   }, [contactInfoUpdateKey]);
 
   const phone = info?.phone || info?.phones?.[0] || '';
-  const contactAddress = info?.address?.trim() || 'College House, 17 King Edwards Rd, Ruislip HA4 7AE';
+  const contactAddress = info?.address?.trim() || '2nd Floor, College House, 17 King Edwards Rd, Ruislip, HA4 7AE, UK';
   const mapEmbedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(contactAddress)}&output=embed&z=18`;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

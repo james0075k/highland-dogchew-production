@@ -640,3 +640,123 @@ export function subscriptionPaymentFailedEmailHtml(sub, reason) {
 
   return layout(`Action Required – Subscription Payment Failed`, body);
 }
+
+// ─── Payment recovered by the reconciliation sweep — Admin ───────────────────
+//
+// Sent only when the hourly sweep had to create an order Stripe already had.
+// That means webhook delivery is broken, so the message leads with the fix.
+
+export function paymentRescuedAdminEmailHtml(rescuedOrderNumbers = [], failedPaymentIntentIds = []) {
+  const rows = rescuedOrderNumbers
+    .map((n) => `
+      <tr>
+        <td style="padding:6px 0;font-size:14px;font-weight:700;">${n}</td>
+      </tr>`)
+    .join('');
+
+  const failedBlock = failedPaymentIntentIds.length > 0
+    ? `
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:14px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-weight:700;font-size:14px;color:#b91c1c;">Could not be recovered automatically</p>
+      <p style="margin:6px 0 0;font-size:13px;color:#7f1d1d;word-break:break-all;">
+        ${failedPaymentIntentIds.join('<br />')}
+      </p>
+      <p style="margin:8px 0 0;font-size:13px;color:#7f1d1d;">
+        These payments succeeded in Stripe but no order could be created. Please create them manually.
+      </p>
+    </div>`
+    : '';
+
+  const body = `
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-weight:700;font-size:15px;color:#92400e;">Orders recovered from Stripe</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#78350f;">
+        These payments succeeded but no order existed, so the reconciliation sweep created them.
+        Customers have now received their confirmation emails.
+      </p>
+    </div>
+
+    <p style="margin:0 0 8px;font-size:14px;color:#2f1e14;font-weight:700;">Recovered orders</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      ${rows}
+    </table>
+
+    ${failedBlock}
+
+    <p style="margin:0 0 8px;font-size:14px;color:#2f1e14;font-weight:700;">Why this happened</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#7a5c4f;">
+      Order creation normally happens the moment Stripe calls our webhook. A recovery means that call
+      never arrived or never succeeded. Check the webhook endpoint in the Stripe Dashboard: it should
+      point at <strong>${brand.siteUrl.replace(/\/$/, '')}/api/webhook/stripe</strong>, be subscribed to
+      <strong>payment_intent.succeeded</strong>, and its signing secret must match
+      PRODUCT_WEBHOOK_SECRET on the server.
+    </p>
+
+    <p style="margin:0;font-size:12px;color:#b8a99a;text-align:center;">
+      Sent automatically by the hourly payment reconciliation sweep.
+    </p>
+  `;
+
+  return layout('Orders recovered from Stripe', body);
+}
+
+// ─── Payment still processing (Pay by Bank etc.) — Admin ────────────────────
+//
+// Delayed-settlement methods sit in `processing` before they succeed. No order
+// exists yet — this is purely so a pending payment is visible while we wait.
+
+export function paymentProcessingAdminEmailHtml(pi) {
+  const meta   = pi.metadata || {};
+  const name   = `${meta.c_firstName || ''} ${meta.c_lastName || ''}`.trim() || 'N/A';
+  const amount = ((pi.amount ?? 0) / 100).toFixed(2);
+  const method = (pi.payment_method_types || []).join(', ') || 'unknown';
+
+  const addressLines = [meta.s_line1, meta.s_line2, meta.s_city, meta.s_county, meta.s_postcode, meta.s_country]
+    .filter(Boolean)
+    .join(', ') || 'N/A';
+
+  const body = `
+    <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:14px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-weight:700;font-size:15px;color:#1e40af;">Payment Processing</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#1e3a8a;">
+        A customer has paid with a method that settles a little later (for example Pay by Bank).
+        No order has been created yet &mdash; it will appear automatically the moment the payment
+        settles, and the customer will get their confirmation email then. No action needed unless
+        this payment is still listed as processing tomorrow.
+      </p>
+    </div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;width:140px;">Amount</td>
+        <td style="padding:6px 0;font-size:14px;font-weight:700;">&pound;${amount}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;">Method</td>
+        <td style="padding:6px 0;font-size:14px;">${method}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;">Customer</td>
+        <td style="padding:6px 0;font-size:14px;">${name}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;">Email</td>
+        <td style="padding:6px 0;font-size:14px;">${meta.c_email || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;">Ship to</td>
+        <td style="padding:6px 0;font-size:14px;">${addressLines}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:13px;color:#7a5c4f;">Payment ID</td>
+        <td style="padding:6px 0;font-size:13px;word-break:break-all;">${pi.id}</td>
+      </tr>
+    </table>
+
+    <p style="margin:0;font-size:12px;color:#b8a99a;text-align:center;">
+      Sent automatically when Stripe reports a payment as processing.
+    </p>
+  `;
+
+  return layout('Payment Processing – awaiting settlement', body);
+}

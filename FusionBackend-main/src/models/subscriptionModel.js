@@ -39,6 +39,20 @@ const subscriptionSchema = new Schema(
   {
     subscriptionId: { type: String, required: true, unique: true, index: true },
 
+    // ── Origin (natural key — set once, never changed) ──────────────────────────
+    //
+    // The PaymentIntent that created this subscription plus a key identifying the
+    // exact cart line it came from. Together these are what makes creation
+    // idempotent: both the Stripe webhook and POST /api/orders/sync call
+    // createSubscriptionsFromPI for the same payment, and the unique index below
+    // is the last line of defence against them both inserting.
+    //
+    // Kept separate from billingHistory on purpose — that array grows on every
+    // renewal, so it is the wrong thing to hang a uniqueness guarantee on.
+    //
+    originPaymentIntentId: { type: String },
+    originItemKey:         { type: String }, // `${product || productName}::${size}`
+
     // ── Customer ───────────────────────────────────────────────────────────────
     email:            { type: String, required: true, index: true, lowercase: true, trim: true },
     stripeCustomerId: { type: String, required: true },
@@ -84,5 +98,20 @@ const subscriptionSchema = new Schema(
 
 // Compound index for the cron job query
 subscriptionSchema.index({ status: 1, nextBillingDate: 1 });
+
+// One subscription per (origin payment, cart line). Partial filter so documents
+// predating the origin fields — and any future doc created without them — are
+// simply not indexed rather than colliding on null, mirroring the paymentIntentId
+// index in orderModel.js.
+subscriptionSchema.index(
+  { originPaymentIntentId: 1, originItemKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      originPaymentIntentId: { $type: 'string', $gt: '' },
+      originItemKey:         { $type: 'string', $gt: '' },
+    },
+  }
+);
 
 export default mongoose.model('Subscription', subscriptionSchema);

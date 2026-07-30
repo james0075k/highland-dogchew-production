@@ -158,4 +158,31 @@ describe('POST /api/webhook/stripe', () => {
     const orders = await OrderModel.find({});
     expect(orders).toHaveLength(0);
   });
+
+  // Pay by Bank and similar settle after the customer leaves. The order must
+  // still only be created on success — this event exists for visibility alone.
+  it('acknowledges payment_intent.processing without creating an order', async () => {
+    const res = await postWebhook({
+      id: 'evt_processing',
+      type: 'payment_intent.processing',
+      data: {
+        object: {
+          id: 'pi_processing',
+          amount: 578,
+          payment_method_types: ['pay_by_bank'],
+          metadata: {
+            type: 'product-purchase',
+            c_email: 'buyer@test.local',
+            c_firstName: 'Ada',
+            s_line1: '1 Test St',
+            s_city: 'London',
+            s_postcode: 'SW1A 1AA',
+          },
+        },
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(await OrderModel.countDocuments()).toBe(0);
+  });
 });

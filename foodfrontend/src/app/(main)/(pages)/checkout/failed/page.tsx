@@ -5,20 +5,24 @@ export const dynamic = 'force-dynamic';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, type StripeError } from '@stripe/stripe-js';
 import { XCircle, ShoppingCart, RefreshCw, AlertCircle } from 'lucide-react';
+import { stripeErrorToFriendly, type FriendlyError } from '@/lib/paymentErrors';
 
 // ─── Retrieve PI failure reason via Stripe.js ─────────────────────────────────
 //
 // Stripe appends payment_intent_client_secret to the return_url on redirect.
-// We use it to call retrievePaymentIntent and surface the exact failure reason.
+// We use it to call retrievePaymentIntent, then run last_payment_error through
+// the same mapper the checkout form uses so the wording matches everywhere.
 //
-async function getFailureReason(clientSecret: string): Promise<string | null> {
+async function getFailureReason(clientSecret: string): Promise<FriendlyError | null> {
   try {
     const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
     if (!stripe) return null;
     const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
-    return paymentIntent?.last_payment_error?.message ?? null;
+    const lastError = paymentIntent?.last_payment_error;
+    if (!lastError) return null;
+    return stripeErrorToFriendly(lastError as StripeError);
   } catch {
     return null;
   }
@@ -29,7 +33,7 @@ export default function CheckoutFailedPage() {
   const paymentIntent  = searchParams.get('payment_intent');
   const clientSecret   = searchParams.get('payment_intent_client_secret');
 
-  const [failureReason, setFailureReason] = useState<string | null>(null);
+  const [failureReason, setFailureReason] = useState<FriendlyError | null>(null);
   const [loaded, setLoaded]               = useState(false);
 
   useEffect(() => {
@@ -99,8 +103,16 @@ export default function CheckoutFailedPage() {
                       Reason
                     </p>
                     <p className="text-sm text-[#2f1e14] dark:text-[#f5e9dc]">
-                      {failureReason}
+                      {failureReason.message}
                     </p>
+                    {failureReason.hint && (
+                      <p className="mt-0.5 text-xs text-[#7A5C4F] dark:text-[#c8b6a6]">
+                        {failureReason.hint}
+                        {failureReason.code && (
+                          <span className="text-[#7A5C4F]/50 dark:text-[#c8b6a6]/40"> ({failureReason.code})</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -151,11 +151,13 @@ async function loadOrder(
 export default function CheckoutSuccessPage() {
   const searchParams     = useSearchParams();
   const router           = useRouter();
-  const paymentIntent    = searchParams.get('payment_intent');
+  // Stripe appends `payment_intent` to the return_url itself; `pi_hint` is our
+  // own copy, kept only as a fallback so the two can never disagree.
+  const paymentIntent    = searchParams.get('payment_intent') || searchParams.get('pi_hint');
   const piClientSecret   = searchParams.get('payment_intent_client_secret');
   const redirectStatus   = searchParams.get('redirect_status');
   // Free-order path: when grandTotal was £0 the checkout bypassed Stripe and
-  // stashed the full order in sessionStorage under hyk_free_order_<orderNumber>.
+  // stashed the full order under hyk_free_order_<orderNumber>.
   const freeOrderNumber  = searchParams.get('order');
   const isFreeOrder      = searchParams.get('free') === '1' && !!freeOrderNumber;
   const { clearCart } = useCart();
@@ -200,10 +202,13 @@ export default function CheckoutSuccessPage() {
   }, [paymentIntent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Free-order path — pull the snapshot from sessionStorage written by checkout.
+    // Free-order path — pull the snapshot written by checkout. localStorage is
+    // where it lives now; sessionStorage is still read so a receipt opened
+    // before this change keeps working.
     if (isFreeOrder && freeOrderNumber) {
       try {
-        const raw = sessionStorage.getItem(`hyk_free_order_${freeOrderNumber}`);
+        const raw = localStorage.getItem(`hyk_free_order_${freeOrderNumber}`)
+          ?? sessionStorage.getItem(`hyk_free_order_${freeOrderNumber}`);
         if (raw) setOrder(JSON.parse(raw) as OrderData);
       } catch { /* ignore */ }
       setLoading(false);
@@ -323,18 +328,45 @@ export default function CheckoutSuccessPage() {
             <CheckCircle className="w-10 h-10 text-green-500 dark:text-green-400" />
           </div>
           <h1 className="font-antique text-3xl text-[#2f1e14] dark:text-[#f5e9dc] mb-3">
-            Payment Received
+            {isFreeOrder ? 'Order Confirmed' : 'Payment Received'}
           </h1>
-          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed mb-8">
-            Your payment was successful. A confirmation email will be sent to you shortly with your full order details.
+          <p className="text-sm text-[#7A5C4F] dark:text-[#c8b6a6] leading-relaxed mb-4">
+            {isFreeOrder
+              ? 'Your order is confirmed and your confirmation email is on its way.'
+              : 'Your payment was successful. A confirmation email will be sent to you shortly with your full order details.'}
           </p>
-          <Link
-            href="/products"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            Continue shopping
-          </Link>
+
+          {/* The order number is the one thing that lets the customer look this
+              up themselves, so surface it whenever we have it. */}
+          {freeOrderNumber && (
+            <p className="text-sm text-[#2f1e14] dark:text-[#f5e9dc] mb-8">
+              Order number{' '}
+              <span className="font-mono font-semibold">{freeOrderNumber}</span>
+            </p>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {freeOrderNumber && (
+              <Link
+                href={`/my-orders?tab=track&order=${encodeURIComponent(freeOrderNumber)}`}
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-sm font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all"
+              >
+                <Package className="w-4 h-4" />
+                View this order
+              </Link>
+            )}
+            <Link
+              href="/products"
+              className={`inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 px-8 rounded-xl transition-all ${
+                freeOrderNumber
+                  ? 'border border-[#d8ccba] dark:border-[#3a2c23] text-[#2f1e14] dark:text-[#f5e9dc] hover:bg-amber-50 dark:hover:bg-[#2a211b]'
+                  : 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md hover:shadow-lg'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Continue shopping
+            </Link>
+          </div>
         </div>
       </div>
     );

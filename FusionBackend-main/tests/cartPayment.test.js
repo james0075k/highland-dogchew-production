@@ -22,10 +22,10 @@ describe('POST /api/cart-payments/validate', () => {
     expect(res.status).toBe(200);
     // 2 * 10 = 20 subtotal
     expect(res.body.data.subtotal).toBe(20);
-    // 20% VAT on 20 = 4
-    expect(res.body.data.totalTax).toBe(4);
-    expect(res.body.data.totalDelivery).toBe(2.99);
-    expect(res.body.data.grandTotal).toBe(26.99);
+    // VAT is baked into catalogue prices, so TAX_RATE is 0 — not added again here
+    expect(res.body.data.totalTax).toBe(0);
+    expect(res.body.data.totalDelivery).toBe(1.99);
+    expect(res.body.data.grandTotal).toBe(21.99);
   });
 
   it('rejects an item whose product was deleted', async () => {
@@ -85,9 +85,9 @@ describe('POST /api/cart-payments/create-payment-intent', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.paymentIntentId).toMatch(/^pi_test_/);
     expect(res.body.data.updateToken).toMatch(/^[a-f0-9]{48}$/);
-    // 10 + (10 * 0.2 = 2) + 2.99 = 14.99 → 1499 pence
+    // 10 (VAT-inclusive) + 1.99 delivery = 11.99 → 1199 pence
     const pi = stripeMockState.paymentIntents.get(res.body.data.paymentIntentId);
-    expect(pi.amount).toBe(1499);
+    expect(pi.amount).toBe(1199);
     expect(pi.metadata.type).toBe('product-purchase');
     expect(pi.metadata.update_token).toBe(res.body.data.updateToken);
   });

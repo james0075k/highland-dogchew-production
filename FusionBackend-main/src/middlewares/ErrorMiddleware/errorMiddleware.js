@@ -5,6 +5,10 @@ const errorMiddleware = (err, req, res, next) => {
 
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
+  // Machine-readable reason, returned alongside the message so the client can
+  // map it to its own wording (and so support can match it to a Stripe event).
+  // Controllers may set it explicitly when they re-wrap a third-party error.
+  let errorCode = err.errorCode;
 
   // ─── Mongoose: Validation Error (missing/invalid fields) ─────────
   if (err.name === 'ValidationError') {
@@ -65,6 +69,9 @@ const errorMiddleware = (err, req, res, next) => {
   if (err.type && err.type.startsWith('Stripe')) {
     statusCode = err.statusCode || 402;
     message = err.message || 'Payment processing error. Please try again.';
+    errorCode = [err.raw?.code || err.code, err.raw?.decline_code || err.decline_code]
+      .filter(Boolean)
+      .join(' · ') || err.type;
   }
 
   // ─── ENOENT: File/directory not found ────────────────────────────
@@ -101,6 +108,7 @@ const errorMiddleware = (err, req, res, next) => {
     success: false,
     statusCode,
     message,
+    ...(errorCode ? { errorCode } : {}),
   });
 };
 

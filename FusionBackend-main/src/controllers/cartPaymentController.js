@@ -21,6 +21,16 @@ class CartError extends Error {
   }
 }
 
+// Re-wraps a Stripe SDK error with our status while keeping the machine-readable
+// reason (code / decline_code). Without this the client only gets prose and has
+// to guess at the cause, which is how "something went wrong" happens.
+function stripeError(status, err) {
+  const wrapped = handleError(status, err.message || 'Payment processing error. Please try again.');
+  const code = [err.code, err.decline_code].filter(Boolean).join(' · ');
+  if (code || err.type) wrapped.errorCode = code || err.type;
+  return wrapped;
+}
+
 // â”€â”€â”€ H-4 / M-4 fix: metadata chunking helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Stripe limits each metadata value to 500 characters (50 keys max).
@@ -310,7 +320,7 @@ export const createPaymentIntent = async (req, res, next) => {
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
     // M-2 fix: surface Stripe API errors as 402 Payment Required, not 500
-    if (err?.type?.startsWith('Stripe')) return next(handleError(402, err.message));
+    if (err?.type?.startsWith('Stripe')) return next(stripeError(402, err));
     next(err);
   }
 };
@@ -376,7 +386,7 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
     return handleSuccess(res, 200, 'Order details saved', {});
   } catch (err) {
     if (err instanceof CartError) return next(handleError(err.status, err.message));
-    if (err?.type?.startsWith('Stripe')) return next(handleError(400, err.message));
+    if (err?.type?.startsWith('Stripe')) return next(stripeError(400, err));
     next(err);
   }
 };

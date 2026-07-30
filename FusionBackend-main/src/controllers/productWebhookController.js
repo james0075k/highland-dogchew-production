@@ -16,6 +16,8 @@ import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
 import { rollbackPromoRedemption } from '../utils/rollbackPromoRedemption.js';
 import { reverseSyncFromStripe } from '../utils/reverseSyncFromStripe.js';
+import sendEmail from '../utils/sendEmail.js';
+import { paymentProcessingAdminEmailHtml } from '../utils/emailTemplates.js';
 import logger from '../utils/logger.js';
 
 const log = logger.child({ component: 'webhook' });
@@ -59,6 +61,32 @@ export const handleProductWebhook = async (req, res) => {
         // H-6 fix: return 500 so Stripe retries (up to ~3 days with exponential back-off).
         // createOrderFromPI is idempotent via unique index — safe to retry.
         return res.status(500).json({ error: 'Processing failed — will retry' });
+      }
+      break;
+    }
+
+    // ── payment_intent.processing ────────────────────────────────────────────
+    //
+    // Delayed-settlement methods (Pay by Bank and friends) sit here before they
+    // succeed. No order is created yet — that happens on payment_intent.succeeded
+    // like every other payment — so this exists purely so a pending payment is
+    // visible to us instead of being a silent gap.
+    case 'payment_intent.processing': {
+      const pi = event.data.object;
+      if (pi.metadata?.type !== 'product-purchase') break;
+
+      log.info(
+        { pi: pi.id, amount: pi.amount, methods: pi.payment_method_types },
+        'Payment processing — awaiting settlement',
+      );
+
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        sendEmail({
+          to: adminEmail,
+          subject: `Payment Processing – £${((pi.amount ?? 0) / 100).toFixed(2)} awaiting settlement`,
+          html: paymentProcessingAdminEmailHtml(pi),
+        }).catch((err) => log.error({ err, pi: pi.id }, 'Processing alert email failed'));
       }
       break;
     }

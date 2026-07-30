@@ -243,3 +243,43 @@ Promise.all([
   cron.schedule(SCHEDULE, () => runSweep('scheduled'), { timezone: 'UTC' });
   cronLog.info({ schedule: SCHEDULE, tz: 'UTC' }, 'Subscription renewal cron scheduled');
 }).catch((err) => cronLog.error({ err }, 'Failed to load subscription processor'));
+
+// ─── Hourly Stripe payment reconciliation ────────────────────────────────────
+// Creates orders for succeeded payments that neither the webhook nor
+// /api/orders/sync managed to record — the case where a customer is charged,
+// closes the tab, and webhook delivery is also broken. Finds nothing when the
+// webhook is healthy, which is the point: silence means the primary path works.
+Promise.all([
+  import('./src/utils/reconcileStripePayments.js'),
+  import('./src/utils/cronLease.js'),
+]).then(([{ reconcileStripePayments }, { acquireLease, releaseLease }]) => {
+  const LEASE_NAME   = 'payment-reconcile';
+  const LEASE_TTL_MS = 15 * 60 * 1000;
+  const SCHEDULE     = process.env.PAYMENT_RECONCILE_CRON || '17 * * * *'; // hourly, off the hour
+
+  if (!cron.validate(SCHEDULE)) {
+    cronLog.error({ schedule: SCHEDULE }, 'Invalid PAYMENT_RECONCILE_CRON — reconciliation disabled');
+    return;
+  }
+
+  async function runReconcile(label) {
+    const got = await acquireLease(LEASE_NAME, LEASE_TTL_MS);
+    if (!got) {
+      cronLog.info({ label }, 'Reconciliation skipped — another instance holds the lease');
+      return;
+    }
+    try {
+      await reconcileStripePayments();
+    } catch (err) {
+      cronLog.error({ err, label }, 'Reconciliation sweep failed');
+    } finally {
+      await releaseLease(LEASE_NAME);
+    }
+  }
+
+  // Two minutes after boot, to catch anything missed while the process was down.
+  setTimeout(() => runReconcile('startup'), 120_000);
+
+  cron.schedule(SCHEDULE, () => runReconcile('scheduled'), { timezone: 'UTC' });
+  cronLog.info({ schedule: SCHEDULE, tz: 'UTC' }, 'Payment reconciliation cron scheduled');
+}).catch((err) => cronLog.error({ err }, 'Failed to load payment reconciler'));

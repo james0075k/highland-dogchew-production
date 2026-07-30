@@ -12,6 +12,18 @@
  *   accumulate billing metadata with no matching subscription record.
  *   If the Stripe cleanup also fails, the customer ID is logged prominently
  *   for manual recovery via the Stripe Dashboard.
+ *
+ * Duplicate protection (a duplicate here means the customer is billed twice on
+ * every renewal, so it is defended at three levels):
+ *   1. In-process single-flight — the webhook and /orders/sync usually land in
+ *      the same Node process within the same second. The second caller awaits
+ *      the first instead of racing it. This also prevents a duplicate Stripe
+ *      Customer, since customers.create sits inside the same window.
+ *   2. Origin-key lookup — skips any line item already recorded for this PI.
+ *   3. Unique index on { originPaymentIntentId, originItemKey } — the database
+ *      is the final arbiter, so even a cross-process race cannot insert twice.
+ *      A duplicate-key error is treated as success, exactly as createOrderFromPI
+ *      treats its own 11000.
  */
 
 import { randomBytes } from 'crypto';
@@ -45,9 +57,41 @@ function generateSubId() {
   return `SUB-${date}-${rand}`;
 }
 
-// ─── Create subscriptions from a confirmed PaymentIntent ─────────────────────
+// The natural key for one subscription: the payment that created it plus the
+// cart line it came from. Must match the backfill in src/config/Connection.js.
+function originItemKey(item) {
+  return `${item.productId ? String(item.productId) : (item.name || '')}::${item.size || 'Default'}`;
+}
+
+// ─── Single-flight guard ─────────────────────────────────────────────────────
+//
+// Keyed by PaymentIntent id. The webhook handler and POST /api/orders/sync both
+// call this for the same payment, typically milliseconds apart in the same
+// process — without this they interleave between the "does it exist?" read and
+// the insert, and both create.
+//
+const inFlightByPI = new Map();
 
 export async function createSubscriptionsFromPI(pi, order) {
+  const key = pi?.id;
+  if (!key) return createSubscriptionsInner(pi, order);
+
+  const running = inFlightByPI.get(key);
+  if (running) {
+    console.log(`[sub] ⏳ Subscription creation already running for ${key} — awaiting it`);
+    return running;
+  }
+
+  const promise = createSubscriptionsInner(pi, order)
+    .finally(() => inFlightByPI.delete(key));
+
+  inFlightByPI.set(key, promise);
+  return promise;
+}
+
+// ─── Create subscriptions from a confirmed PaymentIntent ─────────────────────
+
+async function createSubscriptionsInner(pi, order) {
   const meta = pi.metadata || {};
 
   if (meta.hasSubscription !== 'true') return;
@@ -123,12 +167,25 @@ export async function createSubscriptionsFromPI(pi, order) {
     const intervalWeeks   = parseIntervalWeeks(item.subscriptionInterval);
     const nextBillingDate = addWeeks(new Date(), intervalWeeks);
 
+    const itemKey = originItemKey(item);
+
     try {
-      // Idempotency: skip if this PI + product already has a subscription
+      // Idempotency: skip if this PI + cart line already produced a subscription.
+      // Matched on the origin key (and the legacy billingHistory shape, so a
+      // document written before the migration is still recognised).
       const existingDoc = await SubscriptionModel.findOne({
-        'billingHistory.paymentIntentId': pi.id,
-        product: item.productId || undefined,
-        productName: item.name,
+        $or: [
+          { originPaymentIntentId: pi.id, originItemKey: itemKey },
+          {
+            'billingHistory.paymentIntentId': pi.id,
+            ...(item.productId ? { product: item.productId } : {}),
+            productName: item.name,
+            // Size matters: one order can legitimately subscribe to two sizes of
+            // the same product. Without it the second line was mistaken for a
+            // duplicate of the first and silently dropped.
+            size: item.size || 'Default',
+          },
+        ],
       });
       if (existingDoc) {
         console.log(`[sub] ⏭️  Subscription already exists for ${item.name} — skipped`);
@@ -138,6 +195,8 @@ export async function createSubscriptionsFromPI(pi, order) {
 
       const sub = await SubscriptionModel.create({
         subscriptionId:   generateSubId(),
+        originPaymentIntentId: pi.id,
+        originItemKey:         itemKey,
         email,
         stripeCustomerId,
         paymentMethodId:  pi.payment_method,
@@ -179,6 +238,14 @@ export async function createSubscriptionsFromPI(pi, order) {
       anyDbWriteSucceeded = true;
       console.log(`[sub] ✅ Subscription ${sub.subscriptionId} created for ${item.name}`);
     } catch (err) {
+      // Duplicate key = another path inserted this exact subscription first.
+      // That is the outcome we wanted, so treat it as success rather than
+      // retrying (a retry is what would create the second billing record).
+      if (err.code === 11000) {
+        console.log(`[sub] ⏭️  Subscription for ${item.name} already inserted by another path — skipped`);
+        anyDbWriteSucceeded = true;
+        continue;
+      }
       console.error(`[sub] ❌ Failed to create subscription for ${item.name}:`, err.message);
       // Continue with remaining items — partial success is better than total abort
     }

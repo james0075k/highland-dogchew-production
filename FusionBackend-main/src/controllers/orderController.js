@@ -26,6 +26,7 @@ import { getStripe } from '../config/stripe.js';
 import OrderModel from '../models/orderModel.js';
 import { createOrderFromPI } from '../utils/createOrderFromPI.js';
 import { createSubscriptionsFromPI } from '../utils/createSubscriptionsFromPI.js';
+import { toCustomerOrder } from '../utils/orderPresenter.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/successHandler.js';
 
@@ -38,24 +39,8 @@ export const getOrderByPaymentIntent = async (req, res, next) => {
     const order = await OrderModel.findOne({ paymentIntentId }).lean();
     if (!order) return next(handleError(404, 'Order not found'));
 
-    // Strip internal/sensitive fields before returning
-    const { shippingAddress, ...rest } = order;
-    const safeAddress = shippingAddress
-      ? {
-          fullName:     shippingAddress.fullName,
-          addressLine1: shippingAddress.addressLine1,
-          addressLine2: shippingAddress.addressLine2,
-          city:         shippingAddress.city,
-          county:       shippingAddress.county,
-          postcode:     shippingAddress.postcode,
-          country:      shippingAddress.country,
-          // email included so success page can show "confirmation sent to â€¦"
-          email:        shippingAddress.email,
-          // phone omitted â€” not needed on success page
-        }
-      : {};
-
-    return handleSuccess(res, 200, 'Order fetched successfully', { ...rest, shippingAddress: safeAddress });
+    // Shared with POST /sync so both paths expose exactly the same fields.
+    return handleSuccess(res, 200, 'Order fetched successfully', toCustomerOrder(order));
   } catch (err) {
     next(err);
   }
@@ -223,7 +208,13 @@ export const syncOrderFromPaymentIntent = async (req, res, next) => {
     }
 
     console.log(`[sync] ${created ? 'âœ… Created' : 'â­ï¸  Already existed'}: Order ${order.orderNumber} (PI: ${pi.id})`);
-    return handleSuccess(res, created ? 201 : 200, created ? 'Order created' : 'Order fetched', order);
+    // Same shape as the GET — this used to return the raw document, phone included.
+    return handleSuccess(
+      res,
+      created ? 201 : 200,
+      created ? 'Order created' : 'Order fetched',
+      toCustomerOrder(order),
+    );
 
   } catch (err) {
     next(err);

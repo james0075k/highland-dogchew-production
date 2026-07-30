@@ -14,11 +14,17 @@ import {
 import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
 import {
   Loader2, Tag, X, ChevronRight, ChevronLeft, Lock,
-  RefreshCcw, Truck, ShieldCheck, CheckCircle2, Package,
+  RefreshCcw, Truck, ShieldCheck, CheckCircle2, Package, AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PaymentMethodStrip from '@/components/atoms/PaymentMarks';
+import {
+  postJson,
+  stripeErrorToFriendly,
+  networkErrorToFriendly,
+  type FriendlyError,
+} from '@/lib/paymentErrors';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,6 +88,31 @@ const COUNTRY_NAME_TO_CODE: Record<string, string> = Object.fromEntries(
 
 const countryCode = (name?: string | null): string =>
   (name && COUNTRY_NAME_TO_CODE[name]) || 'GB';
+
+// ─── Shipping validation ──────────────────────────────────────────────────────
+//
+// Returns the first problem found, phrased as "what's wrong" + "how to fix it"
+// so the same notice component can render it as a payment error would be.
+//
+function validateShipping(shipping: ShippingForm): FriendlyError | null {
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!shipping.email.trim()) {
+    return { message: 'Your email address is missing.', hint: 'We need it to send your order confirmation.' };
+  }
+  if (!emailRe.test(shipping.email.trim())) {
+    return { message: 'That email address isn’t valid.', hint: 'Check for typos — e.g. name@example.com.' };
+  }
+  if (!shipping.firstName.trim()) return { message: 'Your first name is missing.' };
+  if (!shipping.lastName.trim())  return { message: 'Your last name is missing.' };
+  if (!shipping.address.trim())   return { message: 'Your street address is missing.', hint: 'We can’t deliver without it.' };
+  if (!shipping.city.trim())      return { message: 'Your town or city is missing.' };
+  if (!shipping.postcode.trim())  return { message: 'Your postcode is missing.' };
+  const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
+  if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
+    return { message: 'That doesn’t look like a valid UK postcode.', hint: 'Enter it like SW1A 1AA.' };
+  }
+  return null;
+}
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -154,6 +185,39 @@ function Field({
   );
 }
 
+// ─── Error notice ─────────────────────────────────────────────────────────────
+//
+// Deliberately compact: one line for what happened, one for what to do next.
+// The Stripe reference is only present on real card/bank rejections (see
+// paymentErrors.ts) — everything else keeps it out of the customer's way and
+// logs it to the console instead.
+//
+function ErrorNotice({ error, className = '' }: { error: FriendlyError | null; className?: string }) {
+  if (!error) return null;
+  return (
+    <div
+      role="alert"
+      aria-live="assertive"
+      className={`px-3.5 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/70 rounded-xl flex items-start gap-2.5 ${className}`}
+    >
+      <AlertCircle className="w-4 h-4 mt-px shrink-0 text-red-500 dark:text-red-400" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-red-700 dark:text-red-300">{error.message}</p>
+        {(error.hint || error.code) && (
+          <p className="mt-0.5 text-xs text-red-600/80 dark:text-red-400/70">
+            {error.hint}
+            {error.code && (
+              <span className="text-red-500/50 dark:text-red-400/40">
+                {error.hint ? ' ' : ''}({error.code})
+              </span>
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Inner form (inside StripeProvider / Elements context) ───────────────────
 
 function CheckoutForm({
@@ -177,7 +241,7 @@ function CheckoutForm({
   const elements = useElements();
   const { items } = useCart();
   const [paying, setPaying] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
+  const [error,  setError]  = useState<FriendlyError | null>(null);
   // Null until the ExpressCheckoutElement reports in. Empty array = no wallet is
   // available on this device, so the whole express section is hidden rather than
   // leaving a blank gap above the payment list.
@@ -188,15 +252,19 @@ function CheckoutForm({
   // The Payment Element is configured with `fields.billingDetails: 'never'` (see
   // below), so these must be supplied at confirm time instead. Sourced from the
   // step-1 form, which is validated before payment can be reached.
+  //
+  // Every sub-field must be present as a string. `undefined` counts as "not
+  // passed" and Stripe rejects the confirm outright with an integration error —
+  // so optional fields (line2, state, phone) are sent as '' when empty.
   const billingDetailsFromForm = () => ({
     name:  `${shipping.firstName} ${shipping.lastName}`.trim(),
     email: shipping.email.trim(),
-    phone: shipping.phone.trim() || undefined,
+    phone: shipping.phone.trim(),
     address: {
       line1:       shipping.address.trim(),
-      line2:       shipping.apartment.trim() || undefined,
+      line2:       shipping.apartment.trim(),
       city:        shipping.city.trim(),
-      state:       shipping.county.trim() || undefined,
+      state:       shipping.county.trim(),
       postal_code: shipping.postcode.trim(),
       country:     countryCode(shipping.country),
     },
@@ -207,21 +275,14 @@ function CheckoutForm({
 
   const selectClass = inputClass + ' appearance-none cursor-pointer';
 
-  const validateInformation = () => {
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!shipping.email.trim() || !emailRe.test(shipping.email.trim())) return 'A valid email address is required.';
-    if (!shipping.firstName.trim()) return 'First name is required.';
-    if (!shipping.lastName.trim())  return 'Last name is required.';
-    if (!shipping.address.trim())   return 'Address is required.';
-    if (!shipping.city.trim())      return 'City is required.';
-    if (!shipping.postcode.trim())  return 'Postcode is required.';
-    const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
-    if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
-      return 'Please enter a valid UK postcode (e.g. SW1A 1AA).';
-    }
+  const validateInformation = (): FriendlyError | null => {
+    const err = validateShipping(shipping);
+    if (err) return err;
     if (shipping.phone.trim()) {
       const phoneRe = /^[\+\d\s\(\)\-]{7,20}$/;
-      if (!phoneRe.test(shipping.phone.trim())) return 'Please enter a valid phone number.';
+      if (!phoneRe.test(shipping.phone.trim())) {
+        return { message: 'That phone number isn’t valid.', hint: 'Use digits only, e.g. 07123 456789.' };
+      }
     }
     return null;
   };
@@ -238,29 +299,24 @@ function CheckoutForm({
     firstName: string; lastName: string; email: string; phone: string;
     address: string; city: string; postcode: string; country: string;
   }>) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/update-meta`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        paymentIntentId,
-        updateToken,
-        customer: {
-          firstName: overrideDetails?.firstName ?? shipping.firstName,
-          lastName:  overrideDetails?.lastName  ?? shipping.lastName,
-          email:     overrideDetails?.email     ?? shipping.email,
-          phone:     overrideDetails?.phone     ?? shipping.phone,
-        },
-        shipping: {
-          address:   overrideDetails?.address   ?? shipping.address,
-          apartment: shipping.apartment,
-          city:      overrideDetails?.city      ?? shipping.city,
-          county:    shipping.county,
-          postcode:  overrideDetails?.postcode  ?? shipping.postcode,
-          country:   overrideDetails?.country   ?? shipping.country,
-        },
-      }),
+    return postJson(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/update-meta`, {
+      paymentIntentId,
+      updateToken,
+      customer: {
+        firstName: overrideDetails?.firstName ?? shipping.firstName,
+        lastName:  overrideDetails?.lastName  ?? shipping.lastName,
+        email:     overrideDetails?.email     ?? shipping.email,
+        phone:     overrideDetails?.phone     ?? shipping.phone,
+      },
+      shipping: {
+        address:   overrideDetails?.address   ?? shipping.address,
+        apartment: shipping.apartment,
+        city:      overrideDetails?.city      ?? shipping.city,
+        county:    shipping.county,
+        postcode:  overrideDetails?.postcode  ?? shipping.postcode,
+        country:   overrideDetails?.country   ?? shipping.country,
+      },
     });
-    return res.json();
   };
 
   const saveShippingToSession = (details: {
@@ -307,12 +363,20 @@ function CheckoutForm({
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email || !emailRe.test(email)) {
         event.paymentFailed({ reason: 'fail', message: 'A valid email address is required.' });
-        setError('A valid email address is required to complete your order.');
+        setError({
+          message: 'We didn’t get a valid email address from your wallet.',
+          hint: 'Add an email to your wallet account, or pay by card instead so we can send your confirmation.',
+          code: 'wallet_email_missing',
+        });
         return;
       }
       if (!firstName || !addressLine1 || !city || !postcode) {
         event.paymentFailed({ reason: 'invalid_shipping_address', message: 'A complete shipping address is required.' });
-        setError('A complete name and shipping address are required to complete your order.');
+        setError({
+          message: 'The delivery address from your wallet is incomplete.',
+          hint: 'We need a name, street address, town and postcode. Add them in your wallet, or pay by card instead.',
+          code: 'wallet_address_incomplete',
+        });
         return;
       }
 
@@ -323,40 +387,38 @@ function CheckoutForm({
       });
 
       // ── Persist details to the PaymentIntent — must succeed before charging ──
-      let metaData: { success?: boolean; message?: string } | null = null;
-      try {
-        metaData = await attachMetaToPaymentIntent({
-          firstName, lastName, email, phone,
-          address: addressLine1, city, postcode, country,
-        });
-      } catch {
-        metaData = null;
-      }
-      if (!metaData?.success) {
-        event.paymentFailed({ reason: 'fail', message: 'We could not save your order details. Please try again.' });
-        setError(metaData?.message || 'We could not save your order details. Please try again.');
+      const meta = await attachMetaToPaymentIntent({
+        firstName, lastName, email, phone,
+        address: addressLine1, city, postcode, country,
+      });
+      if (!meta.ok) {
+        event.paymentFailed({ reason: 'fail', message: meta.error.message });
+        setError(meta.error);
         return;
       }
 
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url:    `${window.location.origin}/checkout/success?payment_intent=${paymentIntentId}`,
+          // Stripe appends the authoritative payment_intent itself; ours goes
+          // as pi_hint so the receipt can't be handed two conflicting ids.
+          return_url:    `${window.location.origin}/checkout/success?pi_hint=${paymentIntentId}`,
           receipt_email: email,
           // Belt-and-braces: the wallet supplies its own billing details and
           // Stripe gives those precedence, but the Payment Element mounted in
           // the same Elements group declares `fields.billingDetails: 'never'`.
           // Passing these too means the confirm is valid either way.
+          // As above: every sub-field must be a string, never undefined.
           payment_method_data: {
             billing_details: {
               name: `${firstName} ${lastName}`.trim(),
               email,
-              phone: phone || undefined,
+              phone: phone || '',
               address: {
                 line1:       addressLine1,
-                line2:       addressLine2 || undefined,
+                line2:       addressLine2 || '',
                 city,
-                state:       county || undefined,
+                state:       county || '',
                 postal_code: postcode,
                 country:     countryCode(country),
               },
@@ -365,12 +427,14 @@ function CheckoutForm({
         },
       });
       if (stripeError) {
-        event.paymentFailed({ reason: 'fail', message: stripeError.message });
-        setError(stripeError.message || 'Payment failed. Please try again.');
+        const friendly = stripeErrorToFriendly(stripeError);
+        event.paymentFailed({ reason: 'fail', message: friendly.message });
+        setError(friendly);
       }
-    } catch {
-      event.paymentFailed({ reason: 'fail' });
-      setError('Something went wrong. Please try again.');
+    } catch (e) {
+      const friendly = networkErrorToFriendly(e);
+      event.paymentFailed({ reason: 'fail', message: friendly.message });
+      setError(friendly);
     } finally {
       setPaying(false);
     }
@@ -403,14 +467,9 @@ function CheckoutForm({
 
       // The PI metadata is the source of truth used to build the order — if this
       // save fails we must NOT charge, or the order would be created blank.
-      let metaData: { success?: boolean; message?: string } | null = null;
-      try {
-        metaData = await attachMetaToPaymentIntent();
-      } catch {
-        metaData = null;
-      }
-      if (!metaData?.success) {
-        setError(metaData?.message || 'We could not save your order details. Please try again.');
+      const meta = await attachMetaToPaymentIntent();
+      if (!meta.ok) {
+        setError(meta.error);
         setPaying(false);
         return;
       }
@@ -418,16 +477,18 @@ function CheckoutForm({
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url:    `${window.location.origin}/checkout/success?payment_intent=${paymentIntentId}`,
+          // Stripe appends the authoritative payment_intent itself; ours goes
+          // as pi_hint so the receipt can't be handed two conflicting ids.
+          return_url:    `${window.location.origin}/checkout/success?pi_hint=${paymentIntentId}`,
           receipt_email: shipping.email,
           // Required because the Payment Element hides these fields — Klarna and
           // Pay by Bank need them, and re-asking would duplicate step 1.
           payment_method_data: { billing_details: billingDetailsFromForm() },
         },
       });
-      if (stripeError) setError(stripeError.message || 'Payment failed. Please try again.');
-    } catch {
-      setError('Something went wrong. Please try again.');
+      if (stripeError) setError(stripeErrorToFriendly(stripeError));
+    } catch (e) {
+      setError(networkErrorToFriendly(e));
     } finally {
       setPaying(false);
     }
@@ -580,12 +641,7 @@ function CheckoutForm({
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="mb-4 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-start gap-2">
-            <span className="mt-0.5 shrink-0">⚠</span>
-            <span>{error}</span>
-          </div>
-        )}
+        <ErrorNotice error={error} className="mb-4" />
 
         {/* Actions */}
         <div className="flex items-center justify-between mt-6 gap-4">
@@ -756,7 +812,12 @@ function CheckoutForm({
                       address: 'never',
                     },
                   },
-                  wallets: { applePay: 'never', googlePay: 'never' },
+                  // Link is offered by the ExpressCheckoutElement above. Turning
+                  // it off here removes the optional "Save my information for
+                  // faster checkout" block from inside the card form — it asked
+                  // again for details already collected in step 1, and its own
+                  // phone validation flagged perfectly good numbers in red.
+                  wallets: { applePay: 'never', googlePay: 'never', link: 'never' },
                 }}
               />
             </div>
@@ -788,12 +849,7 @@ function CheckoutForm({
           </div>
 
           {/* Error */}
-          {error && (
-            <div className="mb-4 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-start gap-2">
-              <span className="mt-0.5 shrink-0">⚠</span>
-              <span>{error}</span>
-            </div>
-          )}
+          <ErrorNotice error={error} className="mb-4" />
 
           {/* Actions */}
           <div className="flex items-center justify-between mt-6 gap-4">
@@ -863,9 +919,12 @@ export default function CheckoutPage() {
   // so the checkout switches to a direct "place order" flow against /checkout-free.
   const [freeOrder,     setFreeOrder]     = useState(false);
   const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
+  const [error,         setError]         = useState<FriendlyError | null>(null);
   const [promoError,    setPromoError]    = useState<string | null>(null);
   const [promoLoading,  setPromoLoading]  = useState(false);
+  // Bumped by the "Try again" button so a failed checkout setup can be retried
+  // without a full page reload (which would also drop the typed-in address).
+  const [setupAttempt,  setSetupAttempt]  = useState(0);
   const [serverBreakdown, setServerBreakdown] = useState<{
     subtotal: number; discount: number; totalTax: number; totalDelivery: number; grandTotal: number;
   } | null>(null);
@@ -886,49 +945,52 @@ export default function CheckoutPage() {
     const createIntent = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/create-payment-intent`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: items.map((i) => ({
-              productId:            i.productId,
-              size:                 i.size,
-              quantity:             i.quantity,
-              unitPrice:            i.unitPrice,
-              isSubscription:       i.isSubscription       || false,
-              subscriptionInterval: i.subscriptionInterval || null,
-            })),
-            promoCode: promoKey,
-          }),
+      const result = await postJson<{
+        free?: boolean;
+        clientSecret?: string;
+        paymentIntentId?: string;
+        updateToken?: string;
+        breakdown: { subtotal: number; discount: number; totalTax: number; totalDelivery: number; grandTotal: number };
+      }>(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/create-payment-intent`, {
+        items: items.map((i) => ({
+          productId:            i.productId,
+          size:                 i.size,
+          quantity:             i.quantity,
+          unitPrice:            i.unitPrice,
+          isSubscription:       i.isSubscription       || false,
+          subscriptionInterval: i.subscriptionInterval || null,
+        })),
+        promoCode: promoKey,
+      });
+
+      if (!result.ok) {
+        setError(result.error);
+      } else if (result.data.free) {
+        // 100%-off promo path — Stripe is bypassed entirely.
+        setFreeOrder(true);
+        setClientSecret(null);
+        setPaymentIntentId(null);
+        setUpdateToken(null);
+        setServerBreakdown(result.data.breakdown);
+      } else if (result.data.clientSecret) {
+        setFreeOrder(false);
+        setClientSecret(result.data.clientSecret);
+        setPaymentIntentId(result.data.paymentIntentId ?? null);
+        setUpdateToken(result.data.updateToken ?? null);
+        setServerBreakdown(result.data.breakdown);
+      } else {
+        setError({
+          message: 'We couldn’t start a secure payment session.',
+          hint: 'Nothing has been charged. Please refresh the page — contact us if it keeps happening.',
+          code: 'no_client_secret',
         });
-        const data = await res.json();
-        if (data.success && data.data?.free) {
-          // 100%-off promo path — Stripe is bypassed entirely.
-          setFreeOrder(true);
-          setClientSecret(null);
-          setPaymentIntentId(null);
-          setUpdateToken(null);
-          setServerBreakdown(data.data.breakdown);
-        } else if (data.success && data.data?.clientSecret) {
-          setFreeOrder(false);
-          setClientSecret(data.data.clientSecret);
-          setPaymentIntentId(data.data.paymentIntentId);
-          setUpdateToken(data.data.updateToken);
-          setServerBreakdown(data.data.breakdown);
-        } else {
-          setError(data.message || 'Failed to initialize payment');
-        }
-      } catch {
-        setError('Something went wrong. Please try again.');
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
     const timer = setTimeout(createIntent, 300);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartKey, promoKey]);
+  }, [cartKey, promoKey, setupAttempt]);
 
   const handleShippingChange = (field: keyof ShippingForm, value: string | boolean) => {
     setShipping((prev) => ({ ...prev, [field]: value }));
@@ -979,10 +1041,21 @@ export default function CheckoutPage() {
           {/* Step indicator */}
           <StepBar step={step} />
 
-          {/* Global error */}
+          {/* Global error — checkout setup failed, so offer a retry that keeps
+              the typed-in details instead of forcing a reload. */}
           {error && (
-            <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
-              {error}
+            <div className="mb-5">
+              <ErrorNotice error={error} />
+              {!clientSecret && !freeOrder && !loading && (
+                <button
+                  type="button"
+                  onClick={() => setSetupAttempt((n) => n + 1)}
+                  className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow hover:from-amber-600 hover:to-orange-600 transition-all text-sm"
+                >
+                  <RefreshCcw className="w-4 h-4" />
+                  Try again
+                </button>
+              )}
             </div>
           )}
 
@@ -1002,7 +1075,11 @@ export default function CheckoutPage() {
               onStepChange={setStep}
               onSuccess={(orderNumber, orderPayload) => {
                 try {
-                  sessionStorage.setItem(`hyk_free_order_${orderNumber}`, JSON.stringify(orderPayload));
+                  // localStorage, not sessionStorage: a £0 order has no
+                  // PaymentIntent, so the receipt has nothing to re-fetch by.
+                  // sessionStorage is scoped to one tab, which meant reopening
+                  // the receipt URL showed a blank confirmation.
+                  localStorage.setItem(`hyk_free_order_${orderNumber}`, JSON.stringify(orderPayload));
                 } catch { /* storage unavailable */ }
                 router.push(`/checkout/success?free=1&order=${encodeURIComponent(orderNumber)}`);
               }}
@@ -1238,28 +1315,13 @@ function FreeCheckoutForm({
 }) {
   const { items, clearCart } = useCart();
   const [placing, setPlacing] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error,   setError]   = useState<FriendlyError | null>(null);
 
   const inputClass =
     'w-full bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 dark:focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] transition-all duration-200';
 
-  const validateInformation = () => {
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!shipping.email.trim() || !emailRe.test(shipping.email.trim())) return 'A valid email address is required.';
-    if (!shipping.firstName.trim()) return 'First name is required.';
-    if (!shipping.lastName.trim())  return 'Last name is required.';
-    if (!shipping.address.trim())   return 'Address is required.';
-    if (!shipping.city.trim())      return 'City is required.';
-    if (!shipping.postcode.trim())  return 'Postcode is required.';
-    const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
-    if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
-      return 'Please enter a valid UK postcode (e.g. SW1A 1AA).';
-    }
-    return null;
-  };
-
   const handleContinue = () => {
-    const err = validateInformation();
+    const err = validateShipping(shipping);
     if (err) { setError(err); return; }
     setError(null);
     onStepChange('payment');
@@ -1269,49 +1331,56 @@ function FreeCheckoutForm({
   const handlePlaceOrder = async () => {
     setPlacing(true);
     setError(null);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart-payments/checkout-free`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            productId:            i.productId,
-            size:                 i.size,
-            quantity:             i.quantity,
-            unitPrice:            i.unitPrice,
-            isSubscription:       i.isSubscription       || false,
-            subscriptionInterval: i.subscriptionInterval || null,
-          })),
-          promoCode,
-          customer: {
-            firstName: shipping.firstName,
-            lastName:  shipping.lastName,
-            email:     shipping.email,
-            phone:     shipping.phone,
-          },
-          shipping: {
-            address:   shipping.address,
-            apartment: shipping.apartment,
-            city:      shipping.city,
-            county:    shipping.county,
-            postcode:  shipping.postcode,
-            country:   shipping.country,
-          },
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to place order');
-      }
-      const order = data.data?.order;
-      if (!order?.orderNumber) throw new Error('Order created but no order number returned');
-      clearCart();
-      onSuccess(order.orderNumber, order);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to place order');
-    } finally {
+
+    const result = await postJson<{ order?: { orderNumber?: string } }>(
+      `${process.env.NEXT_PUBLIC_API_URL}/cart-payments/checkout-free`,
+      {
+        items: items.map((i) => ({
+          productId:            i.productId,
+          size:                 i.size,
+          quantity:             i.quantity,
+          unitPrice:            i.unitPrice,
+          isSubscription:       i.isSubscription       || false,
+          subscriptionInterval: i.subscriptionInterval || null,
+        })),
+        promoCode,
+        customer: {
+          firstName: shipping.firstName,
+          lastName:  shipping.lastName,
+          email:     shipping.email,
+          phone:     shipping.phone,
+        },
+        shipping: {
+          address:   shipping.address,
+          apartment: shipping.apartment,
+          city:      shipping.city,
+          county:    shipping.county,
+          postcode:  shipping.postcode,
+          country:   shipping.country,
+        },
+      },
+    );
+
+    if (!result.ok) {
+      setError(result.error);
       setPlacing(false);
+      return;
     }
+
+    const order = result.data.order;
+    if (!order?.orderNumber) {
+      setError({
+        message: 'Your order was placed, but we couldn’t load its reference.',
+        hint: 'Check your email for the confirmation — contact us if it doesn’t arrive.',
+        code: 'missing_order_number',
+      });
+      setPlacing(false);
+      return;
+    }
+
+    clearCart();
+    onSuccess(order.orderNumber, order);
+    setPlacing(false);
   };
 
   return (
@@ -1323,11 +1392,7 @@ function FreeCheckoutForm({
           Your promo code makes this order free. No payment required.
         </div>
 
-        {error && (
-          <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
-            {error}
-          </div>
-        )}
+        <ErrorNotice error={error} className="mb-5" />
 
         <div className="mb-6">
           <h2 className="font-antique text-base text-[#2f1e14] dark:text-[#f5e9dc] mb-3">Contact</h2>
@@ -1407,11 +1472,7 @@ function FreeCheckoutForm({
           </p>
         </div>
 
-        {error && (
-          <div className="mb-5 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm">
-            {error}
-          </div>
-        )}
+        <ErrorNotice error={error} className="mb-5" />
 
         <button
           type="button"

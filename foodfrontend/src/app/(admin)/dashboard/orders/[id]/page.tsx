@@ -7,11 +7,12 @@ import {
   FiArrowLeft, FiUser, FiMapPin, FiShoppingBag, FiDollarSign,
   FiTruck, FiCreditCard, FiCopy, FiCheck, FiRefreshCw,
   FiChevronDown, FiPackage, FiCalendar, FiPhone, FiMail,
-  FiExternalLink, FiPrinter,
+  FiExternalLink, FiPrinter, FiTag,
 } from 'react-icons/fi';
 import { formatMoney } from '@/lib/format';
 import { authHeader, getAuthToken } from '@/lib/auth';
 import ReceiptModal from './ReceiptModal';
+import TrackingSlipModal from './TrackingSlipModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -170,6 +171,7 @@ export default function OrderDetailPage() {
   const [subsLoading, setSubsLoading]     = useState(false);
   const [subsError,   setSubsError]       = useState(false);
   const [showReceipt, setShowReceipt]     = useState(false);
+  const [showSlip, setShowSlip]           = useState(false);
 
   // ── Fetch order ──────────────────────────────────────────────────────────
   const fetchOrder = useCallback(async () => {
@@ -336,6 +338,13 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSlip(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+          >
+            <FiTag size={14} />
+            Print Tracking Slip
+          </button>
           <button
             onClick={() => setShowReceipt(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
@@ -766,9 +775,12 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      {/* ══════ Print-preview modal — only the receipt prints ══════ */}
+      {/* ══════ Print-preview modals — only the document itself prints ══════ */}
       {showReceipt && (
         <ReceiptModal order={order} onClose={() => setShowReceipt(false)} />
+      )}
+      {showSlip && (
+        <TrackingSlipModal order={order} onClose={() => setShowSlip(false)} />
       )}
     </div>
   );
