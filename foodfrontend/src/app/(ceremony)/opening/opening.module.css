@@ -1,0 +1,1046 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Opening ceremony — Highland Yak Chew
+   Self-contained: this page does not load globals.css, so nothing from the
+   shop's Tailwind layer can leak in and nothing here can leak out.
+   The html/body reset lives in ../ceremony.css — CSS Modules only accept
+   selectors carrying a local class or id.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.stage {
+  /* Himalayan textile red — the maroon-crimson of monastery cloth, not the
+     scarlet of a theatre. Every other colour is measured against it. */
+  --curtain: #7e1512;
+  --curtain-deep: #4a0b0a;
+  --curtain-lit: #a8271f;
+  --gold: #b8976a;
+  --gold-lit: #ebd4a0;
+  --parchment: #f4ede4;
+
+  --charcoal: #0a0908;
+  --cream: #f5ebd7;
+  --gold-aged: #c6a361;
+
+  /* One number governs the whole ribbon: the silk box height. The band is
+     30/96 of it, the droop another 30/96, and the bow and the blades' drop
+     along the drape are both derived from it — so the assembly stays together
+     at any screen size. */
+  --silk-h: clamp(56px, 8vw, 96px);
+  --bow-w: clamp(96px, 16vw, 172px);
+  --pelmet-h: clamp(34px, 7vh, 78px);
+
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+
+  --display: var(--font-ceremony-display), 'Marcellus', Georgia, serif;
+  --sans: var(--font-ceremony-sans), 'DM Sans', system-ui, sans-serif;
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--sans);
+  color: var(--parchment);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Reveal: a Himalayan dawn, sitting behind the curtain ─────────────────── */
+
+.dawn {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #0b1220 0%,
+    #1b2340 28%,
+    #3d3355 48%,
+    #8e5238 64%,
+    #f2a83b 78%,
+    #f6c877 100%
+  );
+}
+
+.sun {
+  position: absolute;
+  left: 50%;
+  bottom: 20%;
+  width: min(46vw, 340px);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 238, 200, 0.95) 0%,
+    rgba(247, 190, 110, 0.5) 38%,
+    rgba(242, 168, 59, 0) 70%
+  );
+}
+
+.ridges {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62%;
+  width: 100%;
+  display: block;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.7;
+}
+
+/* ── Reveal content ───────────────────────────────────────────────────────── */
+
+.revealBody {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: calc(var(--pelmet-h) + 3vh) calc(24px + var(--safe-r)) calc(4vh + var(--safe-b))
+    calc(24px + var(--safe-l));
+  gap: clamp(10px, 2vh, 18px);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 0.9s ease 0.45s, transform 0.9s ease 0.45s;
+}
+
+.revealed .revealBody {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.mark {
+  width: clamp(52px, 9vh, 78px);
+  height: clamp(52px, 9vh, 78px);
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
+.revealTitle {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 7vw, 4.4rem);
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  margin: 0;
+  text-transform: uppercase;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+}
+
+.revealNote {
+  font-size: clamp(0.8rem, 1.6vw, 0.95rem);
+  letter-spacing: 0.02em;
+  color: rgba(255, 244, 226, 0.82);
+  max-width: 34ch;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.enter {
+  margin-top: clamp(4px, 1.4vh, 12px);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #2a1a10;
+  background: linear-gradient(180deg, var(--gold-lit), var(--gold));
+  border: none;
+  border-radius: 999px;
+  padding: 15px 34px;
+  min-height: 48px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.enter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.enter:active {
+  transform: translateY(0);
+}
+
+.enter:focus-visible {
+  outline: 2px solid var(--parchment);
+  outline-offset: 3px;
+}
+
+.autoNote {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 244, 226, 0.55);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Curtains ─────────────────────────────────────────────────────────────── */
+
+.curtain {
+  position: absolute;
+  top: calc(var(--pelmet-h) * 0.55);
+  bottom: -2%;
+  width: 53.5%;
+  background-color: var(--curtain);
+  will-change: transform;
+  /* Cloth has weight: it resists at the start, then runs. Scale is what makes
+     it read as gathering rather than sliding — the folds bunch toward the
+     side as the curtain is drawn back. */
+  transition: transform 1.9s cubic-bezier(0.62, 0.03, 0.19, 1);
+}
+
+/* Drawn closed, two curtains overlap in the middle rather than meeting edge to
+   edge. The left one lies over the right and casts onto it, which is what makes
+   the join read as cloth instead of a seam. */
+.curtainRight {
+  right: -1%;
+  transform-origin: right center;
+}
+
+.curtainLeft {
+  left: -1%;
+  transform-origin: left center;
+  /* No z-index here: it would lift the curtain over .front and bury the
+     ribbon, the bow and the shears. The left curtain laps over the right by
+     being second in the DOM instead. */
+  /* Nothing hangs perfectly straight. Half a percent of wander down the leading
+     edge breaks the ruled line without reading as damage. */
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    99.6% 9%,
+    100% 21%,
+    99.4% 34%,
+    99.9% 46%,
+    99.5% 58%,
+    100% 70%,
+    99.6% 82%,
+    100% 92%,
+    99.4% 100%,
+    0% 100%
+  );
+}
+
+.pleats {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.pleat {
+  height: 100%;
+  flex-basis: 0;
+  flex-shrink: 1;
+  /* One fold: a dark valley on each side, a lit crest wherever this particular
+     fold happens to turn toward the light. */
+  background-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.4) 15%,
+    rgba(0, 0, 0, 0.06) calc(var(--crest) * 1% - 9%),
+    rgba(214, 96, 74, 0.22) calc(var(--crest) * 1%),
+    rgba(0, 0, 0, 0.1) calc(var(--crest) * 1% + 11%),
+    rgba(0, 0, 0, 0.44) 84%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+}
+
+/* Drape: the diagonal shadows that fall across hanging cloth, plus the fine
+   weft of the weave. Off-vertical by a few degrees — that tilt is the whole
+   difference between fabric and corrugated iron. */
+.drape {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.028) 0 1px,
+      rgba(0, 0, 0, 0) 1px 3px
+    ),
+    repeating-linear-gradient(
+      96deg,
+      rgba(0, 0, 0, 0.16) 0px,
+      rgba(0, 0, 0, 0) 90px,
+      rgba(255, 255, 255, 0.05) 170px,
+      rgba(0, 0, 0, 0) 250px,
+      rgba(0, 0, 0, 0.16) 330px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0) 16%,
+      rgba(0, 0, 0, 0) 62%,
+      rgba(0, 0, 0, 0.3) 88%,
+      rgba(0, 0, 0, 0.62) 100%
+    );
+}
+
+/* Gold hem on the leading edge — the only ornament the curtain gets. Only the
+   overlapping curtain shows one; the other's edge is underneath. */
+.hem {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  pointer-events: none;
+}
+
+.curtainLeft .hem {
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 9, 8, 0.7),
+    #7a5c33 45%,
+    var(--gold-lit) 78%,
+    #8a6f3f
+  );
+  /* The overlap throws a shadow onto the curtain behind. */
+  box-shadow: 14px 0 26px rgba(10, 9, 8, 0.6);
+}
+
+.curtainRight .hem {
+  left: 0;
+  background: linear-gradient(270deg, rgba(10, 9, 8, 0.55), rgba(10, 9, 8, 0));
+}
+
+.opening .curtainLeft,
+.revealed .curtainLeft {
+  transform: translateX(-101%) scaleX(0.44);
+}
+
+.opening .curtainRight,
+.revealed .curtainRight {
+  transform: translateX(101%) scaleX(0.44);
+}
+
+/* ── Pelmet: what the curtains hang from ──────────────────────────────────── */
+
+.pelmet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--pelmet-h);
+  z-index: 7;
+  pointer-events: none;
+  background-color: var(--curtain-deep);
+  background-image:
+    repeating-linear-gradient(
+      92deg,
+      rgba(0, 0, 0, 0.42) 0px,
+      rgba(0, 0, 0, 0.05) 26px,
+      rgba(168, 39, 31, 0.26) 46px,
+      rgba(0, 0, 0, 0.05) 68px,
+      rgba(0, 0, 0, 0.42) 92px
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.45));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+}
+
+.pelmetFringe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 7px;
+  background:
+    radial-gradient(circle at 50% 0%, var(--gold-lit) 0 42%, rgba(0, 0, 0, 0) 46%) 0 0 / 14px
+      7px repeat-x,
+    linear-gradient(180deg, var(--gold), rgba(0, 0, 0, 0.6));
+}
+
+/* ── Ceremony furniture (rides on the curtain, leaves with it) ─────────────── */
+
+/* Stacking order for the whole stage, in one place:
+     0  dawn, reveal copy — behind the curtain, waiting
+     0  curtains (right, then left, so the left laps over)
+     4  the ceremony: ribbon, bow, shears, title
+     7  pelmet
+     9  confetti
+    10  skip / sound
+   Nothing else sets z-index. */
+.front {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 4.5vh, 52px);
+  padding: calc(var(--pelmet-h) + 12px) calc(20px + var(--safe-r)) calc(16px + var(--safe-b))
+    calc(20px + var(--safe-l));
+  transition: opacity 0.5s ease;
+}
+
+.opening .front,
+.revealed .front {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.eyebrow {
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(244, 237, 228, 0.62);
+  margin: 0;
+  text-indent: 0.42em;
+}
+
+.title {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 8vw, 5.2rem);
+  letter-spacing: 0.09em;
+  line-height: 1.02;
+  text-transform: uppercase;
+  text-align: center;
+  margin: clamp(8px, 1.6vh, 14px) 0 0;
+  text-shadow: 0 3px 30px rgba(0, 0, 0, 0.45);
+  text-wrap: balance;
+}
+
+.subtitle {
+  font-family: var(--display);
+  font-size: clamp(0.9rem, 2.4vw, 1.35rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-lit);
+  margin: clamp(8px, 1.8vh, 16px) 0 0;
+  text-align: center;
+  text-indent: 0.2em;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── The ribbon ───────────────────────────────────────────────────────────── */
+
+.ribbonZone {
+  position: relative;
+  width: 100%;
+  /* Tall enough for the bow's tails to hang below the ribbon line, and for the
+     silk to droop without clipping. */
+  height: max(calc(var(--bow-w) * 0.95), calc(var(--silk-h) * 1.5));
+  display: flex;
+  align-items: center;
+}
+
+/* The cut lands on the whole ribbon at once. */
+.cut .ribbonZone {
+  animation: cutPulse 150ms ease-out;
+}
+
+@keyframes cutPulse {
+  0% {
+    scale: 1;
+  }
+  45% {
+    scale: 1.02;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+.track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+}
+
+/* Each half spans from the frame edge to the centre. It must be a <div>: an
+   <svg> is a replaced element and would ignore `right`, sizing itself from its
+   intrinsic ratio and stopping short of the middle.
+
+   The SVG box is drawn so the band's centre sits at exactly 50% of this
+   element's height where the halves meet — which is why the bow and the blades
+   line up with it. */
+.silk {
+  position: absolute;
+  top: 50%;
+  height: var(--silk-h);
+  translate: 0 -50%;
+  /* Cast onto the curtain, offset downward, so the ribbon sits in front of the
+     cloth rather than being printed on it. */
+  filter: drop-shadow(0 10px 12px rgba(10, 9, 8, 0.55))
+    drop-shadow(0 2px 3px rgba(10, 9, 8, 0.4));
+  will-change: transform;
+}
+
+.silkSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* A slow breath, a couple of pixels either way, so the silk is never quite
+     still. Offset between the halves — cloth doesn't move in lockstep. */
+  animation: sway 6.5s ease-in-out infinite;
+}
+
+.silkRight .silkSvg {
+  animation-duration: 7.4s;
+  animation-delay: -2.1s;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: translateY(-1.5px);
+  }
+  50% {
+    transform: translateY(1.5px);
+  }
+}
+
+/* The sheen travelling the length of the ribbon. */
+.sheen {
+  animation: sheenSweep 6s linear infinite;
+}
+
+.silkRight .sheen {
+  animation-delay: -3s;
+}
+
+@keyframes sheenSweep {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(940px);
+  }
+}
+
+.silkLeft {
+  left: -2%;
+  right: 50%;
+  transform-origin: left center;
+}
+
+.silkRight {
+  left: 50%;
+  right: -2%;
+  transform-origin: right center;
+}
+
+/* Tension: the silk tightens fractionally as the blades advance. */
+.cutting .silk {
+  transform: scaleY(0.9);
+  transition: transform 0.18s ease-out;
+}
+
+/* ── The release ───────────────────────────────────────────────────────────
+   Both halves are pendulums hinged at the frame edge, and the keyframes below
+   are a real spring — k = 120, c = 10, m = 1, so ζ = 0.456 and ω_d = 9.75 rad/s
+   — sampled from 1 − e^(−5t)(cos 9.75t + 0.513 sin 9.75t). It overshoots to
+   1.20× at t ≈ 0.32s, falls back to 0.96 at t ≈ 0.64s, and is settled by 1.0s.
+   Timing function is linear because the easing is already in the samples.
+
+   The two are not mirrors: the right hangs back 80ms, swings to a shallower
+   rest angle, and takes slightly longer to get there. skewY curls the newly cut
+   end further than the hinge as it falls. */
+.cut .silkLeft,
+.opening .silkLeft,
+.revealed .silkLeft {
+  animation: swingLeft 1.05s linear forwards;
+}
+
+.cut .silkRight,
+.opening .silkRight,
+.revealed .silkRight {
+  animation: swingRight 1.1s linear 80ms forwards;
+}
+
+@keyframes swingLeft {
+  0% {
+    transform: translateY(0) rotate(0deg) skewY(0deg);
+    opacity: 1;
+  }
+  5.2% {
+    transform: translateY(0.1vh) rotate(4.5deg) skewY(0.4deg);
+  }
+  10.4% {
+    transform: translateY(0.3vh) rotate(13.7deg) skewY(1.1deg);
+  }
+  15.7% {
+    transform: translateY(0.8vh) rotate(22.6deg) skewY(1.9deg);
+  }
+  20.9% {
+    transform: translateY(1.5vh) rotate(28.6deg) skewY(2.6deg);
+  }
+  27.8% {
+    /* peak overshoot */
+    transform: translateY(2.6vh) rotate(31.2deg) skewY(3.3deg);
+  }
+  34.8% {
+    transform: translateY(4.1vh) rotate(29.8deg) skewY(3.9deg);
+  }
+  41.7% {
+    transform: translateY(5.9vh) rotate(27.3deg) skewY(4.4deg);
+  }
+  48.7% {
+    transform: translateY(8.1vh) rotate(25.5deg) skewY(4.9deg);
+  }
+  55.7% {
+    /* the return swing */
+    transform: translateY(10.5vh) rotate(25deg) skewY(5.3deg);
+    opacity: 1;
+  }
+  69.6% {
+    transform: translateY(16.5vh) rotate(25.7deg) skewY(6deg);
+    opacity: 0.85;
+  }
+  87% {
+    transform: translateY(25.7vh) rotate(26.2deg) skewY(6.6deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(34vh) rotate(26deg) skewY(7deg);
+    opacity: 0;
+  }
+}
+
+@keyframes swingRight {
+  0% {
+    transform: translateY(0) rotate(0deg) skewY(0deg);
+    opacity: 1;
+  }
+  5.2% {
+    transform: translateY(0.1vh) rotate(-4.1deg) skewY(-0.3deg);
+  }
+  10.4% {
+    transform: translateY(0.3vh) rotate(-12.4deg) skewY(-0.9deg);
+  }
+  15.7% {
+    transform: translateY(0.7vh) rotate(-20.4deg) skewY(-1.7deg);
+  }
+  20.9% {
+    transform: translateY(1.3vh) rotate(-25.8deg) skewY(-2.3deg);
+  }
+  27.8% {
+    transform: translateY(2.3vh) rotate(-28.2deg) skewY(-3deg);
+  }
+  34.8% {
+    transform: translateY(3.7vh) rotate(-26.9deg) skewY(-3.6deg);
+  }
+  41.7% {
+    transform: translateY(5.4vh) rotate(-24.7deg) skewY(-4.1deg);
+  }
+  48.7% {
+    transform: translateY(7.5vh) rotate(-23.1deg) skewY(-4.6deg);
+  }
+  55.7% {
+    transform: translateY(9.8vh) rotate(-22.6deg) skewY(-5deg);
+    opacity: 1;
+  }
+  69.6% {
+    transform: translateY(15.6vh) rotate(-23.3deg) skewY(-5.6deg);
+    opacity: 0.85;
+  }
+  87% {
+    transform: translateY(24.6vh) rotate(-23.7deg) skewY(-6.2deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(33vh) rotate(-23.5deg) skewY(-6.6deg);
+    opacity: 0;
+  }
+}
+
+/* ── Threads springing from the cut ────────────────────────────────────────
+   A handful of fibres let go under tension, arc out, and drop. */
+
+.threads {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.thread {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(245, 235, 215, 0) 0%,
+    var(--cream) 38%,
+    var(--gold-aged) 100%
+  );
+  opacity: 0;
+  animation: thread var(--dur) cubic-bezier(0.14, 0.7, 0.36, 1) var(--delay) forwards;
+}
+
+@keyframes thread {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scaleY(0.35);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 30px))
+      rotate(var(--spin)) scaleY(1);
+    opacity: 0;
+  }
+}
+
+/* ── The bow ──────────────────────────────────────────────────────────────── */
+
+.bow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bow-w);
+  /* The knot sits 38% down the artwork; pulling the box up by that much lands
+     it precisely on the ribbon line. */
+  transform: translate(-50%, -38%);
+  pointer-events: none;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.55));
+}
+
+.bowArt {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cut .bow,
+.opening .bow,
+.revealed .bow {
+  animation: bowDrop 1.1s cubic-bezier(0.4, 0.04, 0.6, 1) 40ms forwards;
+}
+
+@keyframes bowDrop {
+  0% {
+    transform: translate(-50%, -38%) rotate(0deg);
+    opacity: 1;
+  }
+  16% {
+    /* The knot lifts as the tension goes, before gravity takes it. */
+    transform: translate(-50%, -46%) rotate(8deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, 16vh) rotate(26deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, 44vh) rotate(38deg);
+    opacity: 0;
+  }
+}
+
+/* ── Scissors ─────────────────────────────────────────────────────────────── */
+
+.scissors {
+  position: absolute;
+  top: 50%;
+  width: clamp(100px, 14vw, 148px);
+  aspect-ratio: 152 / 92;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+  filter: drop-shadow(0 7px 16px rgba(0, 0, 0, 0.6));
+  /* --sag-k rides the drape: 0 at the bow, negative out toward the frame. */
+  transform: translate(-50%, calc(-50% + var(--silk-h) * var(--sag-k, 0)));
+  transition: left 0.45s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* At rest the shears breathe, so the eye lands on the control rather than on
+   the instruction underneath it. */
+.idle .scissors {
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.045;
+  }
+}
+
+.scissors:active {
+  cursor: grabbing;
+}
+
+.scissorsDragging {
+  transition: none;
+}
+
+.scissors:focus-visible {
+  outline: 2px solid var(--gold-lit);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+.cut .scissors,
+.opening .scissors,
+.revealed .scissors {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* ── Instruction ──────────────────────────────────────────────────────────── */
+
+.hint {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(244, 237, 228, 0.66);
+  margin: 0;
+  text-indent: 0.24em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+.cutting .hint {
+  opacity: 0.25;
+}
+
+.nudge {
+  display: inline-block;
+  animation: nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  0%,
+  62%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.55;
+  }
+  76% {
+    transform: translateX(7px);
+    opacity: 1;
+  }
+}
+
+/* ── Chrome: skip + sound ─────────────────────────────────────────────────── */
+
+.chrome {
+  position: absolute;
+  top: var(--safe-t);
+  left: var(--safe-l);
+  right: var(--safe-r);
+  height: var(--pelmet-h);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(8px, 2vw, 20px);
+  z-index: 10;
+}
+
+.ghost {
+  font-family: var(--sans);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244, 237, 228, 0.62);
+  background: none;
+  border: none;
+  padding: 12px 12px;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.ghost:hover {
+  color: var(--parchment);
+}
+
+.ghost:focus-visible {
+  outline: 2px solid var(--gold-lit);
+  outline-offset: 2px;
+}
+
+/* ── Confetti canvas ──────────────────────────────────────────────────────── */
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Coarse pointers: give the shears a finger-sized grip ─────────────────── */
+
+@media (pointer: coarse) {
+  .scissors {
+    width: clamp(112px, 26vw, 150px);
+  }
+}
+
+/* ── Narrow screens ───────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .stage {
+    --silk-h: clamp(46px, 15vw, 70px);
+    --bow-w: clamp(88px, 26vw, 122px);
+  }
+
+  .hint {
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    gap: 7px;
+  }
+
+  .eyebrow {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+  }
+
+  .revealNote {
+    max-width: 30ch;
+  }
+}
+
+/* ── Short and wide: phones on their side, and small laptops ──────────────── */
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .stage {
+    --silk-h: clamp(40px, 11vh, 62px);
+    --bow-w: clamp(74px, 15vh, 104px);
+    --pelmet-h: clamp(26px, 9vh, 44px);
+  }
+
+  .front {
+    gap: clamp(12px, 3vh, 24px);
+  }
+
+  .title {
+    font-size: clamp(1.5rem, 5.6vh, 2.6rem);
+  }
+
+  .subtitle {
+    font-size: clamp(0.72rem, 2.2vh, 1rem);
+    margin-top: 6px;
+  }
+
+  .revealTitle {
+    font-size: clamp(1.5rem, 6vh, 2.8rem);
+  }
+
+  .revealBody {
+    gap: 8px;
+  }
+
+  .mark {
+    width: clamp(38px, 8vh, 54px);
+    height: clamp(38px, 8vh, 54px);
+  }
+
+  .enter {
+    padding: 12px 26px;
+    min-height: 44px;
+  }
+}
+
+/* ── Very large screens: don't let the type run away ──────────────────────── */
+
+@media (min-width: 1600px) {
+  .stage {
+    --silk-h: 96px;
+    --bow-w: 184px;
+  }
+}
+
+/* ── Reduced motion: keep the ceremony, drop the movement ─────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain {
+    transition: transform 0.01ms;
+  }
+
+  .cut .silkLeft,
+  .cut .silkRight,
+  .opening .silkLeft,
+  .opening .silkRight,
+  .revealed .silkLeft,
+  .revealed .silkRight,
+  .cut .bow,
+  .opening .bow,
+  .revealed .bow {
+    animation: none;
+    opacity: 0;
+  }
+
+  .nudge,
+  .idle .scissors,
+  .silkSvg,
+  .sheen {
+    animation: none;
+    opacity: 1;
+  }
+
+  .thread,
+  .cut .ribbonZone {
+    animation: none;
+  }
+
+  .thread {
+    display: none;
+  }
+
+  .revealBody {
+    transition: opacity 0.01ms;
+  }
+
+  .scissors {
+    transition: none;
+  }
+}

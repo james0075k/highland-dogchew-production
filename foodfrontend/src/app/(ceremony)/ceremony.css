@@ -1,0 +1,19 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Document reset for the ceremony route group only.
+   Kept out of opening.module.css because CSS Modules reject rules made purely
+   of :global(...) — and out of globals.css so nothing from the shop's Tailwind
+   layer can leak in, or out.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #3a0908;
+  overscroll-behavior: none;
+}
+
+body {
+  overflow: hidden;
+}
