@@ -4,3 +4,4 @@ uploads
 /.claude
 /nul
 .env
+backups
