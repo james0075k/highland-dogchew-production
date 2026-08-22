@@ -249,6 +249,18 @@ function CheckoutForm({
 
   const hasSubscriptionItem = items.some((i) => i.isSubscription);
 
+  // Mirrors the "UK Standard" line in the summary above. Stripe.js requires at
+  // least one rate whenever the express element collects a shipping address.
+  const expressShippingRates = [{
+    id: 'uk-standard',
+    displayName: 'UK Standard',
+    amount: Math.round(breakdown.totalDelivery * 100),
+    deliveryEstimate: {
+      minimum: { unit: 'business_day' as const, value: 2 },
+      maximum: { unit: 'business_day' as const, value: 5 },
+    },
+  }];
+
   // The Payment Element is configured with `fields.billingDetails: 'never'` (see
   // below), so these must be supplied at confirm time instead. Sourced from the
   // step-1 form, which is validated before payment can be reached.
@@ -744,7 +756,13 @@ function CheckoutForm({
             </p>
             <ExpressCheckoutElement
               onConfirm={handleExpressConfirm}
-              onShippingAddressChange={(e) => e.resolve()}
+              // `shippingAddressRequired: true` obliges us to hand Stripe.js a
+              // rate here as well as in the options below — resolving with
+              // neither throws "You must specify `shippingRates` when
+              // `shippingAddressRequired` is true", which kills the Apple Pay
+              // sheet the moment it opens (Apple emits this event immediately
+              // with the pre-selected shipping contact).
+              onShippingAddressChange={(e) => e.resolve({ shippingRates: expressShippingRates })}
               onReady={(e) => setExpressMethods(
                 Object.entries(e.availablePaymentMethods ?? {})
                   .filter(([, available]) => available)
@@ -757,7 +775,15 @@ function CheckoutForm({
                 // Klarna is deliberately excluded here — it appears as a row in
                 // the payment list below instead, keeping this strip to wallets.
                 paymentMethods: {
-                  applePay:  'auto',
+                  // 'always' rather than 'auto': 'auto' hides the button unless
+                  // the customer already has an active card in their Apple
+                  // Wallet, which makes "Apple Pay is missing" reports
+                  // impossible to tell apart from a real integration fault.
+                  // With 'always' the button renders on every supported
+                  // browser and Apple prompts to add a card if there is none.
+                  // Revert to 'auto' if you'd rather not show a button that
+                  // can lead to an add-a-card prompt.
+                  applePay:  'always',
                   googlePay: 'auto',
                   amazonPay: 'auto',
                   link:      'auto',
@@ -769,6 +795,11 @@ function CheckoutForm({
                 phoneNumberRequired: true,
                 billingAddressRequired: true,
                 shippingAddressRequired: true,
+                // Required whenever `shippingAddressRequired` is true. Delivery
+                // is already priced into the PaymentIntent, so this is the one
+                // rate the wallet sheet can show — a single option means the
+                // customer can't switch and force a re-price.
+                shippingRates: expressShippingRates,
               }}
             />
           </div>
