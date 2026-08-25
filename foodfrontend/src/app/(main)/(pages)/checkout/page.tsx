@@ -26,6 +26,27 @@ import {
   type FriendlyError,
 } from '@/lib/paymentErrors';
 
+// ─── UK-only shipping ─────────────────────────────────────────────────────────
+//
+// We deliver within the UK only. Delivery is priced as a flat UK rate and
+// catalogue prices are VAT-inclusive at the UK rate, so a non-UK destination is
+// both loss-making and wrong for VAT. Non-UK is rejected outright rather than
+// quietly rewritten to "United Kingdom" — coercing a US address would create an
+// order we can't actually deliver.
+//
+const UK_COUNTRY = 'United Kingdom';
+
+const UK_ALIASES = ['united kingdom', 'gb', 'uk', 'great britain'];
+
+const isUKCountry = (c?: string | null): boolean =>
+  UK_ALIASES.includes((c || '').trim().toLowerCase());
+
+const UK_ONLY_ERROR: FriendlyError = {
+  message: 'We currently deliver to UK addresses only.',
+  hint: 'Use a UK delivery address, or contact us if you’d like us to ship further afield.',
+  code: 'shipping_country_unsupported',
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ShippingForm {
@@ -47,7 +68,7 @@ const initialShipping: ShippingForm = {
   emailOffers: false,
   firstName: '',
   lastName: '',
-  country: 'United Kingdom',
+  country: UK_COUNTRY,
   address: '',
   apartment: '',
   city: '',
@@ -57,25 +78,15 @@ const initialShipping: ShippingForm = {
 };
 
 // Wallet (Apple/Google/Amazon/Link) addresses use 2-letter ISO country codes,
-// but our DB + the country <select> use full names. Map the supported set;
-// fall back to the raw value for anything outside it.
+// but our DB uses full names. Only GB is mapped: anything else falls through to
+// the raw code (e.g. "US"), which then fails isUKCountry() and is rejected,
+// instead of being dressed up as a country we'd appear to ship to.
 const COUNTRY_CODE_TO_NAME: Record<string, string> = {
-  GB: 'United Kingdom',
-  US: 'United States',
-  CA: 'Canada',
-  AU: 'Australia',
-  IE: 'Ireland',
-  DE: 'Germany',
-  FR: 'France',
-  NL: 'Netherlands',
-  SE: 'Sweden',
-  NO: 'Norway',
-  DK: 'Denmark',
-  BE: 'Belgium',
+  GB: UK_COUNTRY,
 };
 
 const countryName = (code?: string | null): string => {
-  if (!code) return 'United Kingdom';
+  if (!code) return UK_COUNTRY;
   return COUNTRY_CODE_TO_NAME[code.toUpperCase()] || code;
 };
 
@@ -107,8 +118,12 @@ function validateShipping(shipping: ShippingForm): FriendlyError | null {
   if (!shipping.address.trim())   return { message: 'Your street address is missing.', hint: 'We can’t deliver without it.' };
   if (!shipping.city.trim())      return { message: 'Your town or city is missing.' };
   if (!shipping.postcode.trim())  return { message: 'Your postcode is missing.' };
+  // UK-only: the country is locked in the form, but a wallet address or a
+  // restored session could still carry something else, so check it here where
+  // both checkout forms pass through.
+  if (!isUKCountry(shipping.country)) return UK_ONLY_ERROR;
   const ukPostcodeRe = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
-  if (shipping.country === 'United Kingdom' && !ukPostcodeRe.test(shipping.postcode.trim())) {
+  if (!ukPostcodeRe.test(shipping.postcode.trim())) {
     return { message: 'That doesn’t look like a valid UK postcode.', hint: 'Enter it like SW1A 1AA.' };
   }
   return null;
@@ -285,8 +300,6 @@ function CheckoutForm({
   const inputClass =
     'w-full bg-white dark:bg-[#1e1510] text-[#2f1e14] dark:text-[#f5e9dc] border border-[#d8ccba] dark:border-[#3a2c23] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-500 dark:focus:border-amber-500 placeholder-[#b0a090] dark:placeholder-[#4a3828] transition-all duration-200';
 
-  const selectClass = inputClass + ' appearance-none cursor-pointer';
-
   const validateInformation = (): FriendlyError | null => {
     const err = validateShipping(shipping);
     if (err) return err;
@@ -389,6 +402,14 @@ function CheckoutForm({
           hint: 'We need a name, street address, town and postcode. Add them in your wallet, or pay by card instead.',
           code: 'wallet_address_incomplete',
         });
+        return;
+      }
+      // `allowedShippingCountries` already filters the wallet sheet, but that is
+      // client-side UI — this is the check that actually holds. Runs before we
+      // persist anything, so a non-UK wallet address is never saved or charged.
+      if (!isUKCountry(country)) {
+        event.paymentFailed({ reason: 'invalid_shipping_address', message: UK_ONLY_ERROR.message });
+        setError(UK_ONLY_ERROR);
         return;
       }
 
@@ -548,25 +569,22 @@ function CheckoutForm({
         <div className="mb-6">
           <h2 className="font-antique text-base text-[#2f1e14] dark:text-[#f5e9dc] mb-3">Shipping address</h2>
           <div className="space-y-3">
+            {/* Locked rather than a dropdown: we ship within the UK only, so
+                offering other countries would advertise delivery we can't
+                fulfil. The value still lives in `shipping.country`, so every
+                downstream call keeps its existing shape. */}
             <Field label="Country / Region" required>
-              <select
-                value={shipping.country}
-                onChange={(e) => onShippingChange('country', e.target.value)}
-                className={selectClass}
-              >
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="United States">United States</option>
-                <option value="Canada">Canada</option>
-                <option value="Australia">Australia</option>
-                <option value="Ireland">Ireland</option>
-                <option value="Germany">Germany</option>
-                <option value="France">France</option>
-                <option value="Netherlands">Netherlands</option>
-                <option value="Sweden">Sweden</option>
-                <option value="Norway">Norway</option>
-                <option value="Denmark">Denmark</option>
-                <option value="Belgium">Belgium</option>
-              </select>
+              <input
+                type="text"
+                value={UK_COUNTRY}
+                readOnly
+                disabled
+                aria-label="Country or region — United Kingdom only"
+                className={inputClass + ' opacity-70 cursor-not-allowed'}
+              />
+              <p className="mt-1 text-[11px] text-[#7A5C4F]/70 dark:text-[#c8b6a6]/60">
+                We currently deliver within the UK only.
+              </p>
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -795,6 +813,10 @@ function CheckoutForm({
                 phoneNumberRequired: true,
                 billingAddressRequired: true,
                 shippingAddressRequired: true,
+                // We ship within the UK only. This greys out non-UK addresses
+                // inside the wallet sheet; handleExpressConfirm re-checks the
+                // country it actually receives, since this option is only UI.
+                allowedShippingCountries: ['GB'],
                 // Required whenever `shippingAddressRequired` is true. Delivery
                 // is already priced into the PaymentIntent, so this is the one
                 // rate the wallet sheet can show — a single option means the

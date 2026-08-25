@@ -14,6 +14,33 @@ const TAX_RATE        = 0;
 const DELIVERY_CHARGE = 1.99; // flat per order (single delivery regardless of item count)
 const CHUNK_SIZE      = 480;  // safely under Stripe's 500-char metadata value limit
 
+// ─── UK-only shipping ─────────────────────────────────────────────────────────
+//
+// We deliver within the UK only. DELIVERY_CHARGE is a flat UK rate and
+// catalogue prices are VAT-inclusive at the UK rate, so a non-UK destination is
+// both loss-making and wrong for VAT. This is the check that actually holds:
+// the locked country field in the checkout UI is presentation, and the wallet
+// (Apple/Google Pay) and a scripted POST both reach these endpoints without
+// passing through it.
+//
+// Rejected outright, never coerced to "United Kingdom" — silently rewriting a
+// US address would produce an order we can't deliver.
+//
+const UK_ALIASES  = ['united kingdom', 'gb', 'uk', 'great britain'];
+const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i;
+
+// Returns an error to hand to next(), or null when the destination is fine.
+function ukShippingError(shipping) {
+  const country = String(shipping?.country ?? 'United Kingdom').trim();
+  if (!UK_ALIASES.includes(country.toLowerCase())) {
+    return handleError(400, 'We currently deliver to UK addresses only');
+  }
+  if (!UK_POSTCODE.test(String(shipping?.postcode ?? '').trim())) {
+    return handleError(400, 'That is not a valid UK postcode');
+  }
+  return null;
+}
+
 class CartError extends Error {
   constructor(status, message) {
     super(message);
@@ -349,6 +376,8 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
     if (!shipping?.address || !shipping?.city || !shipping?.postcode) {
       return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
     }
+    const ukError = ukShippingError(shipping);
+    if (ukError) return next(ukError);
 
     const pi = await getStripe().paymentIntents.retrieve(paymentIntentId);
     if (!pi || pi.metadata?.type !== 'product-purchase') {
@@ -379,7 +408,9 @@ export const updatePaymentIntentMeta = async (req, res, next) => {
         s_city:      String(shipping.city).slice(0, 100),
         s_county:    String(shipping.county || '').slice(0, 100),
         s_postcode:  String(shipping.postcode).slice(0, 20),
-        s_country:   String(shipping.country || 'United Kingdom').slice(0, 100),
+        // ukShippingError() has already established this is the UK, so the
+        // canonical name is stored regardless of which alias was sent.
+        s_country:   'United Kingdom',
       },
     });
 
@@ -422,6 +453,8 @@ export const checkoutFreeOrder = async (req, res, next) => {
     if (!shipping.address || !shipping.city || !shipping.postcode) {
       return next(handleError(400, 'shipping.address, shipping.city and shipping.postcode are required'));
     }
+    const ukError = ukShippingError(shipping);
+    if (ukError) return next(ukError);
 
     const identity = { email: customer.email, ip: req.ip || '' };
     const { lineItems, subtotal, discount, promoData, totalTax, totalDelivery, grandTotal }
@@ -449,7 +482,8 @@ export const checkoutFreeOrder = async (req, res, next) => {
         city:      String(shipping.city).slice(0, 100),
         county:    String(shipping.county || '').slice(0, 100),
         postcode:  String(shipping.postcode).slice(0, 20),
-        country:   String(shipping.country || 'United Kingdom').slice(0, 100),
+        // Normalised: ukShippingError() above has already confirmed the UK.
+        country:   'United Kingdom',
       },
       promoData,
       clientIP: req.ip || '',

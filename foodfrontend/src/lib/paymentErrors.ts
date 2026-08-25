@@ -336,6 +336,24 @@ const SERVER_MESSAGE_RULES: Array<{ test: RegExp; error: FriendlyError }> = [
     },
   },
   {
+    // Must precede the generic `^shipping\.` rule below — `.find()` takes the
+    // first match, and this one carries the actionable hint.
+    test: /UK addresses only/i,
+    error: {
+      message: 'We currently deliver to UK addresses only.',
+      hint: 'Use a UK delivery address, or contact us if you’d like us to ship further afield.',
+      code: 'shipping_country_unsupported',
+    },
+  },
+  {
+    test: /valid UK postcode/i,
+    error: {
+      message: 'That doesn’t look like a valid UK postcode.',
+      hint: 'Enter it like SW1A 1AA.',
+      code: 'shipping_postcode_invalid',
+    },
+  },
+  {
     test: /^customer\.|^shipping\.|customer\.email|shipping\.address/i,
     error: {
       message: 'Some of your details are missing.',
