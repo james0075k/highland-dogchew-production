@@ -1,8 +1,65 @@
 import Subscriber from '../models/subscriberModel.js';
+import ReviewModel from '../models/reviewModel.js';
+import OrderModel from '../models/orderModel.js';
 import sendEmail from '../utils/sendEmail.js';
+import { verifyUnsubscribeToken, recordOptOut } from '../utils/marketingConsent.js';
+
+/* ── Trust badges ───────────────────────────────────────────────────────────
+ * The rating and customer-count badges used to be hardcoded ("4.9★", "500+").
+ * Advertising a review score we can't evidence is unlawful under the DMCC Act,
+ * so each number-backed badge is now dropped unless the data supports it. The
+ * product claims (natural ingredients, vet-approved formula) are unchanged.
+ */
+async function getTrustStats() {
+  try {
+    const [ratingAgg, orderCount] = await Promise.all([
+      ReviewModel.aggregate([
+        { $match: { status: 'approved', isDeleted: { $ne: true } } },
+        { $group: { _id: null, count: { $sum: 1 }, sum: { $sum: '$rating' } } },
+      ]),
+      OrderModel.countDocuments({ paymentStatus: 'paid' }),
+    ]);
+
+    const agg = ratingAgg[0];
+    return {
+      reviewCount: agg?.count ?? 0,
+      rating: agg?.count ? +(agg.sum / agg.count).toFixed(1) : 0,
+      orderCount,
+    };
+  } catch {
+    // A welcome email must still go out if the stats query fails.
+    return { reviewCount: 0, rating: 0, orderCount: 0 };
+  }
+}
+
+function trustBadgeRow(stats) {
+  const badges = [['100%', 'Natural<br/>Ingredients']];
+
+  if (stats.reviewCount > 0) {
+    badges.push([`${stats.rating}★`, 'Customer<br/>Rating']);
+  }
+  // Only round down to a claim we can actually stand behind.
+  if (stats.orderCount >= 50) {
+    const rounded = Math.floor(stats.orderCount / 50) * 50;
+    badges.push([`${rounded}+`, 'Orders<br/>Delivered']);
+  }
+  badges.push(['Vet', 'Approved<br/>Formula']);
+
+  const width = Math.floor(100 / badges.length);
+
+  return badges
+    .map(
+      ([value, label], i) => `
+                <td width="${width}%" style="text-align:center;padding:0 8px;${i > 0 ? 'border-left:1px solid #e8dfd1;' : ''}">
+                  <p style="margin:0 0 4px;font-size:18px;font-weight:800;color:#2e1f14;">${value}</p>
+                  <p style="margin:0;font-size:11px;color:#7a5c4f;line-height:1.4;">${label}</p>
+                </td>`
+    )
+    .join('');
+}
 
 /* ── Welcome email HTML ─────────────────────────────────────────────────────── */
-function welcomeEmailHtml(email) {
+function welcomeEmailHtml(email, stats) {
   const siteUrl = process.env.APP_URL || 'https://highlanddogchew.co.uk';
   const year = new Date().getFullYear();
 
@@ -116,23 +173,7 @@ function welcomeEmailHtml(email) {
         <tr>
           <td style="padding:28px 40px;background:#fdf8f3;border-bottom:1px solid #f0e8de;">
             <table cellpadding="0" cellspacing="0" width="100%">
-              <tr>
-                <td width="25%" style="text-align:center;padding:0 8px;">
-                  <p style="margin:0 0 4px;font-size:18px;font-weight:800;color:#2e1f14;">100%</p>
-                  <p style="margin:0;font-size:11px;color:#7a5c4f;line-height:1.4;">Natural<br/>Ingredients</p>
-                </td>
-                <td width="25%" style="text-align:center;padding:0 8px;border-left:1px solid #e8dfd1;">
-                  <p style="margin:0 0 4px;font-size:18px;font-weight:800;color:#2e1f14;">4.9★</p>
-                  <p style="margin:0;font-size:11px;color:#7a5c4f;line-height:1.4;">Customer<br/>Rating</p>
-                </td>
-                <td width="25%" style="text-align:center;padding:0 8px;border-left:1px solid #e8dfd1;">
-                  <p style="margin:0 0 4px;font-size:18px;font-weight:800;color:#2e1f14;">500+</p>
-                  <p style="margin:0;font-size:11px;color:#7a5c4f;line-height:1.4;">Happy<br/>Dogs</p>
-                </td>
-                <td width="25%" style="text-align:center;padding:0 8px;border-left:1px solid #e8dfd1;">
-                  <p style="margin:0 0 4px;font-size:18px;font-weight:800;color:#2e1f14;">Vet</p>
-                  <p style="margin:0;font-size:11px;color:#7a5c4f;line-height:1.4;">Approved<br/>Formula</p>
-                </td>
+              <tr>${trustBadgeRow(stats)}
               </tr>
             </table>
           </td>
@@ -205,7 +246,7 @@ export const subscribeNewsletter = async (req, res) => {
     await sendEmail({
       to: normalised,
       subject: 'Welcome to Highland Yak Chew 🐾',
-      html: welcomeEmailHtml(normalised),
+      html: welcomeEmailHtml(normalised, await getTrustStats()),
     });
 
     return res.status(201).json({
@@ -233,15 +274,45 @@ export const getSubscribers = async (req, res) => {
   }
 };
 
+/* ── One-click unsubscribe from an email link ───────────────────────────────
+ * Reached from the footer link and from the List-Unsubscribe header, so it has
+ * to answer both GET (a person clicking) and POST (a mail client doing it for
+ * them). The token carries the address, so nobody can unsubscribe anyone else.
+ */
+export const unsubscribeByToken = async (req, res) => {
+  const payload = verifyUnsubscribeToken(req.params.token);
+  const siteUrl = process.env.APP_URL || 'https://highlanddogchew.co.uk';
+
+  if (!payload) {
+    return res.redirect(`${siteUrl}/newsletter/unsubscribed?status=invalid`);
+  }
+
+  try {
+    await recordOptOut(payload.email, payload.scope, 'unsubscribed');
+  } catch (err) {
+    console.error('Unsubscribe error:', err);
+    return res.redirect(`${siteUrl}/newsletter/unsubscribed?status=error`);
+  }
+
+  // A one-click POST from a mail client wants a bare 200, not a redirect.
+  if (req.method === 'POST') {
+    return res.status(200).json({ success: true, message: 'Unsubscribed.' });
+  }
+
+  return res.redirect(
+    `${siteUrl}/newsletter/unsubscribed?status=ok&scope=${encodeURIComponent(payload.scope)}`
+  );
+};
+
 /* ── Unsubscribe ────────────────────────────────────────────────────────────── */
 export const unsubscribeNewsletter = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, message: 'Email required.' });
   try {
-    await Subscriber.findOneAndUpdate(
-      { email: email.toLowerCase().trim() },
-      { isActive: false }
-    );
+    // recordOptOut also deactivates the Subscriber row, and additionally adds
+    // the address to the suppression list so marketing sends drawn from the
+    // order history skip it too.
+    await recordOptOut(email, 'all', 'unsubscribed');
     return res.status(200).json({ success: true, message: 'Unsubscribed successfully.' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to unsubscribe.' });

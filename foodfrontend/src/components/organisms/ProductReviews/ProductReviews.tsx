@@ -31,6 +31,36 @@ const ProductReviews = ({ productId }: { productId?: string }) => {
     if (productId) fetchReviews();
   }, [productId]);
 
+  // Customers arrive here from the review-request email, which links to
+  // ?review=1&name=<first name>. Open the form for them and fill in the name
+  // they already gave us at checkout — read from location rather than
+  // useSearchParams so this component doesn't force the page out of static
+  // rendering. The form itself is unchanged.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('review') !== '1') return;
+
+    const name = params.get('name');
+    if (name) setFormData(prev => ({ ...prev, name }));
+    setShowForm(true);
+
+    // Land on the reviews section, not the top of the page. scrollIntoView
+    // alone would tuck the heading under the fixed navbar, so offset by its
+    // real height rather than guessing a constant.
+    const scrollToReviews = () => {
+      const el = document.getElementById('product-reviews');
+      if (!el) return;
+      const header = document.querySelector('header, nav');
+      const offset = (header?.getBoundingClientRect().height ?? 0) + 16;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    };
+
+    // One frame after paint, so the section has its final position.
+    requestAnimationFrame(() => requestAnimationFrame(scrollToReviews));
+  }, []);
+
   const fetchReviews = async () => {
     try {
       setLoading(true);
@@ -93,7 +123,7 @@ const ProductReviews = ({ productId }: { productId?: string }) => {
   if (!productId) return null;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-16">
+    <div id="product-reviews" className="max-w-7xl mx-auto px-6 py-16">
       <h2 className="text-3xl font-bold text-[#2f1e14] dark:text-[#f5e9dc] text-center mb-10">Customer Reviews</h2>
 
       {loading ? (

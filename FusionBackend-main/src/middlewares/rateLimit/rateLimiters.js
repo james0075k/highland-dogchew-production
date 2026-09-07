@@ -40,6 +40,14 @@ export const newsletterLimiter = rateLimit({
   max: 5,
 });
 
+// Review submission is public and unauthenticated — without a ceiling a script
+// can flood the moderation queue faster than anyone can clear it.
+export const reviewLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+});
+
 export const contactLimiter = rateLimit({
   ...baseOptions,
   windowMs: 60 * 60 * 1000,

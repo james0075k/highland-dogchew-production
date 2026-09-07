@@ -531,7 +531,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const [productsRes, reviewsRes, contactsRes, ordersRes, subsRes, ordersListRes] = await Promise.allSettled([
         fetch(`${API}/products`).then(r => r.json()),
-        fetch(`${API}/reviews`).then(r => r.json()),
+        fetch(`${API}/reviews`, { headers: authHeaders() }).then(r => r.json()),
         fetch(`${API}/contact`).then(r => r.json()),
         fetch(`${API}/admin/orders/stats`,        { headers: authHeaders() }).then(r => r.json()),
         fetch(`${API}/admin/subscriptions/stats`, { headers: authHeaders() }).then(r => r.json()),

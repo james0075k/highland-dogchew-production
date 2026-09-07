@@ -156,7 +156,7 @@ describe('POST /api/cart-payments/update-meta', () => {
         paymentIntentId,
         updateToken,
         customer: { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', phone: '555' },
-        shipping: { address: '1 St', city: 'London', postcode: 'E1' },
+        shipping: { address: '1 St', city: 'London', postcode: 'E1 6AN' },
       });
 
     expect(res.status).toBe(200);
@@ -173,7 +173,7 @@ describe('POST /api/cart-payments/update-meta', () => {
         paymentIntentId,
         updateToken: 'a'.repeat(48),
         customer: { firstName: 'A', lastName: 'B', email: 'a@b.c' },
-        shipping: { address: '1', city: 'L', postcode: 'E1' },
+        shipping: { address: '1', city: 'L', postcode: 'E1 6AN' },
       });
     expect(res.status).toBe(403);
   });
@@ -186,7 +186,7 @@ describe('POST /api/cart-payments/update-meta', () => {
         paymentIntentId,
         updateToken: 'short',
         customer: { firstName: 'A', lastName: 'B', email: 'a@b.c' },
-        shipping: { address: '1', city: 'L', postcode: 'E1' },
+        shipping: { address: '1', city: 'L', postcode: 'E1 6AN' },
       });
     expect(res.status).toBe(403);
   });

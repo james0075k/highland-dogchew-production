@@ -836,6 +836,26 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         </div>
       </div>
 
+      {/* Reviews */}
+      <div id="reviews">
+        <ProductReviews productId={product._id} />
+      </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-[#D8CCBA] dark:border-[#2a2018]">
+          <div className="mb-8">
+            <span className="inline-block text-amber-600 dark:text-amber-500 text-xs font-bold tracking-[0.22em] uppercase mb-2">You May Also Like</span>
+            <h2 className="text-2xl lg:text-3xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc]">Related Products</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {relatedProducts.map((rp, i) => (
+              <ProductCard key={rp._id} product={rp} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Frequently Asked Questions (visible content matches FAQPage JSON-LD) ── */}
       {faqs.length > 0 && (
         <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-[#D8CCBA] dark:border-[#2a2018]">
@@ -879,26 +899,6 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       <div id="size-guide">
         <SizeGuideSection />
       </div>
-
-      {/* Reviews */}
-      <div id="reviews">
-        <ProductReviews productId={product._id} />
-      </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-[#D8CCBA] dark:border-[#2a2018]">
-          <div className="mb-8">
-            <span className="inline-block text-amber-600 dark:text-amber-500 text-xs font-bold tracking-[0.22em] uppercase mb-2">You May Also Like</span>
-            <h2 className="text-2xl lg:text-3xl font-bold font-heading text-[#2E1F14] dark:text-[#f5e9dc]">Related Products</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {relatedProducts.map((rp, i) => (
-              <ProductCard key={rp._id} product={rp} index={i} />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Sticky bar ── */}
       <div className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ease-in-out ${showStickyBar ? 'translate-y-0' : 'translate-y-full'}`}>

@@ -44,6 +44,7 @@ import instagramPostRoute from './src/routes/instagramPostRoute.js';
 import galleryItemRoute from './src/routes/galleryItemRoute.js';
 import categoryRoute from './src/routes/categoryRoute.js';
 import customerSubscriptionRoute from './src/routes/customerSubscriptionRoute.js';
+import marketingRoute from './src/routes/marketingRoute.js';
 import noSqlSanitize from './src/middlewares/sanitize/noSqlSanitize.js';
 
 // ─── Validate required environment variables at startup ──────────────────────
@@ -167,6 +168,7 @@ app.use(`/${api}/instagram-posts`, instagramPostRoute);
 app.use(`/${api}/gallery`, galleryItemRoute);
 app.use(`/${api}/categories`, categoryRoute);
 app.use(`/${api}/customer/subscriptions`, customerSubscriptionRoute);
+app.use(`/${api}/admin/marketing`, marketingRoute);
 
 // 404 handler for unknown API routes
 app.use((req, res, next) => {
@@ -283,3 +285,46 @@ Promise.all([
   cron.schedule(SCHEDULE, () => runReconcile('scheduled'), { timezone: 'UTC' });
   cronLog.info({ schedule: SCHEDULE, tz: 'UTC' }, 'Payment reconciliation cron scheduled');
 }).catch((err) => cronLog.error({ err }, 'Failed to load payment reconciler'));
+
+// ─── Automatic review requests ───────────────────────────────────────────────
+// Deliberately inert unless REVIEW_REQUEST_CRON_ENABLED === 'true'. The admin
+// sends review requests by hand from the dashboard; this is the same job on a
+// timer, ready to switch on once those emails have been proven in the wild.
+Promise.all([
+  import('./src/controllers/reviewRequestProcessController.js'),
+  import('./src/utils/cronLease.js'),
+]).then(([{ processReviewRequests, isReviewRequestCronEnabled }, { acquireLease, releaseLease }]) => {
+  if (!isReviewRequestCronEnabled()) {
+    cronLog.info('Automatic review requests disabled (set REVIEW_REQUEST_CRON_ENABLED=true to enable)');
+    return;
+  }
+
+  const LEASE_NAME   = 'review-requests';
+  const LEASE_TTL_MS = 20 * 60 * 1000;
+  // Late morning UK time: a review ask read over coffee does better than one
+  // that arrives at 2am, and it's well clear of the other two sweeps.
+  const SCHEDULE     = process.env.REVIEW_REQUEST_CRON || '0 10 * * *';
+
+  if (!cron.validate(SCHEDULE)) {
+    cronLog.error({ schedule: SCHEDULE }, 'Invalid REVIEW_REQUEST_CRON — automatic review requests disabled');
+    return;
+  }
+
+  async function runSweep(label) {
+    const got = await acquireLease(LEASE_NAME, LEASE_TTL_MS);
+    if (!got) {
+      cronLog.info({ label }, 'Review request sweep skipped — another instance holds the lease');
+      return;
+    }
+    try {
+      await processReviewRequests();
+    } catch (err) {
+      cronLog.error({ err, label }, 'Review request sweep failed');
+    } finally {
+      await releaseLease(LEASE_NAME);
+    }
+  }
+
+  cron.schedule(SCHEDULE, () => runSweep('scheduled'), { timezone: 'Europe/London' });
+  cronLog.info({ schedule: SCHEDULE, tz: 'Europe/London' }, 'Automatic review request cron scheduled');
+}).catch((err) => cronLog.error({ err }, 'Failed to load review request processor'));

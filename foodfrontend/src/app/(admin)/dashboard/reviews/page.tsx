@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import Cookies from 'js-cookie';
+import { authHeader, jsonAuthHeader } from '@/lib/auth';
 import {
   FiStar, FiCheck, FiX, FiTrash2, FiFilter,
   FiRefreshCw, FiSearch, FiArrowLeft, FiAlertCircle,
-  FiClock, FiCheckCircle, FiXCircle,
+  FiClock, FiCheckCircle, FiXCircle, FiSend,
 } from 'react-icons/fi';
+import ReviewRequestsPanel from './ReviewRequestsPanel';
 
 interface Review {
   _id: string;
@@ -40,6 +41,10 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Moderation and requesting are two different jobs on the same subject, so
+  // they're tabs rather than two dashboard entries. Moderation is the default —
+  // it's the one with a queue that builds up.
+  const [tab, setTab] = useState<'moderate' | 'requests'>('moderate');
   const [filterStatus, setFilterStatus] = useState<StatusKey>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
@@ -51,7 +56,9 @@ export default function AdminReviewsPage() {
       setLoading(true);
       setError(null);
       const params = filterStatus !== 'all' ? `?status=${filterStatus}` : '';
-      const res = await fetch(`${API}/reviews${params}`);
+      // Admin-only endpoint: it returns pending/rejected reviews and reviewer
+      // emails, so it will 401 without a token.
+      const res = await fetch(`${API}/reviews${params}`, { headers: authHeader() });
       const data = await res.json();
       if (data.success) {
         setReviews(Array.isArray(data.data) ? data.data : []);
@@ -69,10 +76,9 @@ export default function AdminReviewsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const token = Cookies.get('token');
       await fetch(`${API}/reviews/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: jsonAuthHeader(),
         body: JSON.stringify({ status }),
       });
       setReviews(prev => prev.map(r => r._id === id ? { ...r, status: status as Review['status'] } : r));
@@ -84,10 +90,9 @@ export default function AdminReviewsPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      const token = Cookies.get('token');
       await fetch(`${API}/reviews/${deleteTarget._id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader(),
       });
       setReviews(prev => prev.filter(r => r._id !== deleteTarget._id));
       setDeleteTarget(null);
@@ -149,18 +154,48 @@ export default function AdminReviewsPage() {
               <FiStar className="text-amber-500" size={18} />
               Reviews
             </h1>
-            <p className="text-xs text-gray-400 mt-0.5">Approve, reject, or delete customer reviews — grouped by status</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {tab === 'moderate'
+                ? 'Approve, reject, or delete customer reviews — grouped by status'
+                : 'Ask customers who received their order to leave a review'}
+            </p>
           </div>
         </div>
-        <button
-          onClick={fetchReviews}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
-        >
-          <FiRefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
+        {tab === 'moderate' && (
+          <button
+            onClick={fetchReviews}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0c1e35] text-white rounded-xl text-sm font-semibold hover:bg-[#0f2744] transition-colors"
+          >
+            <FiRefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        )}
       </div>
 
+      <div className="flex items-center gap-1 p-1 bg-white border border-gray-200 rounded-xl shadow-sm w-fit mb-5">
+        {([
+          { key: 'moderate', label: 'Moderate reviews', icon: FiStar },
+          { key: 'requests', label: 'Request reviews', icon: FiSend },
+        ] as const).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap
+              ${tab === t.key ? 'bg-[#0c1e35] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'}`}
+          >
+            <t.icon size={12} />
+            {t.label}
+            {t.key === 'moderate' && counts.pending > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${tab === t.key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'}`}>
+                {counts.pending}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'requests' ? <ReviewRequestsPanel /> : (
+      <>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
         {STAT_CARDS.map(card => (
           <div key={card.label} className={`bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3 ring-1 ${card.ring}`}>
@@ -306,6 +341,8 @@ export default function AdminReviewsPage() {
             );
           })}
         </div>
+      )}
+      </>
       )}
 
       {deleteTarget && (

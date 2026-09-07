@@ -63,10 +63,17 @@ function isPermanent(err) {
   return typeof code === 'number' && code >= 500 && code < 600;
 }
 
-const sendEmail = async ({ to, subject, html }) => {
+// `headers` and `replyTo` are optional and default to undefined, so existing
+// callers are unaffected. Marketing mail needs them for List-Unsubscribe, which
+// is what puts the native one-click unsubscribe button in Gmail and Outlook.
+const sendEmail = async ({ to, subject, html, text, headers, replyTo, attachments }) => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error('[email] SMTP_USER or SMTP_PASS not set — cannot send email');
-    return;
+    // Throw rather than return: returning quietly made a missing config look
+    // like a successful send, so the admin UI reported "sent" for mail that
+    // was never even attempted. Every caller is fire-and-forget with a catch.
+    const err = new Error('SMTP_USER or SMTP_PASS not set — email not sent');
+    console.error(`[email] ${err.message} (to=${to})`);
+    throw err;
   }
 
   const from = process.env.SMTP_FROM || '"Highland Yak Chew" <admin@highlanddogchew.co.uk>';
@@ -74,7 +81,18 @@ const sendEmail = async ({ to, subject, html }) => {
   let lastErr;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      await getTransporter().sendMail({ from, to, subject, html });
+      await getTransporter().sendMail({
+        from,
+        to,
+        subject,
+        html,
+        // An HTML-only message scores worse with spam filters than a proper
+        // multipart/alternative, and it's what text-only clients fall back to.
+        ...(text && { text }),
+        ...(replyTo && { replyTo }),
+        ...(headers && { headers }),
+        ...(attachments && { attachments }),
+      });
       if (attempt > 1) {
         console.log(`[email] Sent to ${to} on attempt ${attempt} — "${subject}"`);
       }

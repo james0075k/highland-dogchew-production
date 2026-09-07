@@ -66,6 +66,13 @@ export const updateOrderStatus = async (req, res, next) => {
 
     const update = { orderStatus };
 
+    // Stamp the delivery time once, so the review-request countdown has a real
+    // date to work from. Re-saving 'delivered' must not move the clock.
+    if (orderStatus === 'delivered') {
+      const existing = await OrderModel.findById(req.params.id).select('deliveredAt').lean();
+      if (existing && !existing.deliveredAt) update.deliveredAt = new Date();
+    }
+
     if (orderStatus === 'shipped') {
       if (trackingNumber !== undefined && trackingNumber !== null) {
         const tn = String(trackingNumber).trim();

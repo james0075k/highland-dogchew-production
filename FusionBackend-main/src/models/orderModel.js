@@ -123,6 +123,20 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Stamped when an admin marks the order delivered. The review-request
+  // countdown runs from here when it's set, falling back to shippedAt.
+  deliveredAt: {
+    type: Date,
+    default: null,
+  },
+
+  // ── Review request tracking ───────────────────────────────────────────────
+  // Additive: defaults mean every existing order reads as "never asked".
+  // Keeps the admin from mailing the same customer twice about one order.
+  reviewRequest: {
+    sentAt: { type: Date, default: null },
+    count:  { type: Number, default: 0 },
+  },
 
   // ── Promo code snapshot (taken at redemption time) ────────────────────────
   // Stored so charge.refunded can roll back usageCount + redeemedEmails/IPs.

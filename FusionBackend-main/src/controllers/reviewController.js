@@ -1,18 +1,38 @@
-﻿import ReviewModel from '../models/reviewModel.js';
+import ReviewModel from '../models/reviewModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/successHandler.js';
+
+// Reviewers give us their email so we can contact them about the review — it is
+// never part of what the public sees next to their comment.
+const PUBLIC_PROJECTION = '-guestInfo.email';
 
 // CREATE review (public)
 export const createReview = async (req, res, next) => {
   try {
-    const review = await ReviewModel.create(req.body);
+    // Whitelist explicitly. Spreading req.body let a client send
+    // status:'approved' and publish straight to the live site, and set
+    // isDeleted to hide a review from moderation entirely.
+    const { product, tour, guestInfo, rating, comment } = req.body;
+
+    const review = await ReviewModel.create({
+      product: product || null,
+      tour: tour || null,
+      guestInfo: {
+        name: guestInfo?.name,
+        email: guestInfo?.email || '',
+      },
+      rating,
+      comment: comment || '',
+      status: 'pending',
+    });
+
     return handleSuccess(res, 201, 'Review submitted successfully. It will appear after approval.', review);
   } catch (err) {
     return next(handleError(400, `Failed to submit review: ${err.message}`));
   }
 };
 
-// GET all reviews (admin â€” all statuses)
+// GET all reviews (admin — all statuses)
 export const getAllReviews = async (req, res, next) => {
   try {
     const { status, productId } = req.query;
@@ -37,7 +57,9 @@ export const getProductReviews = async (req, res, next) => {
       product: productId,
       status: 'approved',
       isDeleted: { $ne: true },
-    }).sort({ createdAt: -1 });
+    })
+      .select(PUBLIC_PROJECTION)
+      .sort({ createdAt: -1 });
 
     return handleSuccess(res, 200, 'Product reviews fetched', reviews);
   } catch (err) {
@@ -45,10 +67,86 @@ export const getProductReviews = async (req, res, next) => {
   }
 };
 
-// GET reviews by tour package ID (legacy)
+// GET aggregate rating stats (public)
+// Feeds the JSON-LD aggregateRating on the storefront, which used to be
+// hardcoded. Only approved reviews count, so the published numbers match what a
+// visitor can actually read on the page.
+export const getReviewStats = async (req, res, next) => {
+  try {
+    const rows = await ReviewModel.aggregate([
+      { $match: { status: 'approved', isDeleted: { $ne: true }, product: { $ne: null } } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'product',
+          foreignField: '_id',
+          as: 'productDoc',
+        },
+      },
+      { $unwind: '$productDoc' },
+      {
+        $group: {
+          _id: { product: '$product', productType: '$productDoc.productType' },
+          count: { $sum: 1 },
+          sum: { $sum: '$rating' },
+        },
+      },
+    ]);
+
+    // One decimal place is what Google shows and what the UI renders.
+    const round1 = (sum, count) => +(sum / count).toFixed(1);
+
+    const byProduct = {};
+    const typeTotals = {};
+    let siteCount = 0;
+    let siteSum = 0;
+
+    for (const row of rows) {
+      byProduct[row._id.product.toString()] = {
+        count: row.count,
+        rating: round1(row.sum, row.count),
+      };
+
+      // The storefront JSON-LD markets three product lines, not individual
+      // SKUs, so it needs the rating rolled up per productType.
+      const type = row._id.productType;
+      if (type) {
+        typeTotals[type] ??= { count: 0, sum: 0 };
+        typeTotals[type].count += row.count;
+        typeTotals[type].sum += row.sum;
+      }
+
+      siteCount += row.count;
+      siteSum += row.sum;
+    }
+
+    const byType = {};
+    for (const [type, t] of Object.entries(typeTotals)) {
+      byType[type] = { count: t.count, rating: round1(t.sum, t.count) };
+    }
+
+    return handleSuccess(res, 200, 'Review stats fetched', {
+      byProduct,
+      byType,
+      site: {
+        count: siteCount,
+        rating: siteCount ? round1(siteSum, siteCount) : 0,
+      },
+    });
+  } catch (err) {
+    return next(handleError(500, `Failed to fetch review stats: ${err.message}`));
+  }
+};
+
+// GET reviews by tour package ID (legacy, public)
 export const getReviewById = async (req, res, next) => {
   try {
-    const reviews = await ReviewModel.find({ tour: req.params.tourId, isDeleted: { $ne: true } });
+    const reviews = await ReviewModel.find({
+      tour: req.params.tourId,
+      status: 'approved',
+      isDeleted: { $ne: true },
+    }).select(PUBLIC_PROJECTION);
+
     return handleSuccess(res, 200, 'Reviews for this tour fetched', reviews);
   } catch (err) {
     return next(handleError(500, `Failed to fetch reviews: ${err.message}`));
@@ -66,7 +164,7 @@ export const updateReview = async (req, res, next) => {
   }
 };
 
-// DELETE review (admin â€” soft delete)
+// DELETE review (admin — soft delete)
 export const deleteReview = async (req, res, next) => {
   try {
     const review = await ReviewModel.findByIdAndUpdate(

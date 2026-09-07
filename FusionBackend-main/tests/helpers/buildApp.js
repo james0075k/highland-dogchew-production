@@ -7,6 +7,9 @@ import cartPaymentRoute from '../../src/routes/cartPaymentRoute.js';
 import productWebhookRoute from '../../src/routes/productWebhookRoute.js';
 import promoCodeRoute from '../../src/routes/promoCodeRoute.js';
 import orderRoute from '../../src/routes/orderRoute.js';
+import reviewRoute from '../../src/routes/reviewRoute.js';
+import marketingRoute from '../../src/routes/marketingRoute.js';
+import newsletterRoute from '../../src/routes/newsletterRoute.js';
 import errorMiddleware from '../../src/middlewares/ErrorMiddleware/errorMiddleware.js';
 
 export function buildApp() {
@@ -19,6 +22,9 @@ export function buildApp() {
   app.use('/api/cart-payments', cartPaymentRoute);
   app.use('/api/promo', promoCodeRoute);
   app.use('/api/orders', orderRoute);
+  app.use('/api/reviews', reviewRoute);
+  app.use('/api/admin/marketing', marketingRoute);
+  app.use('/api/newsletter', newsletterRoute);
   app.use(errorMiddleware);
   return app;
 }

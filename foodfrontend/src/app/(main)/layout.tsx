@@ -200,7 +200,44 @@ const websiteSchema = {
   },
 };
 
-const storeSchema = {
+// ─── Real aggregate ratings ──────────────────────────────────────────────────
+// These numbers used to be hardcoded (4.9/120, 4.8/85, 4.9/64). Publishing
+// review counts that don't exist is a Google structured-data violation and,
+// since the DMCC Act, unlawful in the UK — so they now come from approved
+// reviews, and a product line with none simply omits the rating.
+
+type TypeStat = { count: number; rating: number };
+type ReviewStats = Record<string, TypeStat>;
+
+async function fetchReviewStats(): Promise<ReviewStats> {
+  const api = process.env.NEXT_PUBLIC_API_URL;
+  if (!api) return {};
+  try {
+    const res = await fetch(`${api}/reviews/stats`, { next: { revalidate: 3600 } });
+    if (!res.ok) return {};
+    const json = await res.json();
+    return (json?.data?.byType ?? {}) as ReviewStats;
+  } catch {
+    // Markup is not worth a failed render — fall back to omitting the rating.
+    return {};
+  }
+}
+
+function ratingFor(stats: ReviewStats, productType: string) {
+  const stat = stats[productType];
+  if (!stat?.count) return {};
+  return {
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: String(stat.rating),
+      reviewCount: String(stat.count),
+      bestRating: '5',
+      worstRating: '1',
+    },
+  };
+}
+
+const buildStoreSchema = (stats: ReviewStats) => ({
   '@context': 'https://schema.org',
   '@type': 'OnlineStore',
   name: 'Highland Yak Chew',
@@ -227,7 +264,7 @@ const storeSchema = {
           url: `${BASE_URL}/products/yak-chews`,
           image: `${BASE_URL}/images/logos.jpeg`,
           brand: { '@type': 'Brand', name: 'Highland Yak Chew' },
-          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '120', bestRating: '5' },
+          ...ratingFor(stats, 'yak-milk'),
           offers: { '@type': 'Offer', priceCurrency: 'GBP', availability: 'https://schema.org/InStock', url: `${BASE_URL}/products/yak-chews` },
         },
       },
@@ -243,7 +280,7 @@ const storeSchema = {
           url: `${BASE_URL}/products/puff-treats`,
           image: `${BASE_URL}/images/logos.jpeg`,
           brand: { '@type': 'Brand', name: 'Highland Yak Chew' },
-          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '85', bestRating: '5' },
+          ...ratingFor(stats, 'puff-treat'),
           offers: { '@type': 'Offer', priceCurrency: 'GBP', availability: 'https://schema.org/InStock', url: `${BASE_URL}/products/puff-treats` },
         },
       },
@@ -259,13 +296,13 @@ const storeSchema = {
           url: `${BASE_URL}/products/highland-mix`,
           image: `${BASE_URL}/images/logos.jpeg`,
           brand: { '@type': 'Brand', name: 'Highland Yak Chew' },
-          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '64', bestRating: '5' },
+          ...ratingFor(stats, 'highland-mix'),
           offers: { '@type': 'Offer', priceCurrency: 'GBP', availability: 'https://schema.org/InStock', url: `${BASE_URL}/products/highland-mix` },
         },
       },
     ],
   },
-};
+});
 
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
@@ -326,7 +363,9 @@ const siteNavigationSchema = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const storeSchema = buildStoreSchema(await fetchReviewStats());
+
   return (
     <html
       lang="en-GB"
