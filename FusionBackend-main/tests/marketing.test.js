@@ -293,9 +293,9 @@ describe('what the send reports back', () => {
     // A cid: reference plus the matching attachment — not an http link that
     // breaks until the frontend ships the file.
     expect(sent.html).toContain('src="cid:hero@highlandyakchew"');
-    expect(sent.attachments).toHaveLength(1);
-    expect(sent.attachments[0].cid).toBe('hero@highlandyakchew');
-    expect(sent.attachments[0].content.length).toBeGreaterThan(1000);
+    const hero = sent.attachments.find((a) => a.cid === 'hero@highlandyakchew');
+    expect(hero).toBeTruthy();
+    expect(hero.content.length).toBeGreaterThan(1000);
     expect(sent.html).not.toContain('/images/email/');
   });
 });
@@ -419,5 +419,83 @@ describe('review link hygiene', () => {
     expect(html).toContain('name=Monica');
     expect(html).not.toContain('name=Monica+');   // trailing space encoded
     expect(html).toContain('Dear Monica,');       // not "Dear Monica ,"
+  });
+});
+
+describe('branding in the masthead', () => {
+  it('sends the logo and hero, and keeps the wordmark as live text', async () => {
+    const order = await seedDeliveredOrder('buyer@test.local');
+
+    await request(app)
+      .post('/api/admin/marketing/review-requests/send')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ orderIds: [order._id.toString()] });
+
+    const sent = sentEmails[0];
+
+    // Both images travel with the message, under distinct content ids
+    const cids = sent.attachments.map((a) => a.cid).sort();
+    expect(cids).toEqual(['hero@highlandyakchew', 'logo@highlandyakchew']);
+    expect(sent.attachments.find((a) => a.cid === 'logo@highlandyakchew').contentType)
+      .toBe('image/png');   // PNG, or transparency is lost on the dark header
+
+    expect(sent.html).toContain('src="cid:logo@highlandyakchew"');
+    // Title case, serif, and real text — so branding survives blocked images
+    expect(sent.html).toContain('Highland Yak Chew');
+    expect(sent.html).not.toContain('highland yak chew');
+    expect(sent.html).toContain('Georgia');
+  });
+});
+
+describe('real sends use the customer\'s own details', () => {
+  it('greets each newsletter recipient by their own name, never a placeholder', async () => {
+    // Two customers with different names, plus a subscriber with no name at all
+    await seedDeliveredOrder('winston@test.local', {
+      shippingAddress: {
+        fullName: 'Winston Churchill', firstName: 'Winston', email: 'winston@test.local',
+        addressLine1: '10 Downing St', city: 'London', postcode: 'SW1A 2AA', country: 'United Kingdom',
+      },
+    });
+    await seedDeliveredOrder('priya@test.local', {
+      shippingAddress: {
+        fullName: 'Priya Patel', firstName: 'Priya', email: 'priya@test.local',
+        addressLine1: '2 Mill Lane', city: 'Leeds', postcode: 'LS1 4AP', country: 'United Kingdom',
+      },
+    });
+    await Subscriber.create({ email: 'anon@test.local' });
+
+    await request(app)
+      .post('/api/admin/marketing/newsletter/send')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ source: 'both', subject: 'S', headline: 'H', bodyHtml: '<p>b</p>' });
+
+    const byTo = Object.fromEntries(sentEmails.map((e) => [e.to, e.html]));
+
+    expect(byTo['winston@test.local']).toContain('Dear Winston,');
+    expect(byTo['priya@test.local']).toContain('Dear Priya,');
+    // A subscriber never gave us a name, so no greeting rather than a fake one
+    expect(byTo['anon@test.local']).not.toContain('Dear ');
+
+    // No message may carry another customer's name or a preview placeholder
+    expect(byTo['winston@test.local']).not.toContain('Priya');
+    expect(byTo['priya@test.local']).not.toContain('Winston');
+    for (const html of Object.values(byTo)) {
+      expect(html).not.toContain('{first name}');
+      expect(html).not.toContain('Dear Test,');
+      expect(html).not.toContain('Dear Ada,');
+    }
+  });
+
+  it('shows a visible placeholder in a test send, not a real-looking name', async () => {
+    await Subscriber.create({ email: 'reader@test.local' });
+
+    await request(app)
+      .post('/api/admin/marketing/newsletter/send')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ source: 'subscribers', subject: 'S', headline: 'H', bodyHtml: '<p>b</p>', testTo: 'me@test.local' });
+
+    expect(sentEmails).toHaveLength(1);
+    expect(sentEmails[0].to).toBe('me@test.local');
+    expect(sentEmails[0].html).toContain('{first name}');
   });
 });

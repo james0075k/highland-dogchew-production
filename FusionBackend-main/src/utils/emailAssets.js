@@ -22,8 +22,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSET_DIR = path.join(__dirname, '..', '..', 'assets', 'email');
 
 export const HEROES = {
-  review: { file: 'review-hero.jpg', cid: 'hero@highlandyakchew' },
-  newsletter: { file: 'newsletter-hero.jpg', cid: 'hero@highlandyakchew' },
+  review: { file: 'review-hero.jpg', cid: 'hero@highlandyakchew', type: 'image/jpeg' },
+  newsletter: { file: 'newsletter-hero.jpg', cid: 'hero@highlandyakchew', type: 'image/jpeg' },
+  // PNG, not JPEG: the mark sits on the dark header and needs its transparency.
+  logo: { file: 'logo-mark.png', cid: 'logo@highlandyakchew', type: 'image/png' },
 };
 
 // Read once per process — these are a few hundred KB and never change at runtime.
@@ -54,7 +56,7 @@ export function heroAttachment(kind) {
     filename: hero.file,
     content: buffer,
     cid: hero.cid,
-    contentType: 'image/jpeg',
+    contentType: hero.type,
     contentDisposition: 'inline',
   }];
 }
@@ -67,5 +69,14 @@ export function heroSrc(kind) {
 /** Same image as a data: URI, for the admin preview iframe. */
 export function heroDataUri(kind) {
   const buffer = readHero(kind);
-  return buffer ? `data:image/jpeg;base64,${buffer.toString('base64')}` : null;
+  if (!buffer) return null;
+  return `data:${HEROES[kind].type};base64,${buffer.toString('base64')}`;
+}
+
+/**
+ * Every image a marketing email needs: the header logo plus its hero.
+ * Returned together so a caller can't accidentally attach one and not the other.
+ */
+export function emailAttachments(kind) {
+  return [...heroAttachment('logo'), ...heroAttachment(kind)];
 }

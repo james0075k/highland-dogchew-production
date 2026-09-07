@@ -29,6 +29,18 @@ const JOBS = [
   { src: 'dog-1.webp', out: 'newsletter-hero.jpg', width: 1200 },
 ];
 
+// The header logo is handled separately: it must stay PNG, because it sits on
+// the dark brown header and needs its transparency. JPEG would box it in white.
+// logo11.png carries the wordmark baked in, so only the mountain mark is taken —
+// the "Highland Yak Chew" wordmark is live text in the email, which keeps the
+// branding readable when a client blocks images.
+const LOGO = {
+  src: 'logo11.png',
+  out: 'logo-mark.png',
+  crop: { left: 60, top: 78, width: 380, height: 168 },
+  width: 560, // 2x the 280px display width, for retina
+};
+
 await mkdir(OUT_DIR, { recursive: true });
 await mkdir(BACKEND_ASSETS, { recursive: true });
 
@@ -44,6 +56,20 @@ for (const job of JOBS) {
   await copyFile(to, path.join(BACKEND_ASSETS, job.out));
 
   console.log(`${job.src} -> images/email/${job.out}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(0)} KB`);
+}
+
+{
+  const from = path.join(PUBLIC_IMAGES, LOGO.src);
+  const to = path.join(OUT_DIR, LOGO.out);
+
+  const info = await sharp(from)
+    .extract(LOGO.crop)
+    .resize({ width: LOGO.width })
+    .png({ compressionLevel: 9 })
+    .toFile(to);
+
+  await copyFile(to, path.join(BACKEND_ASSETS, LOGO.out));
+  console.log(`${LOGO.src} -> images/email/${LOGO.out}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(0)} KB (transparent)`);
 }
 
 console.log('\nEmail images written to public/images/email/ and copied to the backend assets/email/');

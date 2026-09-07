@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { heroAttachment } from './emailAssets.js';
+import { LOGO_CID } from './emailBrand.js';
 
 /**
  * Send an email via Hostinger SMTP.
@@ -78,6 +80,16 @@ const sendEmail = async ({ to, subject, html, text, headers, replyTo, attachment
 
   const from = process.env.SMTP_FROM || '"Highland Yak Chew" <admin@highlanddogchew.co.uk>';
 
+  // Every template's masthead references the logo by content id. Attaching it
+  // here rather than at each call site means a new template can never ship with
+  // a broken header because someone forgot the attachment.
+  let allAttachments = attachments;
+  const needsLogo = typeof html === 'string' && html.includes(`cid:${LOGO_CID}`);
+  const hasLogo = (attachments || []).some((a) => a.cid === LOGO_CID);
+  if (needsLogo && !hasLogo) {
+    allAttachments = [...heroAttachment('logo'), ...(attachments || [])];
+  }
+
   let lastErr;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
@@ -91,7 +103,7 @@ const sendEmail = async ({ to, subject, html, text, headers, replyTo, attachment
         ...(text && { text }),
         ...(replyTo && { replyTo }),
         ...(headers && { headers }),
-        ...(attachments && { attachments }),
+        ...(allAttachments?.length && { attachments: allAttachments }),
       });
       if (attempt > 1) {
         console.log(`[email] Sent to ${to} on attempt ${attempt} — "${subject}"`);

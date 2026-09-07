@@ -15,13 +15,7 @@
  *    blocked, which is the default in a lot of clients.
  */
 
-const brand = {
-  name: 'Highland Yak Chew',
-  color: '#2f1e14',
-  accent: '#d97706',
-  cream: '#f5f0e8',
-  supportEmail: 'admin@highlanddogchew.co.uk',
-};
+import { brand, SERIF, masthead } from './emailBrand.js';
 
 const siteUrl = () => process.env.APP_URL || 'https://highlanddogchew.co.uk';
 
@@ -59,12 +53,7 @@ function marketingLayout({ title, preheader, bodyHtml, unsubscribeUrl }) {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-          <tr>
-            <td style="background:${brand.color};padding:28px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:300;letter-spacing:0.15em;text-transform:lowercase;">
-                highland yak chew
-              </h1>
-            </td>
+          <tr>${masthead()}
           </tr>
 
           ${bodyHtml}
@@ -132,7 +121,7 @@ function productBlock(item) {
                 <td width="88" style="vertical-align:top;padding-right:16px;">${thumb}</td>
                 <td style="vertical-align:top;">
                   <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:${brand.color};">${esc(item.name)}</p>
-                  <p style="margin:0 0 8px;font-size:13px;color:#7a5c4f;">How did your dog get on with it?</p>
+                  <p style="margin:0 0 8px;font-size:13px;color:#7a5c4f;">Did this one go down well? Tap a star to tell us.</p>
                   ${starRow(item.reviewUrl)}
                   <p style="margin:8px 0 0;font-size:12px;">
                     <a href="${item.reviewUrl}" style="color:${brand.accent};text-decoration:none;font-weight:600;">Write a quick review &rarr;</a>
@@ -149,7 +138,7 @@ function productBlock(item) {
  * @param {Array<{name, image, reviewUrl}>} params.items
  * @param {string} params.unsubscribeUrl
  */
-export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscribeUrl, heroSrc }) {
+export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscribeUrl, heroSrc, logoSrc }) {
   const name = (firstName || '').trim();
   // "Dear there" reads worse than no name at all.
   const greeting = name ? `Dear ${esc(name)},` : 'Hello,';
@@ -161,13 +150,29 @@ export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscr
             <td style="padding:32px 40px 8px;">
               <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:${brand.color};">${greeting}</p>
               <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#5b4636;">
-                Your order has landed and we hope it went down well. We're a small team in the UK
-                sourcing every chew from the Himalayas, and honest feedback from real dog owners is
-                genuinely how we decide what to make next.
+                We hope your parcel arrived safely &mdash; and, more to the point, that it met with
+                your dog's approval.
               </p>
-              <p style="margin:0 0 8px;font-size:15px;line-height:1.75;color:#5b4636;">
-                If you have a minute, we'd love to hear what your dog made of it.
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#5b4636;">
+                Every Highland Yak Chew is slow-dried by hand in the Himalayas, so no two batches are
+                quite alike. Hearing how yours went down tells us more than any test we could run
+                ourselves &mdash; and helps other dog owners choose the right chew for their pup.
               </p>
+              <p style="margin:0 0 10px;font-size:15px;line-height:1.75;color:#5b4636;">
+                If you have a minute, we'd love to know how your dog got on:
+              </p>
+              <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 4px;">
+                ${[
+                  'Did they take to it straight away, or need a little persuading?',
+                  'How long did it keep them happily busy?',
+                  'Was the size and hardness right for them?',
+                  'Would you buy it again?',
+                ].map((q) => `
+                <tr>
+                  <td style="padding:0 8px 6px 0;vertical-align:top;color:${brand.accent};font-size:15px;line-height:1.6;">&bull;</td>
+                  <td style="padding:0 0 6px;font-size:15px;line-height:1.6;color:#5b4636;">${q}</td>
+                </tr>`).join('')}
+              </table>
             </td>
           </tr>
 
@@ -187,11 +192,12 @@ export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscr
                 <tr>
                   <td style="padding:18px 20px;">
                     <p style="margin:0 0 8px;font-size:14px;line-height:1.7;color:#5b4636;">
-                      A review takes about a minute, and there's no need to be polite about it &mdash;
-                      if something wasn't right, tell us and we'll put it straight.
+                      A couple of sentences is plenty &mdash; and please be honest. If something
+                      wasn't right, tell us and we'll put it straight, no quibble.
                     </p>
                     <p style="margin:0;font-size:14px;line-height:1.7;color:#5b4636;">
-                      Thank you for trusting us with your dog. It genuinely means a lot.
+                      Thank you for trusting us with your dog. For a small team like ours, that means
+                      a great deal.
                     </p>
                     <p style="margin:14px 0 0;font-size:14px;color:${brand.color};font-weight:700;">
                       &mdash; The Highland Yak Chew team &#128062;
@@ -207,6 +213,7 @@ export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscr
     preheader: `A minute of your time on order ${orderNumber} would help us a lot.`,
     bodyHtml: body,
     unsubscribeUrl,
+    logoSrc,
   });
 }
 
@@ -259,6 +266,7 @@ export function newsletterEmailHtml({
   unsubscribeUrl,
   preheader,
   heroSrc,
+  logoSrc,
 }) {
   const greeting = greetingName
     ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:${brand.color};">Dear ${esc(greetingName)},</p>`
@@ -294,7 +302,7 @@ export function newsletterEmailHtml({
 
           <tr>
             <td style="padding:32px 40px 8px;">
-              <h2 style="margin:0 0 18px;font-size:24px;line-height:1.3;font-weight:800;color:${brand.color};">
+              <h2 style="margin:0 0 18px;font-family:${SERIF};font-size:26px;line-height:1.3;font-weight:400;color:${brand.color};">
                 ${esc(headline)}
               </h2>
               ${greeting}
@@ -311,6 +319,7 @@ export function newsletterEmailHtml({
     preheader: preheader || headline,
     bodyHtml: body,
     unsubscribeUrl,
+    logoSrc,
   });
 }
 
@@ -324,9 +333,20 @@ export function reviewRequestEmailText({ firstName, orderNumber, items, unsubscr
   const lines = [
     name ? `Dear ${name},` : 'Hello,',
     '',
-    'Your order has landed and we hope it went down well. We are a small team in',
-    'the UK sourcing every chew from the Himalayas, and honest feedback from real',
-    'dog owners is genuinely how we decide what to make next.',
+    'We hope your parcel arrived safely — and, more to the point, that it met with',
+    "your dog's approval.",
+    '',
+    'Every Highland Yak Chew is slow-dried by hand in the Himalayas, so no two',
+    'batches are quite alike. Hearing how yours went down tells us more than any',
+    'test we could run ourselves — and helps other dog owners choose the right',
+    'chew for their pup.',
+    '',
+    "If you have a minute, we'd love to know how your dog got on:",
+    '',
+    '  • Did they take to it straight away, or need a little persuading?',
+    '  • How long did it keep them happily busy?',
+    '  • Was the size and hardness right for them?',
+    '  • Would you buy it again?',
     '',
     `From order ${orderNumber}:`,
     '',
@@ -339,10 +359,11 @@ export function reviewRequestEmailText({ firstName, orderNumber, items, unsubscr
   }
 
   lines.push(
-    'A review takes about a minute, and there is no need to be polite about it —',
-    'if something was not right, tell us and we will put it straight.',
+    'A couple of sentences is plenty — and please be honest. If something was not',
+    'right, tell us and we will put it straight, no quibble.',
     '',
-    'Thank you for trusting us with your dog. It genuinely means a lot.',
+    'Thank you for trusting us with your dog. For a small team like ours, that',
+    'means a great deal.',
     '',
     '— The Highland Yak Chew team',
     '',

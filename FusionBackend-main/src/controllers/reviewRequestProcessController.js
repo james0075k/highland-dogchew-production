@@ -17,6 +17,7 @@ import EmailCampaignModel from '../models/emailCampaignModel.js';
 import sendBulk from '../utils/sendBulk.js';
 import { getSuppressedEmails, unsubscribeUrl, unsubscribeHeaders } from '../utils/marketingConsent.js';
 import { reviewRequestEmailHtml } from '../utils/marketingTemplates.js';
+import { heroSrc, emailAttachments } from '../utils/emailAssets.js';
 import logger from '../utils/logger.js';
 
 const log = logger.child({ component: 'reviewRequestCron' });
@@ -97,7 +98,7 @@ export async function processReviewRequests() {
 
     messages.push({
       to: email,
-      subject: 'How did your dog get on with your order? 🐾',
+      subject: "We'd love to hear how your dog got on 🐾",
       html: reviewRequestEmailHtml({
         firstName: order.shippingAddress?.firstName,
         orderNumber: order.orderNumber,
@@ -115,8 +116,11 @@ export async function processReviewRequests() {
           };
         }),
         unsubscribeUrl: unsubscribeUrl(email, 'review'),
+        heroSrc: heroSrc('review'),
+        logoSrc: heroSrc('logo'),
       }),
       headers: unsubscribeHeaders(email, 'review'),
+      attachments: emailAttachments('review'),
     });
     orderIds.push(order._id);
   }

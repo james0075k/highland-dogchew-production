@@ -3,12 +3,14 @@
  * All templates return complete HTML strings suitable for nodemailer.
  */
 
+import { brand as sharedBrand, masthead, SERIF } from './emailBrand.js';
+
+// siteUrl is read per-call because APP_URL is loaded from .env at boot.
 const brand = {
-  name: 'Highland Yak Chew',
-  color: '#2f1e14',
-  accent: '#d97706',
-  supportEmail: 'admin@highlanddogchew.co.uk',
-  siteUrl: process.env.APP_URL || 'https://highlanddogchew.co.uk',
+  ...sharedBrand,
+  get siteUrl() {
+    return process.env.APP_URL || 'https://highlanddogchew.co.uk';
+  },
 };
 
 // ─── Shared layout wrapper ────────────────────────────────────────────────────
@@ -28,12 +30,7 @@ function layout(title, bodyHtml) {
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
           <!-- Header -->
-          <tr>
-            <td style="background:${brand.color};padding:28px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:300;letter-spacing:0.15em;text-transform:lowercase;">
-                highland yak chew
-              </h1>
-            </td>
+          <tr>${masthead()}
           </tr>
 
           <!-- Body -->
@@ -130,7 +127,7 @@ export function customerOrderEmailHtml(order, firstName, options = {}) {
   const subItems = (order.items || []).filter((i) => i.subscriptionInterval);
 
   const body = `
-    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Order Confirmed!</h2>
+    <h2 style="margin:0 0 6px;font-family:${SERIF};font-size:25px;font-weight:400;">Order Confirmed!</h2>
     <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
       Hi ${firstName || addr.fullName.split(' ')[0]}, thank you for your order.
       We'll email you when it ships.
@@ -333,7 +330,7 @@ export function subscriptionRenewalEmailHtml(sub, order) {
   const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
 
   const body = `
-    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Your Subscription Has Been Renewed</h2>
+    <h2 style="margin:0 0 6px;font-family:${SERIF};font-size:25px;font-weight:400;">Your Subscription Has Been Renewed</h2>
     <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
       Hi ${firstName}, your recurring delivery has been charged and will be on its way soon.
     </p>
@@ -401,7 +398,7 @@ export function subscriptionCancelledCustomerEmailHtml(sub) {
   const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
 
   const body = `
-    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Subscription Cancelled</h2>
+    <h2 style="margin:0 0 6px;font-family:${SERIF};font-size:25px;font-weight:400;">Subscription Cancelled</h2>
     <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
       Hi ${firstName}, your subscription has been cancelled as requested. You will not be charged again.
     </p>
@@ -503,7 +500,7 @@ export function subscriptionPausedEmailHtml(sub) {
   const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
 
   const body = `
-    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Subscription Paused</h2>
+    <h2 style="margin:0 0 6px;font-family:${SERIF};font-size:25px;font-weight:400;">Subscription Paused</h2>
     <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
       Hi ${firstName}, your subscription has been paused. You won't be charged until you resume it.
     </p>
@@ -553,7 +550,7 @@ export function subscriptionResumedEmailHtml(sub) {
   const firstName = addr.firstName || addr.fullName?.split(' ')[0] || 'there';
 
   const body = `
-    <h2 style="margin:0 0 6px;font-size:24px;font-weight:700;">Subscription Resumed</h2>
+    <h2 style="margin:0 0 6px;font-family:${SERIF};font-size:25px;font-weight:400;">Subscription Resumed</h2>
     <p style="margin:0 0 24px;color:#7a5c4f;font-size:15px;">
       Hi ${firstName}, great news — your subscription is active again! Your next delivery is on its way at the scheduled date.
     </p>

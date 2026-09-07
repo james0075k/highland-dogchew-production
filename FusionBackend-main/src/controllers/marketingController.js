@@ -19,13 +19,17 @@ import {
   reviewRequestEmailHtml, reviewRequestEmailText,
   newsletterEmailHtml, newsletterEmailText,
 } from '../utils/marketingTemplates.js';
-import { heroAttachment, heroSrc, heroDataUri } from '../utils/emailAssets.js';
+import { heroSrc, heroDataUri, emailAttachments } from '../utils/emailAssets.js';
 import logger from '../utils/logger.js';
 
 const log = logger.child({ component: 'marketing' });
 
 const SITE_URL = () => process.env.APP_URL || 'https://highlanddogchew.co.uk';
 const PRODUCT_TYPES = ['yak-milk', 'puff-treat', 'highland-mix'];
+// Shown only in previews and test sends. Real sends use the customer's own
+// first name; this placeholder makes that substitution visible at a glance.
+const PREVIEW_NAME = '{first name}';
+
 const ORDER_STATUSES = ['pending', 'confirmed', 'backordered', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -217,13 +221,14 @@ export const sendReviewRequests = async (req, res, next) => {
 
       messages.push({
         to: testTo || email,
-        subject: `How did your dog get on with your order? 🐾`,
+        subject: `We'd love to hear how your dog got on 🐾`,
         html: reviewRequestEmailHtml({
           firstName: order.shippingAddress?.firstName,
           orderNumber: order.orderNumber,
           items,
           unsubscribeUrl: unsubscribeUrl(email, 'review'),
           heroSrc: heroSrc('review'),
+          logoSrc: heroSrc('logo'),
         }),
         text: reviewRequestEmailText({
           firstName: order.shippingAddress?.firstName,
@@ -232,7 +237,7 @@ export const sendReviewRequests = async (req, res, next) => {
           unsubscribeUrl: unsubscribeUrl(email, 'review'),
         }),
         headers: unsubscribeHeaders(email, 'review'),
-        attachments: heroAttachment('review'),
+        attachments: emailAttachments('review'),
       });
       sendableOrderIds.push(order._id);
     }
@@ -379,19 +384,20 @@ export const sendNewsletter = async (req, res, next) => {
           html: newsletterEmailHtml({
             headline,
             bodyHtml,
-            greetingName: 'Test',
+            greetingName: PREVIEW_NAME,
             ctaLabel,
             ctaUrl,
             showRange,
             unsubscribeUrl: unsubscribeUrl(testTo, 'newsletter'),
             heroSrc: heroSrc('newsletter'),
+            logoSrc: heroSrc('logo'),
           }),
           text: newsletterEmailText({
-            headline, bodyHtml, greetingName: 'Test', ctaLabel, ctaUrl,
+            headline, bodyHtml, greetingName: PREVIEW_NAME, ctaLabel, ctaUrl,
             unsubscribeUrl: unsubscribeUrl(testTo, 'newsletter'),
           }),
           headers: unsubscribeHeaders(testTo, 'newsletter'),
-          attachments: heroAttachment('newsletter'),
+          attachments: emailAttachments('newsletter'),
         },
       ]);
 
@@ -420,13 +426,14 @@ export const sendNewsletter = async (req, res, next) => {
         showRange,
         unsubscribeUrl: unsubscribeUrl(r.email, 'newsletter'),
         heroSrc: heroSrc('newsletter'),
+        logoSrc: heroSrc('logo'),
       }),
       text: newsletterEmailText({
         headline, bodyHtml, greetingName: r.name, ctaLabel, ctaUrl,
         unsubscribeUrl: unsubscribeUrl(r.email, 'newsletter'),
       }),
       headers: unsubscribeHeaders(r.email, 'newsletter'),
-      attachments: heroAttachment('newsletter'),
+      attachments: emailAttachments('newsletter'),
     }));
 
     const result = await sendBulk(messages);
@@ -476,13 +483,14 @@ export const previewNewsletter = async (req, res, next) => {
     const html = newsletterEmailHtml({
       headline: headline || 'Your headline here',
       bodyHtml: bodyHtml || '<p>Your message here.</p>',
-      greetingName: 'Ada',
+      greetingName: PREVIEW_NAME,
       ctaLabel,
       ctaUrl,
       showRange,
       unsubscribeUrl: '#preview',
       // cid: only resolves inside a mail client, so the preview inlines it.
       heroSrc: heroDataUri('newsletter'),
+      logoSrc: heroDataUri('logo'),
     });
 
     return handleSuccess(res, 200, 'Preview rendered', { html });

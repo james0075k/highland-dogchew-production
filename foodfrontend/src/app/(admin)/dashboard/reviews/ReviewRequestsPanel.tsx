@@ -112,7 +112,8 @@ export default function ReviewRequestsPanel() {
   const toggle = (id: string) =>
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 
@@ -129,7 +130,8 @@ export default function ReviewRequestsPanel() {
 
     if (orderIds.length === 0) return;
 
-    asTest ? setTesting(true) : setSending(true);
+    if (asTest) setTesting(true);
+    else setSending(true);
     setTestMsg(null);
 
     try {
@@ -158,9 +160,11 @@ export default function ReviewRequestsPanel() {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Send failed';
-      asTest ? setTestMsg(msg) : setError(msg);
+      if (asTest) setTestMsg(msg);
+      else setError(msg);
     } finally {
-      asTest ? setTesting(false) : setSending(false);
+      if (asTest) setTesting(false);
+      else setSending(false);
     }
   };
 
