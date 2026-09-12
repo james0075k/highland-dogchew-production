@@ -157,12 +157,33 @@ export default async function BlogPostPage({ params }: Props) {
     url: `${BASE_URL}/blog/${post.slug}`,
   };
 
+  // Answer engines quote self-contained Q&A far more readily than prose, so a
+  // post that answers real questions gets surfaced where an essay does not.
+  // Google requires the visible section below to match this markup.
+  const faqSchema = post.faqs?.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: post.faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: { '@type': 'Answer', text: f.answer },
+        })),
+      }
+    : null;
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
       <main className="min-h-screen" style={{ background: 'var(--surface-page)' }}>
         {/* Hero header */}
         <section
@@ -251,6 +272,33 @@ export default async function BlogPostPage({ params }: Props) {
         <article className="max-w-3xl mx-auto px-6 py-12 md:py-14 space-y-1.5">
           {renderMarkdown(post.content)}
         </article>
+
+        {/* Common questions — visible counterpart to the FAQPage schema above */}
+        {post.faqs && post.faqs.length > 0 && (
+          <section className="max-w-3xl mx-auto px-6 pb-12">
+            <h2
+              className="text-2xl md:text-3xl font-bold mb-6"
+              style={{
+                fontFamily: 'var(--font-antique-serif), DM Serif Display, serif',
+                color: 'var(--text-primary)',
+              }}
+            >
+              Common Questions
+            </h2>
+            <div className="border-t" style={{ borderColor: 'var(--border-base)' }}>
+              {post.faqs.map((faq) => (
+                <div key={faq.question} className="py-5 border-b" style={{ borderColor: 'var(--border-base)' }}>
+                  <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {faq.question}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CTA */}
         <div className="max-w-3xl mx-auto px-6 pb-12">

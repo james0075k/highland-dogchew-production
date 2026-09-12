@@ -226,11 +226,30 @@ function TeamCard({ member, idx }: { member: TeamMember; idx: number }) {
   );
 }
 
+// ─── Live rating stat ──────────────────────────────────────────────────────────
+// The stats strip used to claim a flat "5★ Customer Rating" regardless of what
+// customers actually said. It now shows the real sitewide average from approved
+// reviews — same source (/reviews/stats) as the per-product JSON-LD — and is
+// honest about there being nothing to show yet rather than inventing a number.
+function RatingStat({ rating, count }: { rating: number; count: number }) {
+  return (
+    <div className="text-center">
+      <p className="text-4xl md:text-5xl font-bold font-heading text-amber-400 leading-none">
+        {count > 0 ? `${rating.toFixed(1)}★` : "New"}
+      </p>
+      <p className="mt-2 text-sm md:text-base text-amber-100/70 font-subheading italic tracking-wide">
+        {count > 0 ? `Rated from ${count}+ reviews` : "Customer Rating"}
+      </p>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const AboutPage = () => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+  const [siteRating, setSiteRating] = useState({ rating: 0, count: 0 });
 
   const hero = useReveal(0.05);
   const story = useReveal(0.15);
@@ -252,6 +271,17 @@ const AboutPage = () => {
       }
     };
     fetchTeam();
+
+    const fetchSiteRating = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/stats`);
+        const data = await res.json();
+        if (data.success && data.data?.site) setSiteRating(data.data.site);
+      } catch {
+        // silently fail — the tile falls back to an honest "New" rather than a fake number
+      }
+    };
+    fetchSiteRating();
   }, []);
 
   return (
@@ -670,7 +700,7 @@ const AboutPage = () => {
           <div className="relative max-w-5xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
               <AnimatedStat value={100} suffix="%" label="Natural Ingredients" />
-              <AnimatedStat value={5} suffix="★" label="Customer Rating" />
+              <RatingStat rating={siteRating.rating} count={siteRating.count} />
               <AnimatedStat value={10} suffix="k+" label="Happy Dogs" />
               <AnimatedStat value={3} suffix="" label="Himalayan Regions" />
             </div>

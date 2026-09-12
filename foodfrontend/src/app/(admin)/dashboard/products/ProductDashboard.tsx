@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   RotateCcw,
+  Star,
 } from 'lucide-react';
 import { FiArrowLeft, FiRefreshCw, FiSearch } from 'react-icons/fi';
 
@@ -35,8 +36,6 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     variety: '',
     badge: '',
     description: '',
-    rating: '0',
-    reviews: '0',
     features: [''],
     sizes: [{ label: '', value: '', price: '', originalPrice: '', bulkTiers: [] as any[], stockQuantity: '' }],
     bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
@@ -66,6 +65,8 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
     variety?: { name?: string; category?: string } | string;
     price: string | number;
     originalPrice: string | number;
+    rating?: number;
+    reviews?: number;
     [key: string]: unknown;
   }
 
@@ -339,8 +340,6 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       variety: product.variety?._id || product.variety || '',
       badge: product.badge || '',
       description: product.description || '',
-      rating: (product.rating ?? 0).toString(),
-      reviews: (product.reviews ?? 0).toString(),
       features: product.features?.length ? product.features : [''],
       sizes: product.sizes?.length
         ? product.sizes.map((s: any) => ({
@@ -388,8 +387,6 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       variety: '',
       badge: '',
       description: '',
-      rating: '0',
-      reviews: '0',
       features: [''],
       sizes: [{ label: '', value: '', price: '', originalPrice: '', bulkTiers: [], stockQuantity: '' }],
       bulkPricing: [{ quantity: '', price: '', originalPrice: '', discount: '' }],
@@ -477,8 +474,9 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
       formDataToSend.append('variety', formData.variety);
       formDataToSend.append('badge', formData.badge);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('rating', formData.rating);
-      formDataToSend.append('reviews', formData.reviews);
+      // rating/reviews are intentionally not sent — the backend computes them
+      // from approved reviews (syncProductRating) and ignores this field
+      // entirely, so there's nothing here for an admin to accidentally desync.
 
       formDataToSend.append('features', JSON.stringify(formData.features.filter((f) => f.trim() !== '')));
       formDataToSend.append('sizes', JSON.stringify(
@@ -820,31 +818,29 @@ const ProductDashboard = ({ defaultProductType }: ProductDashboardProps) => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-600 mb-1.5">Rating (0-5)</label>
-                  <input
-                    type="number"
-                    name="rating"
-                    value={formData.rating}
-                    onChange={handleChange}
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 transition-colors"
-                    placeholder="4.5"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-600 mb-1.5">Number of Reviews</label>
-                  <input
-                    type="number"
-                    name="reviews"
-                    value={formData.reviews}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 transition-colors"
-                    placeholder="1174"
-                  />
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-medium text-gray-600 mb-1.5">Rating</label>
+                  {editingProduct ? (
+                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50">
+                      <Star size={14} className="text-amber-400 fill-amber-400 flex-shrink-0" />
+                      <span className="font-semibold text-gray-700">
+                        {(editingProduct.rating ?? 0).toString()}★
+                      </span>
+                      <span className="text-gray-400">
+                        · {editingProduct.reviews ?? 0} review{(editingProduct.reviews ?? 0) === 1 ? '' : 's'}
+                      </span>
+                      <Link
+                        href={`/dashboard/reviews?product=${encodeURIComponent(editingProduct.name)}`}
+                        className="ml-auto text-amber-600 hover:underline text-xs font-medium whitespace-nowrap"
+                      >
+                        Manage reviews →
+                      </Link>
+                    </div>
+                  ) : (
+                    <p className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400">
+                      Starts at 0★ — computed automatically once customers leave approved reviews.
+                    </p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">

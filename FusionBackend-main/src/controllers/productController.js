@@ -65,7 +65,7 @@ export const createProduct = async (req, res, next) => {
   try {
     const {
       name, price, originalPrice, category, productType, variety, badge,
-      description, features, sizes, bulkPricing, rating, reviews,
+      description, features, sizes, bulkPricing,
       pricingSettings, subscriptionSettings,
     } = req.body;
 
@@ -147,8 +147,9 @@ export const createProduct = async (req, res, next) => {
       features: parsedFeatures,
       sizes: parsedSizes,
       bulkPricing: parsedBulkPricing,
-      rating: rating ? parseFloat(rating) : 0,
-      reviews: reviews ? parseInt(reviews) : 0,
+      // rating/reviews are never accepted from a client — they're computed
+      // exclusively from approved reviews by syncProductRating(). A new
+      // product always starts at the schema default (0/0).
       image: fullImageUrl,
       gallery: galleryUrls,
       trackStock,
@@ -344,6 +345,12 @@ export const updateProduct = async (req, res, next) => {
     if (updatedData.updatedAt) delete updatedData.updatedAt;
     if (updatedData.__v) delete updatedData.__v;
 
+    // rating/reviews are never accepted from a client, even on an unrelated
+    // edit (e.g. changing price) — they're computed exclusively from approved
+    // reviews by syncProductRating(). See productRatingSync.test.js.
+    delete updatedData.rating;
+    delete updatedData.reviews;
+
     // Parse JSON strings if they exist (safe â€” returns fallback on malformed input)
     if (updatedData.features && typeof updatedData.features === 'string') {
       updatedData.features = safeJsonParse(updatedData.features, []);
@@ -407,8 +414,6 @@ export const updateProduct = async (req, res, next) => {
     // Convert numeric strings to numbers
     if (updatedData.price) updatedData.price = parseFloat(updatedData.price);
     if (updatedData.originalPrice) updatedData.originalPrice = parseFloat(updatedData.originalPrice);
-    if (updatedData.rating) updatedData.rating = parseFloat(updatedData.rating);
-    if (updatedData.reviews) updatedData.reviews = parseInt(updatedData.reviews);
 
     // Handle main image update
     if (req.files?.image && req.files.image[0]) {

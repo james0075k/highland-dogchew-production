@@ -1,10 +1,46 @@
 import ReviewModel from '../models/reviewModel.js';
+import ProductModel from '../models/productModel.js';
 import handleError from '../utils/errorHandler.js';
 import handleSuccess from '../utils/successHandler.js';
+import logger from '../utils/logger.js';
+
+const log = logger.child({ component: 'reviewController' });
 
 // Reviewers give us their email so we can contact them about the review — it is
 // never part of what the public sees next to their comment.
 const PUBLIC_PROJECTION = '-guestInfo.email';
+
+/**
+ * Recomputes a product's headline rating from its approved reviews.
+ *
+ * product.rating / product.reviews are what the product card, the product page
+ * header and the storefront JSON-LD all read. They started as fields an admin
+ * typed by hand, so they could disagree with the actual reviews on the page —
+ * a product showed an empty star row while carrying a real five-star review.
+ * Recomputing here makes the reviews the single source of truth.
+ *
+ * Called after any change to a review's published state. Deliberately not
+ * throwing: moderation must still succeed even if this write fails, and the
+ * next moderation action recomputes it anyway.
+ */
+export async function syncProductRating(productId) {
+  if (!productId) return;
+
+  try {
+    const [agg] = await ReviewModel.aggregate([
+      { $match: { product: productId, status: 'approved', isDeleted: { $ne: true } } },
+      { $group: { _id: null, count: { $sum: 1 }, sum: { $sum: '$rating' } } },
+    ]);
+
+    const count = agg?.count ?? 0;
+    await ProductModel.findByIdAndUpdate(productId, {
+      reviews: count,
+      rating: count ? +(agg.sum / count).toFixed(1) : 0,
+    });
+  } catch (err) {
+    log.error({ err, productId: String(productId) }, 'Failed to sync product rating');
+  }
+}
 
 // CREATE review (public)
 export const createReview = async (req, res, next) => {
@@ -158,6 +194,9 @@ export const updateReview = async (req, res, next) => {
   try {
     const updatedReview = await ReviewModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedReview) return next(handleError(404, 'Review not found'));
+
+    await syncProductRating(updatedReview.product);
+
     return handleSuccess(res, 200, 'Review updated', updatedReview);
   } catch (err) {
     return next(handleError(400, `Failed to update review: ${err.message}`));
@@ -173,6 +212,9 @@ export const deleteReview = async (req, res, next) => {
       { new: true }
     );
     if (!review) return next(handleError(404, 'Review not found'));
+
+    await syncProductRating(review.product);
+
     return handleSuccess(res, 200, 'Review deleted');
   } catch (err) {
     return next(handleError(500, `Failed to delete review: ${err.message}`));

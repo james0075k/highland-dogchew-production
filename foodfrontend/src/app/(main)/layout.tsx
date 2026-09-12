@@ -157,7 +157,11 @@ export const metadata: Metadata = {
 };
 
 // ── JSON-LD Structured Data ────────────────────────────────────────────────
-const organizationSchema = {
+// Organization schema takes the sitewide rating as a parameter (built once
+// fetchReviewStats() has resolved) rather than being a plain object, so a
+// brand-level search/AI answer sees the same real, approved-reviews-only
+// number the product pages already show — never an invented one.
+const buildOrganizationSchema = (site?: { count: number; rating: number }) => ({
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Highland Yak Chew',
@@ -185,7 +189,18 @@ const organizationSchema = {
     '@type': 'PostalAddress',
     addressCountry: 'GB',
   },
-};
+  ...(site?.count
+    ? {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: String(site.rating),
+          reviewCount: String(site.count),
+          bestRating: '5',
+          worstRating: '1',
+        },
+      }
+    : {}),
+});
 
 const websiteSchema = {
   '@context': 'https://schema.org',
@@ -208,18 +223,24 @@ const websiteSchema = {
 
 type TypeStat = { count: number; rating: number };
 type ReviewStats = Record<string, TypeStat>;
+type AllReviewStats = { byType: ReviewStats; site: TypeStat };
 
-async function fetchReviewStats(): Promise<ReviewStats> {
+const EMPTY_STATS: AllReviewStats = { byType: {}, site: { count: 0, rating: 0 } };
+
+async function fetchReviewStats(): Promise<AllReviewStats> {
   const api = process.env.NEXT_PUBLIC_API_URL;
-  if (!api) return {};
+  if (!api) return EMPTY_STATS;
   try {
     const res = await fetch(`${api}/reviews/stats`, { next: { revalidate: 3600 } });
-    if (!res.ok) return {};
+    if (!res.ok) return EMPTY_STATS;
     const json = await res.json();
-    return (json?.data?.byType ?? {}) as ReviewStats;
+    return {
+      byType: (json?.data?.byType ?? {}) as ReviewStats,
+      site: (json?.data?.site ?? { count: 0, rating: 0 }) as TypeStat,
+    };
   } catch {
     // Markup is not worth a failed render — fall back to omitting the rating.
-    return {};
+    return EMPTY_STATS;
   }
 }
 
@@ -364,7 +385,9 @@ const siteNavigationSchema = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const storeSchema = buildStoreSchema(await fetchReviewStats());
+  const stats = await fetchReviewStats();
+  const storeSchema = buildStoreSchema(stats.byType);
+  const organizationSchema = buildOrganizationSchema(stats.site);
 
   return (
     <html

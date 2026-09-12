@@ -9,9 +9,322 @@ export interface BlogPost {
   image: string;
   imageAlt: string;
   author?: string;
+  /**
+   * Optional Q&A rendered as a visible section and as FAQPage structured data.
+   *
+   * Answer engines (Google AI Overviews, ChatGPT, Perplexity) quote
+   * self-contained question/answer pairs far more readily than they quote prose,
+   * so a post that answers real questions directly gets surfaced where an essay
+   * does not. Google requires the visible content to match the markup, which is
+   * why these render on the page rather than living only in the schema.
+   */
+  faqs?: { question: string; answer: string }[];
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    slug: 'yak-chew-vs-bone-which-is-safer-for-your-dog',
+    title: 'Yak Chew vs Bone: Which Is Actually Safer for Your Dog?',
+    excerpt:
+      'Bones are the traditional dog treat — and the one UK vets are asked about most. Here is an honest look at the risks of cooked and raw bones, how a Himalayan yak milk chew compares, and how to choose the right long-lasting chew for your dog.',
+    category: 'Dog Health',
+    date: '2026-09-02',
+    readTime: '8 min read',
+    image: '/images/blog/yak-chew-vs-bone.jpg',
+    imageAlt:
+      'Why choose a Highland Yak Chew over a bone — a comparison chart showing that bones can splinter, are messy and smelly, raise digestion concerns and do not last, while a yak chew is made with 100% yak milk, uses simple natural ingredients, lasts for hours and can be puffed into a crunchy treat when it gets too small',
+    author: 'Highland Yak Chew Team',
+    faqs: [
+      {
+        question: 'Are bones safe for dogs?',
+        answer:
+          'Cooked bones are not safe for dogs and UK veterinary organisations including the PDSA and RSPCA advise against them, because cooking makes bone brittle so it splinters into sharp fragments that can damage the mouth, throat and gut. Raw bones are less brittle but still carry real risks: fractured teeth, bacterial contamination such as salmonella, constipation, and intestinal blockage. If you want a long-lasting chew without those risks, a hard cheese chew such as a yak milk chew is a safer option.',
+      },
+      {
+        question: 'Why can cooked bones splinter?',
+        answer:
+          'Cooking dries out the collagen that gives bone its flexibility. What remains is brittle and shatters under pressure instead of wearing down gradually, producing sharp shards. This applies to leftover roast, chicken, chop and rib bones — the ones most likely to reach a dog from a family meal.',
+      },
+      {
+        question: 'What is the best long-lasting chew for a dog in the UK?',
+        answer:
+          'For most dogs a Himalayan yak milk chew is among the longest-lasting natural options available in the UK. A Highland Yak Chew is a hard cheese chew made from yak and cow milk, lime juice and a pinch of salt, and typically lasts days to weeks of regular chewing. Unlike a bone it softens progressively as the dog works at it rather than splintering, and unlike rawhide it contains no hide, bleach or artificial binders.',
+      },
+      {
+        question: 'Do yak chews break dogs’ teeth?',
+        answer:
+          'Any hard chew carries some risk of dental damage if a dog bites down with full force on an unyielding object. A yak chew softens as saliva works into it, so a dog gnaws and scrapes rather than cracking it, which is gentler on teeth than bone or antler. Choose the correct size for your dog’s weight, supervise chewing, and remove the chew if your dog is a very aggressive crunch-and-swallow chewer rather than a gnawer.',
+      },
+      {
+        question: 'Are yak chews better than rawhide?',
+        answer:
+          'Yak chews contain one food — milk — while rawhide is an animal hide by-product that is often treated with chemicals during processing and can swell in the stomach when swallowed in large pieces. Yak chews are also grain-free, low in fat and over 55% protein. For owners avoiding processed by-products, a yak chew is the more straightforward choice.',
+      },
+      {
+        question: 'What do I do when the yak chew gets too small?',
+        answer:
+          'Take it off your dog once the piece is small enough to swallow whole, then microwave that stump for about 45 seconds. It puffs into a light, crunchy treat your dog can eat safely. This removes the choking hazard that every other long-lasting chew leaves you to manage, and means none of the chew is wasted.',
+      },
+      {
+        question: 'Where can I buy Highland Yak Chew in the UK?',
+        answer:
+          'Highland Yak Chew ships across the United Kingdom from highlanddogchew.co.uk. Standard UK delivery is £1.99, delivery is free on orders over £30, and orders typically arrive within 2–5 working days. Returns are accepted within 14 days.',
+      },
+    ],
+    content: `
+## Yak Chew vs Bone: Which Is Actually Safer for Your Dog?
+
+Ask a room of UK dog owners what makes the best long-lasting treat and someone will say a bone. It is the oldest answer there is — dogs and bones go together in every cartoon, every idiom, every children's book.
+
+It is also the question UK vets field most often, and their answer is more cautious than the cartoons suggest.
+
+This is an honest comparison. Not every bone is dangerous, and no chew is risk-free. But the differences matter, and they are worth understanding before you hand something to your dog for the next few hours.
+
+### The Problem With Cooked Bones
+
+On cooked bones, veterinary advice in the UK is close to unanimous — organisations including the **PDSA** and the **RSPCA** advise against giving them at all.
+
+The reason is physical. Bone gets its toughness from collagen, a flexible protein woven through the mineral structure. Cooking drives out moisture and degrades that collagen. What is left behind is brittle: instead of wearing down gradually under a dog's teeth, it **shatters into sharp fragments.**
+
+Those fragments can:
+
+- Cut the gums, tongue and soft palate
+- Lodge in the throat
+- Perforate the stomach or intestinal wall
+- Cause blockages that require emergency surgery
+
+This covers exactly the bones most likely to reach a dog by accident — the Sunday roast, the chicken carcass, the leftover chop, the rib bones scraped off a plate. **A cooked bone is never a safe dog chew.**
+
+### Raw Bones Are Safer — But Not Risk-Free
+
+Raw bones retain their collagen, so they are far less likely to splinter. Plenty of owners feed them without incident, and raw feeders make a reasonable case for them.
+
+They are still not without risk:
+
+- **Fractured teeth.** Weight-bearing bones from large animals are harder than dog enamel. Slab fractures of the upper carnassial tooth are a routine finding in practice, and repair usually means extraction under general anaesthetic.
+- **Bacteria.** Raw bone carries salmonella, campylobacter and E. coli — a risk for the dog, and for anyone in the household handling the bone or the surfaces it touches. That matters more in homes with young children, elderly relatives, or anyone immunosuppressed.
+- **Constipation and obstruction.** Swallowed bone fragments compact in the gut.
+- **Mess.** Raw bone goes rancid, stains carpet and upholstery, and cannot be left down between sessions.
+
+Raw bones are a considered choice with real trade-offs, not an obviously safe default.
+
+### How a Yak Milk Chew Compares
+
+A **Highland Yak Chew** takes a completely different approach to the same problem: how do you give a dog something that lasts for hours without giving them something that can break?
+
+It is not a bone at all. It is a hard cheese, made in the Himalayas from **yak and cow milk, a little lime juice, and a pinch of salt** — boiled, curdled, pressed, then slow-dried and smoked over several weeks. It is a preservation method Himalayan communities used to feed themselves through winter, long before anyone thought of giving one to a dog.
+
+| | Bones | Highland Yak Chew |
+| --- | --- | --- |
+| **Splinter risk** | Cooked bones shatter into sharp shards | Softens progressively; does not splinter |
+| **Teeth** | Hard bone can cause slab fractures | Softens with saliva — dogs gnaw rather than crack |
+| **Bacteria** | Raw bone carries salmonella and campylobacter | Dried and shelf-stable |
+| **Ingredients** | Whatever the animal was | Milk, lime juice, salt — three ingredients |
+| **How long it lasts** | Often gone quickly, or unsafe once broken | Days to weeks of regular chewing |
+| **Mess and smell** | Greasy, stains fabric, goes rancid | Odourless, does not stain |
+| **The last piece** | Small fragment — a choking hazard | Microwave 45 seconds into a puffed treat |
+
+### Why the Texture Is the Whole Point
+
+The important difference is not the ingredient list. It is **how the chew behaves under a dog's teeth.**
+
+A bone resists until it fails, and when it fails it does so suddenly and sharply. A yak chew does the opposite. Saliva works into the surface, the outer layer softens, and the dog scrapes away thin flakes. The chew gets gradually smaller instead of breaking apart.
+
+That is why it lasts so long, and it is also why it is gentler on teeth. Your dog is gnawing, not cracking.
+
+That scraping action is doing useful work too: mechanical abrasion against the tooth surface helps reduce plaque and tartar build-up. For the many dogs who will not tolerate a toothbrush, that is a genuine benefit rather than a marketing line.
+
+### What Is Actually In One
+
+Per chew, the traditional process yields:
+
+- **Over 55% crude protein**, with a complete amino acid profile
+- **Naturally low in fat** — suitable for dogs watching their weight
+- **Grain-free and gluten-free** — no cereal of any kind
+- **Naturally occurring calcium** from the milk
+- **No preservatives, additives, or artificial flavours**
+
+Dogs with a diagnosed dairy allergy should avoid them, since they are a milk product. For everyone else, the ingredient list is short enough to read aloud.
+
+### Choosing the Right Size
+
+Size matters more than most owners expect. Too small is a choking risk; too large can put a smaller dog off entirely.
+
+| Your dog's weight | Size to choose |
+| --- | --- |
+| 5–10kg | Small |
+| 10–25kg | Medium |
+| Over 25kg | Large |
+
+If your dog is a determined chewer, size up rather than down.
+
+### How to Use One Safely
+
+No chew is supervision-free. Sensible practice with a yak chew:
+
+1. **Match the size to your dog's weight** using the table above.
+2. **Supervise**, particularly for the first few sessions, while you learn how your dog approaches it.
+3. **Watch which type of chewer you have.** Gnawers do well with yak chews. A dog who tries to crack and swallow everything whole needs closer watching.
+4. **Take it away when it gets small** — once the stump could be swallowed whole, the chewing part is over.
+5. **Microwave the stump for 45 seconds.** It puffs into a crunchy treat, and the hazard disappears.
+6. **Fresh water available**, as with any dried chew.
+
+### So — Bone or Yak Chew?
+
+If it is a **cooked** bone, there is no debate. Do not give it.
+
+If it is a **raw** bone, you are accepting a set of trade-offs — dental fractures, bacteria, mess — in exchange for a chew that many dogs enjoy.
+
+If what you want is a long-lasting, natural chew that will not splinter, will not go rancid on the rug, and ends in a puffed treat rather than a fragment you have to wrestle away — that is the gap a yak milk chew fills.
+
+Choose what you genuinely feel is best for your dog. We just think it helps to know what you are choosing between.
+
+---
+
+### Try Highland Yak Chew
+
+We ship across the **United Kingdom** from [highlanddogchew.co.uk](/products) — standard delivery **£1.99**, **free over £30**, typically arriving in **2–5 working days**, with 14-day returns.
+
+- [**Yak Milk Chews**](/products/yak-chews) — the long-lasting hard cheese chew, in three sizes
+- [**Puff Treats**](/products/puff-treats) — light, airy and crunchy; gentler for puppies and senior dogs
+- [**Highland Mix**](/products/highland-mix) — a variety box, ideal for multi-dog households
+
+Follow us on [Instagram](https://www.instagram.com/highlanddogchew) and [Facebook](https://www.facebook.com/highlanddogchew) for new flavours, offers, and rather a lot of happy dogs.
+
+*Natural chews. Happy dogs. Better chewing habits.* 🐾
+    `.trim(),
+  },
+  {
+    slug: 'international-dog-day-celebrating-the-dogs-who-make-every-day-better',
+    title: 'Happy International Dog Day: Celebrating the Dogs Who Make Every Day Better',
+    excerpt:
+      'From the first tail wag in the morning to those big eyes asking for just one more chew — International Dog Day is a moment to notice what our dogs give us all year round, and to give something back that genuinely deserves the name treat.',
+    category: 'Our Story',
+    date: '2026-08-26',
+    readTime: '6 min read',
+    image: '/images/blog/international-dog-day.jpg',
+    // Alt text describes the image for screen readers and for the crawlers that
+    // read it as a caption — including the words baked into the artwork, which
+    // no automated reader can otherwise see.
+    imageAlt:
+      'Happy International Dog Day from Highland Yak Chew — a border collie and a golden retriever lying together in a sunlit meadow beside a wooden board of natural yak milk chews, with the words 100% Yak Milk made in the Himalayas, Long-Lasting Chew and Natural & Simple',
+    author: 'Highland Yak Chew Team',
+    faqs: [
+      {
+        question: 'When is International Dog Day?',
+        answer:
+          'International Dog Day is celebrated every year on 26 August. It was founded in 2004 to encourage dog adoption and to recognise the work dogs do alongside people — as assistance dogs, search and rescue dogs, and family companions.',
+      },
+      {
+        question: 'What is a yak milk chew made from?',
+        answer:
+          'A Highland Yak Chew contains just three ingredients: yak and cow milk, a little lime juice, and a pinch of salt. The milk is boiled, curdled with the lime juice, pressed, and then slow-dried and smoked for several weeks in the Himalayas. There are no preservatives, additives, grains, or artificial flavours.',
+      },
+      {
+        question: 'How long does a yak chew last?',
+        answer:
+          'A single Highland Yak Chew typically lasts several days to a few weeks of regular chewing, depending on your dog’s size and how determined a chewer they are. Within any one sitting, most dogs settle in for a good few hours. That is far longer than a rawhide or a biscuit, which is why yak chews suit dogs who get bored quickly.',
+      },
+      {
+        question: 'Are yak chews safe for dogs?',
+        answer:
+          'Yak chews are a hard cheese chew that softens progressively as your dog works at it, rather than splintering the way a cooked bone can. Choose a size suited to your dog’s weight, supervise chewing as you would with any treat, and take the chew away once it is small enough to swallow whole. That final stump can be microwaved for 45 seconds to puff it into a light, crunchy treat, which removes the choking risk entirely.',
+      },
+      {
+        question: 'What size yak chew does my dog need?',
+        answer:
+          'Highland Yak Chew sizes follow your dog’s weight: small for dogs of 5–10kg, medium for 10–25kg, and large for dogs over 25kg. A chew that is too small is a choking risk, and one that is too large can be discouraging for a smaller dog, so matching the size to the dog matters more than most owners expect.',
+      },
+      {
+        question: 'Are yak chews suitable for dogs with grain or gluten intolerance?',
+        answer:
+          'Yes. Yak chews are naturally grain-free and gluten-free, because they contain no cereal of any kind — only milk, lime juice and salt. They are also low in fat and high in protein, which makes them a practical option for dogs on restricted diets. Dogs with a diagnosed dairy allergy should avoid them, as they are a milk product.',
+      },
+    ],
+    content: `
+## Happy International Dog Day
+
+Today is all about celebrating the dogs who make every day better.
+
+From the first tail wag of the morning to those big eyes asking for *just one more chew* — they give us their whole day, every day, and ask for remarkably little in return.
+
+International Dog Day falls on **26 August** each year. It was founded in 2004 to encourage adoption and to recognise what dogs do for people: guiding, searching, detecting, comforting, and simply being there when the house would otherwise be quiet.
+
+But most of us do not need a date in the calendar to know what our dogs are worth. What the day is useful for is stopping long enough to notice it.
+
+### What Your Dog Actually Gives You
+
+It is easy to describe a dog as a pet and leave it there. The reality is measurable.
+
+- **They get you outside.** Dog owners walk substantially more than non-owners, in weather most of us would otherwise avoid entirely.
+- **They regulate your routine.** Dogs impose a rhythm on a day — fed, walked, settled — that many people find steadying.
+- **They notice you.** A dog reads your posture and your tone before you have said a word.
+- **They are honest.** There is no performance in a dog's greeting. Whatever kind of day you have had, it counts for nothing against the fact that you came home.
+
+They are not just pets. They are family, and most owners would say the household would not function without them.
+
+### So Give Them Something That Actually Earns the Word "Treat"
+
+Here is the honest problem with most dog treats: they are gone in seconds. A biscuit is a moment. A dog swallows it, looks up, and the event is over.
+
+A chew is different, because chewing is not really about food at all.
+
+Chewing releases endorphins and engages the parasympathetic nervous system — the same system responsible for rest and recovery. A dog settled into a long chew is not just occupied. They are genuinely calmer afterwards. It is one of the few things you can give a dog that works on their nervous system rather than just their stomach.
+
+That is the difference between feeding a dog and giving them something to do.
+
+### What Makes a Himalayan Yak Chew Different
+
+A Highland Yak Chew is made from three ingredients: **yak and cow milk, a little lime juice, and a pinch of salt.**
+
+That is the complete list. No preservatives, no additives, no grains, no artificial flavours, and nothing that needs explaining on the back of a packet.
+
+The milk is boiled, curdled with lime juice, pressed into blocks, and then slow-dried and smoked over several weeks in the mountains. It is a preservation method that predates refrigeration by centuries — Himalayan communities made these to feed themselves through winter long before anyone thought to give one to a dog.
+
+What that traditional process produces:
+
+- **Over 55% crude protein**, with a complete amino acid profile
+- **Naturally low fat** — suitable for dogs watching their weight
+- **Grain-free and gluten-free**, because there is no cereal in it at all
+- **Naturally occurring calcium** from the milk itself
+- **Days to weeks** from a single chew, with hours of engagement in any one sitting
+- **A hard cheese texture** that softens progressively, rather than splintering like a cooked bone
+
+And when it is worn down to a stump too small to chew safely, you do not throw it away. Forty-five seconds in the microwave turns it into a puffy, crunchy treat — which also neatly removes the choking hazard that every other long-lasting chew leaves you managing.
+
+### Matching the Chew to the Dog
+
+Getting the size right matters more than most owners expect. Too small is a choking risk; too large can put a smaller dog off entirely.
+
+| Your dog's weight | Size to choose |
+| --- | --- |
+| 5–10kg | Small |
+| 10–25kg | Medium |
+| Over 25kg | Large |
+
+If your dog is a determined chewer, size up rather than down. A chew that lasts is the entire point.
+
+### Chewing Is Not a Luxury
+
+It is worth saying plainly: chewing is a behavioural need, not an indulgence.
+
+Dogs who are not given something appropriate to chew will find something inappropriate — skirting boards, shoes, furniture legs. This is not naughtiness. It is a normal dog doing a normal dog thing without a suitable outlet.
+
+Regular chewing also does real work on dental health, helping to reduce plaque and tartar through the mechanical action of chewing itself. For a dog who will not tolerate a toothbrush, and most will not, that is not a small thing.
+
+So the "treat" is doing three jobs at once: it satisfies an instinct, it calms the nervous system, and it looks after their teeth.
+
+### Happy International Dog Day
+
+Whether your dog is a puppy still working out what feet are for, a steady middle-aged companion who knows exactly when dinner is, or an old friend who has slowed down but still finds the energy for the door — today is theirs.
+
+Give them the extra-big treat. They have more than earned it.
+
+**Happy International Dog Day from all of us at Highland Yak Chew.** 🐾
+
+[Browse our range of natural yak milk chews](/products) and find the right size for your best friend.
+    `.trim(),
+  },
   {
     slug: 'signs-your-dog-loves-highland-yak-chews',
     title: '5 Signs Your Dog Is Absolutely Loving Their Highland Yak Chew',
@@ -77,7 +390,7 @@ This kind of ritual formation is a sign of psychological wellbeing. A dog who ha
 
 Not every treat inspires this depth of engagement. The reason yak chews do comes down to four things:
 
-- **Duration**: A single chew provides hours of engagement, not minutes
+- **Duration**: A single chew lasts days to weeks, not minutes
 - **Flavour depth**: The subtle smokiness from traditional Himalayan processing develops as the dog works through the chew
 - **Nutrition**: With over 55% protein and natural calcium, the body recognises and responds to genuinely nourishing food
 - **Texture**: The progressive softening as the dog chews creates a continuously changing sensory experience
