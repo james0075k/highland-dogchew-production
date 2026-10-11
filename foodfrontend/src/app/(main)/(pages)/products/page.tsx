@@ -10,21 +10,24 @@ const categories = [
     title: 'Yak Milk Chews',
     description: '100% natural, long-lasting chews packed with protein and calcium. Perfect for all dog sizes.',
     href: '/products/yak-chews',
-    image: '/images/yak-milk-category.jpg',
+    image: '/images/yak-milk-chews-four-flavours.jpg',
+    imageAlt: 'Yak milk dog chews in four flavours — original, strawberry, blueberry and turmeric — with the fruit and spice used in each',
     color: 'from-amber-500 to-orange-600',
   },
   {
     title: 'Puff Treats',
     description: 'Light, crunchy puffed treats made from yak milk. A delicious reward your dog will love.',
     href: '/products/puff-treats',
-    image: '/images/puff-treats-category.jpg',
+    image: '/images/puff-treats-crunchy-puff-chew-pouch.jpg',
+    imageAlt: 'Highland Yak Chew Crunchy Puff Chew pouch with puffed yak milk treats visible through the window',
     color: 'from-rose-500 to-pink-600',
   },
   {
     title: 'Highland Mix Chews',
     description: 'A premium blend of Himalayan ingredients for a unique chewing experience.',
     href: '/products/highland-mix',
-    image: '/images/highland-mix-category.jpg',
+    image: '/images/highland-mix-gift-box-range.jpg',
+    imageAlt: 'Highland Yak Chew gift box with flavoured milk chews, an unpuffed chew pouch and a crunchy puff chew pouch',
     color: 'from-emerald-500 to-teal-600',
   },
 ];
@@ -58,7 +61,7 @@ export default function ProductsLandingPage() {
                   <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-20 group-hover:opacity-30 transition-opacity`} />
                   <Image
                     src={category.image || '/fallback.svg'}
-                    alt={category.title}
+                    alt={category.imageAlt}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"
                     sizes="(max-width: 768px) 100vw, 33vw"

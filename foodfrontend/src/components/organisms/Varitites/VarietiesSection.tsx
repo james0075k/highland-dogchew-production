@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, useInView, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView, useMotionTemplate, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import { varietyPhoto } from '@/app/data/varietyPhotos';
 
 type Variety = {
   _id: string;
@@ -89,84 +90,164 @@ const getAccent = (name: string) => accentMap[name] || { bg: 'bg-[#B8976A]/10', 
 /* ═══════════════════════════════════════════════
    DESKTOP VARIETY CARD
    ═══════════════════════════════════════════════ */
+const TILT = 9;        // max tilt in degrees towards the cursor
+const PARALLAX = 14;   // px the photo drifts the opposite way, for depth
+const SPRING = { stiffness: 220, damping: 22, mass: 0.6 };
+
 function VarietyCard({ variety, index, onClick, prefersReduced }: { variety: Variety; index: number; onClick: () => void; prefersReduced: boolean | null }) {
   const [hovered, setHovered] = useState(false);
   const accent = getAccent(variety.name);
+  const photo = varietyPhoto(variety);
+
+  // Pointer position over the card, -0.5 … 0.5 on each axis.
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+  const sx = useSpring(px, SPRING);
+  const sy = useSpring(py, SPRING);
+  const rotateX = useTransform(sy, [-0.5, 0.5], [TILT, -TILT]);
+  const rotateY = useTransform(sx, [-0.5, 0.5], [-TILT, TILT]);
+  const imgX = useTransform(sx, [-0.5, 0.5], [PARALLAX, -PARALLAX]);
+  const imgY = useTransform(sy, [-0.5, 0.5], [PARALLAX, -PARALLAX]);
+  const glowX = useTransform(sx, [-0.5, 0.5], [0, 100]);
+  const glowY = useTransform(sy, [-0.5, 0.5], [0, 100]);
+  const glow = useMotionTemplate`radial-gradient(circle at ${glowX}% ${glowY}%, rgba(255,240,215,0.28), transparent 55%)`;
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (prefersReduced) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    px.set((e.clientX - r.left) / r.width - 0.5);
+    py.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const handleLeave = () => {
+    setHovered(false);
+    px.set(0);
+    py.set(0);
+  };
+
+  // Cards fan in from alternating angles, then settle flat.
+  const fan = index % 2 === 0 ? -5 : 5;
 
   return (
-    <motion.div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group relative overflow-hidden rounded-2xl cursor-pointer shadow-md hover:shadow-2xl dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-400"
-      style={{ aspectRatio: '3 / 4' }}
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '0px 0px -60px 0px', amount: 0.1 }}
-      transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -6 }}
-    >
-      <Image
-        src={variety.image || '/placeholder.jpg'}
-        alt={variety.name}
-        fill
-        className="object-cover"
-        style={{
-          transform: hovered && !prefersReduced ? 'scale(1.08)' : 'scale(1)',
-          transition: 'transform 0.6s ease-out',
+    <div style={{ perspective: 1100 }}>
+      <motion.div
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseMove={handleMove}
+        onMouseLeave={handleLeave}
+        className="group relative overflow-hidden rounded-2xl cursor-pointer shadow-md hover:shadow-2xl dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-shadow duration-500"
+        style={{ aspectRatio: '3 / 4', rotateX, rotateY, transformStyle: 'preserve-3d' }}
+        // The card owns the in-view trigger; the photo and label below follow it
+        // through variants. (A child starting at clip-path inset(100%) never
+        // reports as visible, so it can't trigger its own reveal.)
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '0px 0px -60px 0px', amount: 0.15 }}
+        variants={{
+          hidden: prefersReduced ? { opacity: 0 } : { opacity: 0, y: 70, rotate: fan, scale: 0.9 },
+          show: {
+            opacity: 1, y: 0, rotate: 0, scale: 1,
+            transition: { type: 'spring', stiffness: 90, damping: 14, mass: 0.9, delay: index * 0.12 },
+          },
         }}
-        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-      />
-
-      {/* gradient overlay */}
-      <div
-        className={`absolute inset-0 bg-gradient-to-b ${accent.gradient} transition-opacity duration-500`}
-        style={{ opacity: hovered ? 0.85 : 0.6 }}
-      />
-
-      {/* stitch corners */}
-      <div className="absolute inset-0">
-        <StitchCorner pos="tl" />
-        <StitchCorner pos="br" />
-      </div>
-
-      {/* paw watermark */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-[0.12] transition-opacity duration-500">
-        <PawSvg className="w-10 h-10 text-white" />
-      </div>
-
-      {/* top label */}
-      <div className="absolute top-5 left-5 right-5 z-10">
-        <p className="text-white/60 text-[10px] font-semibold tracking-[0.22em] uppercase mb-1" style={{ fontFamily: 'var(--font-dm-sans)' }}>
-          {variety.category || 'Special Variety'}
-        </p>
-        <h3 className="text-white text-[24px] leading-tight drop-shadow-md" style={{ fontFamily: "var(--font-playfair), 'Playfair Display', serif" }}>
-          {variety.name}
-        </h3>
-      </div>
-
-      {/* description overlay */}
-      {variety.description && (
-        <div className="absolute left-5 right-5 bottom-16 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-          <p className="text-white/70 text-[13px] leading-relaxed line-clamp-2" style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif" }}>
-            {variety.description}
-          </p>
-        </div>
-      )}
-
-      {/* CTA button */}
-      <div
-        className="absolute bottom-0 left-0 right-0 p-4 flex transition-all duration-400 ease-out z-10"
-        style={{
-          opacity: hovered ? 1 : 0,
-          transform: hovered ? 'translateY(0)' : 'translateY(14px)',
-        }}
+        whileHover={prefersReduced ? undefined : { y: -10, scale: 1.02 }}
+        whileTap={prefersReduced ? undefined : { scale: 0.98 }}
       >
-        <button className="flex-1 h-11 bg-gradient-to-r from-[#B8976A] to-[#9A7B52] hover:from-[#9A7B52] hover:to-[#7A5C4F] text-white text-[11px] font-semibold tracking-[0.16em] uppercase flex items-center justify-center rounded-xl shadow-lg transition-all duration-300" style={{ fontFamily: 'var(--font-dm-sans)' }}>
-          Buy Product
-        </button>
-      </div>
-    </motion.div>
+        {/* Photo: curtain reveal + zoom-settle on entry, parallax drift on hover */}
+        <motion.div
+          className="absolute -inset-4"
+          style={prefersReduced ? undefined : { x: imgX, y: imgY }}
+          variants={prefersReduced ? undefined : {
+            hidden: { clipPath: 'inset(100% 0 0 0)', scale: 1.3 },
+            show: {
+              clipPath: 'inset(0% 0 0 0)', scale: 1,
+              transition: { duration: 1.1, delay: 0.1 + index * 0.12, ease: [0.22, 1, 0.36, 1] },
+            },
+          }}
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            fill
+            className="object-cover"
+            style={{
+              transform: hovered && !prefersReduced ? 'scale(1.1)' : 'scale(1.02)',
+              transition: 'transform 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+            sizes="(max-width: 1024px) 55vw, 30vw"
+          />
+        </motion.div>
+
+        {/* gradient overlay */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-b ${accent.gradient} transition-opacity duration-500`}
+          style={{ opacity: hovered ? 0.8 : 0.55 }}
+        />
+
+        {/* soft light that follows the cursor */}
+        {!prefersReduced && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none mix-blend-soft-light transition-opacity duration-300"
+            style={{ background: glow, opacity: hovered ? 1 : 0 }}
+          />
+        )}
+
+        {/* stitch corners */}
+        <div className="absolute inset-0">
+          <StitchCorner pos="tl" />
+          <StitchCorner pos="br" />
+        </div>
+
+        {/* paw watermark */}
+        <motion.div
+          className="absolute top-4 right-4"
+          animate={{ opacity: hovered ? 0.18 : 0, rotate: hovered ? -12 : 0, scale: hovered ? 1 : 0.6 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+        >
+          <PawSvg className="w-10 h-10 text-white" />
+        </motion.div>
+
+        {/* top label */}
+        <motion.div
+          className="absolute top-5 left-5 right-5 z-10"
+          variants={prefersReduced ? undefined : {
+            hidden: { opacity: 0, y: -12 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.45 + index * 0.12 } },
+          }}
+        >
+          <p className="text-white/70 text-[10px] font-semibold tracking-[0.22em] uppercase mb-1" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+            {variety.category || 'Special Variety'}
+          </p>
+          <h3 className="text-white text-[24px] leading-tight drop-shadow-md" style={{ fontFamily: "var(--font-playfair), 'Playfair Display', serif" }}>
+            {variety.name}
+          </h3>
+        </motion.div>
+
+        {/* description overlay */}
+        {variety.description && (
+          <div
+            className="absolute left-5 right-5 bottom-16 z-10 transition-all duration-500"
+            style={{ opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(10px)' }}
+          >
+            <p className="text-white/80 text-[13px] leading-relaxed line-clamp-2" style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif" }}>
+              {variety.description}
+            </p>
+          </div>
+        )}
+
+        {/* CTA button */}
+        <div
+          className="absolute bottom-0 left-0 right-0 p-4 flex transition-all duration-500 ease-out z-10"
+          style={{
+            opacity: hovered ? 1 : 0,
+            transform: hovered ? 'translateY(0)' : 'translateY(16px)',
+          }}
+        >
+          <button className="flex-1 h-11 bg-gradient-to-r from-[#B8976A] to-[#9A7B52] hover:from-[#9A7B52] hover:to-[#7A5C4F] text-white text-[11px] font-semibold tracking-[0.16em] uppercase flex items-center justify-center rounded-xl shadow-lg transition-all duration-300" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+            Buy Product
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -175,17 +256,35 @@ function VarietyCard({ variety, index, onClick, prefersReduced }: { variety: Var
    ═══════════════════════════════════════════════ */
 function MobileVarietyCard({ variety, onClick }: { variety: Variety; onClick: () => void }) {
   const accent = getAccent(variety.name);
+  const photo = varietyPhoto(variety);
+  const prefersReduced = useReducedMotion();
 
   return (
-    <div onClick={onClick} className="relative overflow-hidden rounded-2xl shadow-md cursor-pointer" style={{ aspectRatio: '3 / 4' }}>
-      <Image src={variety.image || '/placeholder.jpg'} alt={variety.name} fill className="object-cover" />
-      <div className={`absolute inset-0 bg-gradient-to-b ${accent.gradient} opacity-65`} />
+    <motion.div
+      onClick={onClick}
+      className="relative overflow-hidden rounded-2xl shadow-md cursor-pointer"
+      style={{ aspectRatio: '3 / 4' }}
+      initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 30, scale: 0.95 }}
+      whileInView={prefersReduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+      whileTap={prefersReduced ? undefined : { scale: 0.97 }}
+    >
+      {/* slow drift so the photo feels alive on touch screens, which have no hover */}
+      <motion.div
+        className="absolute inset-0"
+        animate={prefersReduced ? undefined : { scale: [1.04, 1.12, 1.04] }}
+        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <Image src={photo.src} alt={photo.alt} fill sizes="85vw" className="object-cover" />
+      </motion.div>
+      <div className={`absolute inset-0 bg-gradient-to-b ${accent.gradient} opacity-60`} />
 
       <StitchCorner pos="tl" />
       <StitchCorner pos="br" />
 
       <div className="absolute top-5 left-5 right-5 z-10">
-        <p className="text-white/60 text-[10px] font-semibold tracking-[0.22em] uppercase mb-1" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+        <p className="text-white/70 text-[10px] font-semibold tracking-[0.22em] uppercase mb-1" style={{ fontFamily: 'var(--font-dm-sans)' }}>
           {variety.category || 'Special Variety'}
         </p>
         <h3 className="text-white text-[24px] leading-tight drop-shadow-md" style={{ fontFamily: "var(--font-playfair), 'Playfair Display', serif" }}>
@@ -198,7 +297,7 @@ function MobileVarietyCard({ variety, onClick }: { variety: Variety; onClick: ()
           Buy Product
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -444,9 +543,13 @@ const VarietiesSection = () => {
       {/* ═══════ DOG PHOTO STRIP ═══════ */}
       <FadeUp className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-3 gap-3 md:gap-5">
-          {['/images/dog-9.webp', '/images/dog-20.webp', '/images/dog-31.webp'].map((src, i) => (
+          {[
+            { src: '/images/instagram/strawberry-yak-milk-dog-chews.webp', alt: 'Strawberry yak milk dog chews with fresh strawberries' },
+            { src: '/images/instagram/blueberry-yak-milk-dog-chews.webp', alt: 'Blueberry yak milk dog chews scattered with fresh blueberries' },
+            { src: '/images/blog/turmeric-yak-milk-dog-chew-real-turmeric.webp', alt: 'Turmeric yak milk dog chews beside fresh turmeric root' },
+          ].map(({ src, alt }, i) => (
             <motion.div key={src} initial={{ opacity: 0, scale: 0.92 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: i * 0.1 }} className="relative aspect-[4/3] rounded-2xl overflow-hidden group">
-              <Image src={src} alt="Dog enjoying flavoured yak chew" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Image src={src} alt={alt} fill sizes="33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a1410]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-25 transition-opacity duration-500">
                 <PawSvg className="w-7 h-7 text-white" />

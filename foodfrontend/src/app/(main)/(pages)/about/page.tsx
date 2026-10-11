@@ -603,8 +603,8 @@ const AboutPage = () => {
                 <div className="relative">
                   <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/10 aspect-[4/5]">
                     <Image
-                      src="/images/dog-12.webp"
-                      alt="Golden retriever in nature"
+                      src="/images/blog/himalayan-yak-chew-churpi-hard-cheese-nepal.webp"
+                      alt="Natural Himalayan yak chews beside a Highland Yak Chew pack illustrated with yaks and mountains"
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 50vw"

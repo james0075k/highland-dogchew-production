@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import VarietyDetailClient from './VarietyDetailClient';
 import { BRAND, BASE_URL, JsonLd, metaDescription, buildBreadcrumbJsonLd } from '@/utils/seo';
+import { varietyPhoto } from '@/app/data/varietyPhotos';
 
 export const revalidate = 300;
 
@@ -30,7 +31,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     variety.description,
     `Explore ${variety.name} flavour natural yak milk dog chews from ${BRAND}. ${variety.productCount || ''} products. Free UK delivery over £30.`
   );
-  const image = variety.image;
+  // Social cards need an absolute URL; curated photos are site-relative.
+  const photo = varietyPhoto(variety).src;
+  const image = photo.startsWith('/') ? `${BASE_URL}${photo}` : photo;
 
   return {
     title,

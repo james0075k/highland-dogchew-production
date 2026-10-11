@@ -175,9 +175,9 @@ const buildOrganizationSchema = (site?: { count: number; rating: number }) => ({
   image: `${BASE_URL}/og-image.jpg`,
   description: 'Premium natural yak milk dog chews and Himalayan dog treats, handcrafted for healthy, happy dogs.',
   sameAs: [
-    'https://www.instagram.com/highlanddogchew',
+    'https://www.instagram.com/highlandyakchew/',
     'https://www.tiktok.com/@highlanddogchew',
-    'https://www.facebook.com/highlanddogchew',
+    'https://www.facebook.com/profile.php?id=61587628198013',
   ],
   contactPoint: {
     '@type': 'ContactPoint',

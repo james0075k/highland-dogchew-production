@@ -19,15 +19,18 @@ interface Post {
 }
 
 /* ─── Fallback (static) posts ───────────────────────────────────────── */
+// Shown only when no posts have been added in Dashboard → Instagram.
+// Real photos from @highlandyakchew, so the fallback never shows stock dogs.
+const IG_PROFILE = 'https://www.instagram.com/highlandyakchew/';
 const FALLBACK: Post[] = [
-  { id: 'f1', image: '/images/dog-28.webp', caption: 'Happy dog enjoying a Highland Yak Chew!', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
-  { id: 'f2', image: '/images/dog-13.webp', caption: 'Long-lasting yak milk chews — your dog will love them!', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
-  { id: 'f3', image: '/images/dog-17.webp', caption: 'Natural & grain-free. Made from authentic mountain recipes.', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
-  { id: 'f4', image: '/images/dog-25.webp', caption: 'Your dog deserves the best — try Highland Yak Chew!', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
-  { id: 'f5', image: '/images/dog-23.webp', caption: 'Unboxing day! Himalayan Puff Treats have arrived', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
-  { id: 'f6', image: '/images/dog-21.webp', caption: 'Dental health + happy dog = Highland Yak Chew', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
-  { id: 'f7', image: '/images/dog-16.webp', caption: 'Puppy approved! Yak Milk Chews for every breed', permalink: 'https://instagram.com/highlanddogchew', isVideo: true },
-  { id: 'f8', image: '/images/dog-33.webp', caption: '100% natural. No grain. No gluten. Just goodness.', permalink: 'https://instagram.com/highlanddogchew', isVideo: false },
+  { id: 'f1', image: '/images/blog/are-yak-chews-safe-dog-chewing-highland-yak-chew.webp', caption: 'Fox red Labrador carrying a strawberry Highland Yak Chew across the garden', permalink: IG_PROFILE },
+  { id: 'f2', image: '/images/blog/yak-milk-dog-chews-original-strawberry-blueberry-turmeric.webp', caption: 'Four flavours of yak milk chew: original, strawberry, blueberry and turmeric', permalink: IG_PROFILE },
+  { id: 'f3', image: '/images/blog/how-long-do-yak-chews-last-pug-chewing.webp', caption: 'Black pug settling in on the sofa with a strawberry yak chew', permalink: IG_PROFILE },
+  { id: 'f4', image: '/images/blog/highland-gift-box-yak-chews-puff-treats.webp', caption: 'The Highland Gift Box: flavoured chews, puffed and unpuffed treats', permalink: IG_PROFILE },
+  { id: 'f5', image: '/images/blog/yak-chew-size-guide-small-dogs-pugs.webp', caption: 'Two pugs checking out their first Highland Yak Chew', permalink: IG_PROFILE },
+  { id: 'f6', image: '/images/instagram/blueberry-yak-milk-dog-chews.webp', caption: 'Blueberry yak milk chews, made with real blueberries', permalink: IG_PROFILE },
+  { id: 'f7', image: '/images/blog/crunchy-puffed-yak-chew-treats-pouch.webp', caption: 'Crunchy Puff Chew: puffed yak milk treats', permalink: IG_PROFILE },
+  { id: 'f8', image: '/images/blog/turmeric-yak-milk-dog-chew-real-turmeric.webp', caption: 'Turmeric yak milk chews, made with real turmeric', permalink: IG_PROFILE },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
@@ -185,8 +188,8 @@ function PostCard({ post, index }: { post: Post; index: number }) {
 export default function InstagramFeedSection() {
   const [posts, setPosts]           = useState<Post[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [igUrl, setIgUrl]           = useState('https://www.instagram.com/highlanddogchew/');
-  const [handle, setHandle]         = useState('highlanddogchew');
+  const [igUrl, setIgUrl]           = useState(IG_PROFILE);
+  const [handle, setHandle]         = useState('highlandyakchew');
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 

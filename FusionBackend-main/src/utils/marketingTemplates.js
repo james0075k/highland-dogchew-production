@@ -220,9 +220,9 @@ export function reviewRequestEmailHtml({ firstName, orderNumber, items, unsubscr
 // ─── Newsletter ───────────────────────────────────────────────────────────────
 
 const RANGE = [
-  { img: 'yak-milk-category.jpg', label: 'Yak Milk Chews', blurb: 'Long-lasting natural chews', href: '/products/yak-chews' },
-  { img: 'puff-treats-category.jpg', label: 'Puff Treats', blurb: 'Light &amp; crunchy rewards', href: '/products/puff-treats' },
-  { img: 'highland-mix-category.jpg', label: 'Highland Mix', blurb: 'Premium blended chews', href: '/products/highland-mix' },
+  { img: 'yak-milk-chews-four-flavours.jpg', label: 'Yak Milk Chews', blurb: 'Long-lasting natural chews', href: '/products/yak-chews' },
+  { img: 'puff-treats-crunchy-puff-chew-pouch.jpg', label: 'Puff Treats', blurb: 'Light &amp; crunchy rewards', href: '/products/puff-treats' },
+  { img: 'highland-mix-gift-box-range.jpg', label: 'Highland Mix', blurb: 'Premium blended chews', href: '/products/highland-mix' },
 ];
 
 function rangeStrip() {

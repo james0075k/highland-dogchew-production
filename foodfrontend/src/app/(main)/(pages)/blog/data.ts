@@ -1,3 +1,5 @@
+import { guidePosts } from './guides';
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -5,6 +7,8 @@ export interface BlogPost {
   content: string;
   category: string;
   date: string;
+  /** Set when a published post is substantially rewritten; becomes dateModified. */
+  updated?: string;
   readTime: string;
   image: string;
   imageAlt: string;
@@ -21,7 +25,9 @@ export interface BlogPost {
   faqs?: { question: string; answer: string }[];
 }
 
+// Array order is listing order: the first post is featured on /blog.
 export const blogPosts: BlogPost[] = [
+  ...guidePosts,
   {
     slug: 'yak-chew-vs-bone-which-is-safer-for-your-dog',
     title: 'Yak Chew vs Bone: Which Is Actually Safer for Your Dog?',
@@ -189,7 +195,7 @@ We ship across the **United Kingdom** from [highlanddogchew.co.uk](/products) �
 - [**Puff Treats**](/products/puff-treats) — light, airy and crunchy; gentler for puppies and senior dogs
 - [**Highland Mix**](/products/highland-mix) — a variety box, ideal for multi-dog households
 
-Follow us on [Instagram](https://www.instagram.com/highlanddogchew) and [Facebook](https://www.facebook.com/highlanddogchew) for new flavours, offers, and rather a lot of happy dogs.
+Follow us on [Instagram](https://www.instagram.com/highlandyakchew/) and [Facebook](https://www.facebook.com/profile.php?id=61587628198013) for new flavours, offers, and rather a lot of happy dogs.
 
 *Natural chews. Happy dogs. Better chewing habits.* 🐾
     `.trim(),
@@ -470,99 +476,6 @@ We source every chew directly from Himalayan farming cooperatives, ensuring fair
     `.trim(),
   },
   {
-    slug: 'are-yak-chews-safe-for-dogs',
-    title: 'Are Yak Chews Safe for Dogs? Everything You Need to Know',
-    excerpt:
-      'Yak chews have become one of the most popular long-lasting dog treats in the UK. But are they actually safe? We break down the science, the ingredients, and the facts every responsible dog owner should know before buying.',
-    category: 'Dog Health',
-    date: '2026-03-10',
-    readTime: '5 min read',
-    image: '/images/dog-28.webp',
-    imageAlt: 'Golden Retriever happily chewing a natural yak milk chew on grass',
-    author: 'Highland Yak Chew Team',
-    content: `
-## Are Yak Chews Safe for Dogs?
-
-Yak chews — also known as Himalayan dog chews or yak milk chews — are made from just three natural ingredients: yak milk, cow milk, and a small amount of lime juice and salt. No preservatives, no artificial additives, no chemicals. They have been a staple in Himalayan communities for centuries, and today they are one of the most trusted natural chews available for dogs in the UK and across Europe.
-
-### Why They Are Safe
-
-- **Natural ingredients only**: The simple, time-tested recipe contains no BHA, BHT, artificial colours, or flavour enhancers — just pure dairy protein that has been smoked and sun-dried at high altitude.
-- **High protein, low fat**: With over 55% protein and less than 5% fat per chew, yak chews support lean muscle development without contributing to weight gain — making them an excellent choice for dogs on calorie-controlled diets.
-- **Grain-free and gluten-free**: Ideal for dogs with grain sensitivities, wheat allergies, or digestive issues triggered by common fillers found in commercial treats.
-- **Long-lasting and fully digestible**: Unlike rawhide — which can swell in the stomach and cause intestinal blockages — yak chews soften gradually as your dog works through them and are broken down naturally during digestion.
-- **No splintering risk**: Unlike antlers or cooked bones, yak chews do not splinter into sharp fragments, reducing the risk of internal cuts or choking.
-
-### Dental Health Benefits
-
-Veterinary research consistently shows that the mechanical action of chewing helps reduce plaque and tartar build-up. The firm texture of a yak chew works like a natural toothbrush — scraping teeth clean while your dog enjoys every minute. Regular chewing has been linked to fresher breath, healthier gums, and reduced risk of periodontal disease.
-
-### Size Matters
-
-Always choose the correct size for your dog. A chew that is too small can become a choking hazard if swallowed whole. Refer to our [Size Guide](/products/yak-chews) to pick the right fit based on your dog's weight and chewing style.
-
-### The Puff Treat Bonus
-
-When a yak chew gets too small to chew safely, do not throw it away. Microwave the end piece for 30–60 seconds and watch it puff up into a crunchy, airy treat — a completely safe, zero-waste snack your dog will love.
-
-### Who Should Be Cautious?
-
-- Puppies under 16 weeks whose adult teeth have not yet erupted
-- Dogs with a confirmed dairy allergy (note: yak milk contains significantly less lactose than regular cow milk)
-- Dogs recovering from dental surgery or those with cracked or fractured teeth
-- Very aggressive power chewers — consider sizing up to an XL chew
-
-### The Verdict
-
-Yak chews are one of the safest, most nutritious long-lasting treats available for dogs of all breeds. They are recommended by veterinarians, backed by centuries of traditional use, and loved by millions of dogs worldwide. Always supervise your dog while chewing and remove any small pieces that could pose a risk.
-    `.trim(),
-  },
-  {
-    slug: 'how-highland-yak-chews-are-made',
-    title: 'How Highland Yak Chews Are Made: From Nepal to Your Dog',
-    excerpt:
-      'Ever wondered what goes into making an authentic Highland Yak Chew? The answer is centuries of Himalayan tradition, sustainable farming, and just three natural ingredients — no factories, no chemicals, just pure craftsmanship.',
-    category: 'Our Story',
-    date: '2026-03-04',
-    readTime: '6 min read',
-    image: '/images/dog-5.webp',
-    imageAlt: 'Husky standing in a snowy highland landscape, evoking Himalayan origins',
-    author: 'Highland Yak Chew Team',
-    content: `
-## From the Himalayas to Your Dog's Bowl
-
-The story of yak chews begins over 4,000 metres above sea level in the Himalayan mountains of Nepal, where herding communities have been pressing yak and cow milk into hard cheese blocks for generations. Originally crafted as a high-protein food source for herders embarking on long mountain journeys, this ancient recipe has found a new purpose — providing dogs with one of the healthiest, most natural chews on the planet.
-
-### The Three Ingredients
-
-1. **Yak milk** — The primary ingredient, naturally rich in protein, calcium, and omega-3 fatty acids. Yaks graze freely on wild Himalayan herbs and grasses, giving the milk its distinctive nutritional profile.
-2. **Cow milk** — Blended with yak milk to achieve the ideal firmness and texture. The ratio is carefully controlled to ensure consistency across every batch.
-3. **Lime juice & salt** — Used as natural coagulants to separate the curds from the whey. No artificial preservatives, no chemicals — just the same technique used for centuries.
-
-### The Traditional Process
-
-- **Step 1 — Milking**: Yaks and cows are milked by hand in small Himalayan villages, often at elevations above 3,500 metres.
-- **Step 2 — Boiling & skimming**: The milk is boiled in large copper vessels over wood fires. The cream is skimmed off and used separately.
-- **Step 3 — Curdling**: Fresh lime juice is added to the hot milk, causing it to separate into curds and whey. The curds are strained through cotton cloth.
-- **Step 4 — Pressing**: The curds are packed into wooden moulds and pressed under heavy stones for several hours to extract all remaining moisture.
-- **Step 5 — Smoking**: The compressed blocks are hung above a slow-burning wood fire, absorbing a subtle smoky flavour that dogs find irresistible.
-- **Step 6 — Sun-drying**: The smoked blocks are moved outdoors and sun-dried for 4–8 weeks at high altitude, where the cold, dry air removes moisture slowly and naturally.
-- **Step 7 — Quality grading**: Each chew is inspected by hand for cracks, density, and weight before being approved for export.
-
-### Why This Method Works
-
-The high altitude and cold mountain air allow the chews to dry slowly and naturally, locking in nutrients without any chemical processing. This slow dehydration is what gives authentic Highland Yak Chews their incredible hardness and long shelf life — typically 3–5 years without refrigeration.
-
-### Our Commitment to Fair Trade
-
-At Highland Yak Chew, we work directly with Himalayan farming cooperatives, ensuring fair wages and sustainable practices. Every chew you buy supports rural livelihoods in some of the most remote communities on Earth.
-
-### Why Authenticity Matters
-
-Not all "yak chews" are genuine. Some mass-produced alternatives use mostly cow milk, add binding agents, or skip the traditional smoking and drying process. At Highland Yak Chew, we guarantee that every chew is authentically Himalayan-made using the original recipe — because your dog deserves the real thing.
-    `.trim(),
-  },
-  {
     slug: 'top-5-benefits-yak-milk-chews-dogs',
     title: 'Top 5 Benefits of Yak Milk Chews for Dogs',
     excerpt:
@@ -621,59 +534,6 @@ This means every single gram of the chew gets used. No waste, no guilt, and one 
 ### Shop Our Range
 
 Browse our [Yak Milk Chews](/products/yak-chews), [Himalayan Puff Treats](/products/puff-treats), and [Highland Mix Chews](/products/highland-mix) to find the perfect treat for your dog.
-    `.trim(),
-  },
-  {
-    slug: 'yak-chew-size-guide',
-    title: 'Yak Chew Size Guide: Choosing the Right Chew for Your Dog',
-    excerpt:
-      'Picking the wrong size yak chew can be a safety hazard — too small and it is a choking risk, too large and your dog loses interest. Here is a comprehensive guide to choosing the perfect size for every breed and weight.',
-    category: 'Buying Guide',
-    date: '2026-02-10',
-    readTime: '4 min read',
-    image: '/images/dog-31.webp',
-    imageAlt: 'Multiple dog breeds of different sizes looking upward together',
-    author: 'Highland Yak Chew Team',
-    content: `
-## Choosing the Right Size Yak Chew
-
-Getting the right size chew is essential for both safety and satisfaction. A chew that is too small can become a choking risk if swallowed whole, while one that is too large may discourage your dog from even starting. The perfect chew should be at least 1.5 times the width of your dog's mouth.
-
-### Size Guide by Dog Weight
-
-| Dog Weight | Recommended Size | Example Breeds |
-|------------|-----------------|----------------|
-| Under 5 kg | XS / Puppy | Chihuahua, Yorkshire Terrier, Maltese |
-| 5–15 kg | Small | Cavalier King Charles, Dachshund, Shih Tzu |
-| 15–30 kg | Medium | Cocker Spaniel, Border Collie, Beagle |
-| 30–45 kg | Large | Labrador, Golden Retriever, Boxer |
-| 45 kg+ | XL / Jumbo | German Shepherd, Rottweiler, Great Dane |
-
-### Adjusting for Chewing Style
-
-Not all dogs chew the same way. Consider your dog's chewing personality:
-
-- **Gentle chewers**: These dogs lick and nibble slowly. The standard size recommendation works well — they will enjoy the chew for hours.
-- **Moderate chewers**: Most dogs fall into this category. Stick with the recommended size and supervise for the first session to gauge how quickly they work through it.
-- **Power chewers**: Dogs like Staffies, Pit Bulls, and working breeds who demolish toys in minutes. Always go one size up from the guide above. An XL chew is worth the extra cost for safety and longevity.
-
-### Age-Specific Advice
-
-- **Puppies (16 weeks to 6 months)**: Start with puppy-sized chews and supervise every session. Their teeth and jaws are still developing — a chew that is too hard may cause discomfort.
-- **Adult dogs (1–7 years)**: Follow the weight guide above and adjust for chewing style.
-- **Senior dogs (7+ years)**: Older dogs may have weakened teeth or gum sensitivity. Choose a slightly smaller or softer variety, or try our Puff Treats for a gentler chewing experience.
-
-### Safety Tips
-
-- Always supervise your dog during the first few chewing sessions
-- Replace the chew when it becomes small enough to swallow whole
-- Do not give yak chews to dogs under 16 weeks old
-- If a piece breaks off, remove it immediately
-- Remember: microwave the end piece to make a puff treat — zero waste
-
-### Need Help?
-
-If you are unsure which size is right for your dog, [contact us](/contact) and our team will be happy to recommend the perfect chew based on your dog's breed, weight, and chewing habits.
     `.trim(),
   },
   {

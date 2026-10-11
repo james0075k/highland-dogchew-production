@@ -22,11 +22,22 @@ const OUT_DIR = path.join(PUBLIC_IMAGES, 'email');
 // its own copy on disk — it can't reach the frontend's public folder.
 const BACKEND_ASSETS = path.join(process.cwd(), '..', 'FusionBackend-main', 'assets', 'email');
 
-// Chosen for warm, brand-matching tones and — importantly — no photographer
-// watermark. dog-12.webp is watermarked and must not be used in marketing.
+// Our own photos from the @highlandyakchew Instagram export, so the email shows
+// the actual product. (The old stock dog-*.webp sources are not ours to use —
+// dog-12.webp even carries a photographer watermark.)
+// `height` + `position` crop to a fixed shape; omit them to keep the source ratio.
 const JOBS = [
-  { src: 'dog-20.webp', out: 'review-hero.jpg', width: 1200 },
-  { src: 'dog-1.webp', out: 'newsletter-hero.jpg', width: 1200 },
+  { src: 'blog/are-yak-chews-safe-dog-chewing-highland-yak-chew.webp', out: 'review-hero.jpg', width: 1200, height: 800, position: 'north' },
+  { src: 'blog/yak-chew-ingredients-yak-cow-milk-natural-flavours.webp', out: 'newsletter-hero.jpg', width: 1200, height: 600, position: 'centre' },
+];
+
+// Category cards: shown on /products and linked (not embedded) by the
+// newsletter's range strip, so they live in public/images and must stay JPEG.
+// Keep the old *-category.jpg files: newsletters already sent still link to them.
+const CATEGORY_JOBS = [
+  { src: 'blog/yak-milk-dog-chews-original-strawberry-blueberry-turmeric.webp', out: 'yak-milk-chews-four-flavours.jpg', position: 'centre' },
+  { src: 'blog/crunchy-puffed-yak-chew-treats-pouch.webp', out: 'puff-treats-crunchy-puff-chew-pouch.jpg', position: 'south' },
+  { src: 'blog/highland-gift-box-yak-chews-puff-treats.webp', out: 'highland-mix-gift-box-range.jpg', position: 'south' },
 ];
 
 // The header logo is handled separately: it must stay PNG, because it sits on
@@ -49,13 +60,24 @@ for (const job of JOBS) {
   const to = path.join(OUT_DIR, job.out);
 
   const info = await sharp(from)
-    .resize({ width: job.width, withoutEnlargement: true })
+    .resize(job.height
+      ? { width: job.width, height: job.height, fit: 'cover', position: job.position }
+      : { width: job.width, withoutEnlargement: true })
     .jpeg({ quality: 82, progressive: true, mozjpeg: true })
     .toFile(to);
 
   await copyFile(to, path.join(BACKEND_ASSETS, job.out));
 
   console.log(`${job.src} -> images/email/${job.out}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(0)} KB`);
+}
+
+for (const job of CATEGORY_JOBS) {
+  const info = await sharp(path.join(PUBLIC_IMAGES, job.src))
+    .resize({ width: 800, height: 600, fit: 'cover', position: job.position })
+    .jpeg({ quality: 82, progressive: true, mozjpeg: true })
+    .toFile(path.join(PUBLIC_IMAGES, job.out));
+
+  console.log(`${job.src} -> images/${job.out}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(0)} KB`);
 }
 
 {

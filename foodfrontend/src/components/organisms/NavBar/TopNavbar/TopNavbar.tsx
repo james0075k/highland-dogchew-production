@@ -6,7 +6,7 @@ import { Instagram, Phone, Mail } from 'lucide-react';
 const FALLBACK = {
   phone: '+9779851254578',
   email: 'sales@highland1.com',
-  instagram: 'https://instagram.com/highlanddogchew',
+  instagram: 'https://www.instagram.com/highlandyakchew/',
 };
 
 const TopNavbar = () => {

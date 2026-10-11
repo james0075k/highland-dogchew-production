@@ -275,7 +275,7 @@ const PillarsSection = () => {
       <FadeUp delay={0.1}>
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
           <div className="grid grid-cols-3 gap-3 md:gap-5">
-            {["/images/dog-12.webp", "/images/dog-18.webp", "/images/dog-25.webp"].map((src, i) => (
+            {["/images/blog/long-lasting-natural-dog-chew-labrador-garden.webp", "/images/blog/how-long-do-yak-chews-last-pug-chewing.webp", "/images/blog/dog-christmas-gift-box-uk-highland-yak-chew.webp"].map((src, i) => (
               <motion.div
                 key={src}
                 initial={{ opacity: 0, scale: 0.92 }}

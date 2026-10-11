@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { blogPosts } from '../data';
+import { PROMO } from '@/utils/promo';
 
 const BASE_URL = 'https://highlanddogchew.co.uk';
 
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `${BASE_URL}/blog/${post.slug}`,
       type: 'article',
       publishedTime: post.date,
+      modifiedTime: post.updated ?? post.date,
       images: [{ url: post.image, width: 1200, height: 630, alt: post.title }],
     },
   };
@@ -48,7 +50,10 @@ function renderMarkdown(md: string) {
   const flushTable = () => {
     if (!tableRows.length) return;
     const [headerRow, , ...bodyRows] = tableRows;
-    const headers = headerRow.split('|').map((s) => s.trim()).filter(Boolean);
+    // Drop only the empty strings outside the leading/trailing pipes, so a blank
+    // corner header cell ("| | A | B |") keeps the columns aligned.
+    const splitRow = (row: string) => row.trim().replace(/^\||\|$/g, '').split('|').map((s) => s.trim());
+    const headers = splitRow(headerRow);
     elements.push(
       <div key={key++} className="overflow-x-auto my-8 rounded-xl border" style={{ borderColor: 'var(--border-base)' }}>
         <table className="w-full text-sm border-collapse">
@@ -61,11 +66,11 @@ function renderMarkdown(md: string) {
           </thead>
           <tbody>
             {bodyRows.map((row, ri) => {
-              const cells = row.split('|').map((s) => s.trim()).filter(Boolean);
+              const cells = splitRow(row);
               return (
                 <tr key={ri} style={{ background: ri % 2 === 0 ? 'var(--surface-card)' : 'var(--surface-page)' }}>
                   {cells.map((c, ci) => (
-                    <td key={ci} className="px-5 py-3 border-b" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-base)' }}>{c}</td>
+                    <td key={ci} className="px-5 py-3 border-b" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-base)' }}>{c.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 === 0 ? part : <strong key={i} style={{ color: 'var(--text-primary)' }}>{part}</strong>))}</td>
                   ))}
                 </tr>
               );
@@ -85,6 +90,30 @@ function renderMarkdown(md: string) {
       continue;
     }
     if (inTable) flushTable();
+
+    // ![alt text](/images/blog/file.webp 1200x900) — the dimensions reserve
+    // space so the page doesn't jump while the image loads.
+    const img = line.match(/^!\[(.+?)\]\((\S+?)\s+(\d+)x(\d+)\)$/);
+    if (img) {
+      const [, alt, src, w, h] = img;
+      elements.push(
+        <figure key={key++} className="my-8">
+          <Image
+            src={src}
+            alt={alt}
+            width={Number(w)}
+            height={Number(h)}
+            sizes="(max-width: 768px) 100vw, 720px"
+            className="w-full h-auto max-h-[640px] object-contain rounded-xl"
+            style={{ background: 'var(--surface-image-bg)' }}
+          />
+          <figcaption className="text-center text-xs mt-3 italic" style={{ color: 'var(--text-muted)' }}>
+            {alt}
+          </figcaption>
+        </figure>
+      );
+      continue;
+    }
 
     if (line.startsWith('### ')) {
       elements.push(
@@ -147,6 +176,7 @@ export default async function BlogPostPage({ params }: Props) {
     headline: post.title,
     description: post.excerpt,
     datePublished: post.date,
+    dateModified: post.updated ?? post.date,
     author: { '@type': 'Organization', name: 'Highland Yak Chew', url: BASE_URL },
     publisher: {
       '@type': 'Organization',
@@ -330,6 +360,9 @@ export default async function BlogPostPage({ params }: Props) {
             </h3>
             <p className="text-sm mb-6 max-w-md mx-auto relative" style={{ color: 'var(--text-secondary)' }}>
               Browse our full range of natural yak milk chews, Himalayan puff treats, and Highland mix chews — all grain-free, all natural.
+            </p>
+            <p className="text-sm mb-6 relative" style={{ color: 'var(--text-primary)' }}>
+              Use code <strong>{PROMO.code}</strong> for {PROMO.percent}% off your order.
             </p>
             <Link
               href="/products"

@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import ProductCard from '@/components/molecules/ProductCard/ProductCard';
+import { varietyPhoto } from '@/app/data/varietyPhotos';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
@@ -98,14 +99,16 @@ export default function VarietyDetailPage() {
     );
   }
 
+  const hero = varietyPhoto(variety);
+
   return (
     <div className="min-h-screen bg-[var(--surface-page)] transition-colors duration-300">
 
       {/* ═══════ HERO ═══════ */}
       <div className="relative h-[380px] md:h-[480px] overflow-hidden">
-        {variety.image ? (
+        {hero.src !== '/placeholder.jpg' ? (
           <motion.div className="absolute inset-0" style={{ y: heroY, scale: heroScale }}>
-            <img src={variety.image} alt={variety.name} className="w-full h-full object-cover" />
+            <img src={hero.src} alt={hero.alt} className="w-full h-full object-cover" />
           </motion.div>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#B8976A] to-[#7A5C4F]" />
