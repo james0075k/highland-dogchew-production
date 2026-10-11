@@ -10,11 +10,19 @@ export default function HeroCarouselControls({ slideCount }: { slideCount: numbe
   const [current, setCurrent]     = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
+  const goTo = useCallback((i: number) => setCurrent(((i % slideCount) + slideCount) % slideCount), [slideCount]);
+
   // Sync DOM visibility whenever `current` changes.
   useEffect(() => {
     for (let i = 0; i < slideCount; i++) {
-      const img = document.querySelector<HTMLElement>(`.hero-slide-${i}`);
-      if (img) img.style.opacity = i === current ? "1" : "0";
+      const el = document.querySelector<HTMLElement>(`.hero-slide-${i}`);
+      if (el) el.style.opacity = i === current ? "1" : "0";
+
+      // Inactive video slides are stopped and rewound so they restart cleanly.
+      if (el instanceof HTMLVideoElement && i !== current) {
+        el.pause();
+        el.currentTime = 0;
+      }
 
       const txt = document.querySelector<HTMLElement>(`.hero-text-slide[data-slide="${i}"]`);
       if (txt) {
@@ -22,14 +30,59 @@ export default function HeroCarouselControls({ slideCount }: { slideCount: numbe
         txt.style.pointerEvents = i === current ? "auto" : "none";
       }
     }
+
+    const active = document.querySelector(`.hero-slide-${current}`);
+    const overlay = document.querySelector<HTMLElement>(".hero-overlay");
+    if (overlay) overlay.style.opacity = active instanceof HTMLVideoElement ? "0" : "1";
+
+    // While one film part plays, warm up the next part so the film continues
+    // across slides without a loading gap. Only from a video slide — the first
+    // part's poster is its opening frame, so it can load on demand and the
+    // initial page load downloads no video at all.
+    const next = document.querySelector(`.hero-slide-${(current + 1) % slideCount}`);
+    if (
+      active instanceof HTMLVideoElement &&
+      next instanceof HTMLVideoElement &&
+      next.readyState === HTMLMediaElement.HAVE_NOTHING
+    ) {
+      next.preload = "auto";
+      next.load();
+    }
   }, [current, slideCount]);
 
-  const goTo = useCallback((i: number) => setCurrent(((i % slideCount) + slideCount) % slideCount), [slideCount]);
-
+  // Auto-advance. Image slides hold for 6s; video slides play to the end and
+  // advance on `ended`, so the transition lands on the film's own scene change.
   useEffect(() => {
-    if (!isPlaying) return;
-    const t = setTimeout(() => goTo(current + 1), 6000);
-    return () => clearTimeout(t);
+    const el = document.querySelector(`.hero-slide-${current}`);
+
+    if (!(el instanceof HTMLVideoElement)) {
+      if (!isPlaying) return;
+      const t = setTimeout(() => goTo(current + 1), 6000);
+      return () => clearTimeout(t);
+    }
+
+    if (!isPlaying) {
+      el.pause();
+      return;
+    }
+
+    let cancelled = false;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const onEnded = () => goTo(current + 1);
+    el.addEventListener("ended", onEnded);
+    // Playing is also what triggers the (preload="none") download if it wasn't
+    // warmed up. Autoplay can be blocked (e.g. low-power mode) or the file can
+    // fail — then the poster stays visible and we fall back to the image timing
+    // so the carousel never gets stuck. `cancelled` ignores the AbortError a
+    // pending play() throws when we pause it ourselves (slide change / pause).
+    el.play().catch(() => {
+      if (!cancelled) fallback = setTimeout(() => goTo(current + 1), 6000);
+    });
+    return () => {
+      cancelled = true;
+      el.removeEventListener("ended", onEnded);
+      clearTimeout(fallback);
+    };
   }, [current, isPlaying, goTo]);
 
   return (

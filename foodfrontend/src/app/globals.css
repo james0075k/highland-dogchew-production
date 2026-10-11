@@ -167,6 +167,7 @@ html.dark .fade-out-mask:after {
 .hero-slide {
   transition: opacity 0.7s ease-in-out;
 }
-.hero-text-slide {
+.hero-text-slide,
+.hero-overlay {
   transition: opacity 0.6s ease-in-out;
 }

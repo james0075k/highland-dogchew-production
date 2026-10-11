@@ -32,6 +32,7 @@ import dynamic from "next/dynamic";
 // Above-the-fold: render eagerly for fast LCP + SEO
 import RhodeHero from "@/components/organisms/HeroBanner/RhodeHero";
 import YakMilkSection from "@/components/organisms/YakMilkSection/YakMilkSection";
+import PromoBanner from "@/components/organisms/PromoBanner/PromoBanner";
 
 // Below-the-fold: code-split. SSR stays on (default) for SEO; JS is fetched only
 // when the chunk is needed, cutting initial bundle on the homepage.
@@ -73,6 +74,7 @@ export default async function Home() {
   return (
     <>
       <RhodeHero />
+      <PromoBanner />
       <YakMilkSection initialProducts={yak} />
       <PuffTreatsSection initialProducts={puff} />
       <HighlandMixChewSection initialProducts={mix} />
