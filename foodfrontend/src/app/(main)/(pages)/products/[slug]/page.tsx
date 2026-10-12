@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${product.name} | ${BRAND}`;
   const description = metaDescription(
     product.description,
-    `Buy ${product.name} from ${BRAND} — natural, single-ingredient yak milk dog chews. Free UK delivery over £30.`
+    `Buy ${product.name} from ${BRAND} — natural, single-ingredient yak milk dog chews. Delivered across the UK.`
   );
   const image = product.gallery?.[0] || product.image;
 

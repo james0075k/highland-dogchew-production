@@ -1,12 +1,13 @@
 "use client";
 import { Truck, Clock, MapPin, Package, AlertTriangle, Mail, RefreshCw, CreditCard, Shield, Gift } from "lucide-react";
 import Link from "next/link";
+import { PROMO } from "@/utils/promo";
 
 const LAST_UPDATED  = "19 March 2026";
 const COMPANY_EMAIL = "hello@highlanddogchew.co.uk";
 
 const shippingOptions = [
-  { name: "Standard UK Delivery", time: "3–5 business days", cost: "£1.99", note: "Free on orders over £30" },
+  { name: "Standard UK Delivery", time: "3–5 business days", cost: "£1.99", note: "Flat rate per order" },
   { name: "Express UK Delivery",  time: "1–2 business days", cost: "£5.99", note: "Order before 1 PM" },
   { name: "Next Day Delivery",    time: "Next business day",  cost: "£7.99", note: "Order before 12 PM Mon–Thu" },
 ];
@@ -88,9 +89,9 @@ export default function ShippingPolicyPage() {
             <p>We currently ship to <strong>Great Britain and Northern Ireland</strong>. For Scottish Highlands, islands, and remote areas, please allow an additional 1–2 business days.</p>
           </Card>
 
-          <Card icon={Gift} title="Free Delivery">
-            <p>Enjoy <strong>free standard delivery</strong> on all orders over <strong>£30</strong>.</p>
-            <p>The free delivery threshold is applied automatically at checkout — no code needed.</p>
+          <Card icon={Gift} title="Discount Code">
+            <p>Use code <strong>{PROMO.code}</strong> at checkout for <strong>{PROMO.percent}% off</strong> your order.</p>
+            <p>See our <Link href="/discount-code" className="underline text-[#8B5E3C] dark:text-amber-400">discount code page</Link> for details.</p>
           </Card>
 
           <Card icon={AlertTriangle} title="Failed Deliveries">

@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${variety.name} Yak Chews | ${BRAND}`;
   const description = metaDescription(
     variety.description,
-    `Explore ${variety.name} flavour natural yak milk dog chews from ${BRAND}. ${variety.productCount || ''} products. Free UK delivery over £30.`
+    `Explore ${variety.name} flavour natural yak milk dog chews from ${BRAND}. ${variety.productCount || ''} products. Delivered across the UK.`
   );
   // Social cards need an absolute URL; curated photos are site-relative.
   const photo = varietyPhoto(variety).src;

@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${product.name} | Highland Mix | ${BRAND}`;
   const description = metaDescription(
     product.description,
-    `${product.name} — part of the ${BRAND} Highland Mix range of natural yak milk dog chews. Free UK delivery over £30.`
+    `${product.name} — part of the ${BRAND} Highland Mix range of natural yak milk dog chews. Delivered across the UK.`
   );
   const image = product.gallery?.[0] || product.image;
 

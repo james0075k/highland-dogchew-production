@@ -8,14 +8,14 @@ const BASE_URL = "https://highlanddogchew.co.uk";
 export const metadata: Metadata = {
   title: "Highland Yak Chew | Premium Yak Milk Dog Treats UK",
   description:
-    "Highland Yak Chew – the UK's premium highland yak chew brand. 100% natural yak milk dog chews, Himalayan puff treats & highland mix. Long-lasting, high-protein, grain-free. Made by Himalayan farmers. Free UK delivery.",
+    "Highland Yak Chew – the UK's premium highland yak chew brand. 100% natural yak milk dog chews, Himalayan puff treats & highland mix. Long-lasting, high-protein, grain-free. Made by Himalayan farmers. Delivered across the UK.",
   alternates: {
     canonical: BASE_URL,
   },
   openGraph: {
     title: "Highland Yak Chew | Premium Yak Milk Dog Treats UK",
     description:
-      "100% natural highland yak chew dog treats – long-lasting, high-protein, grain-free. Handcrafted by Himalayan farmers. Free UK delivery.",
+      "100% natural highland yak chew dog treats – long-lasting, high-protein, grain-free. Handcrafted by Himalayan farmers. Delivered across the UK.",
     url: BASE_URL,
     images: [
       {

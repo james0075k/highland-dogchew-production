@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    'Shop Highland Yak Chew – premium highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews made from authentic mountain recipes. Free UK delivery. Grain-free, natural ingredients your dog will love.',
+    'Shop Highland Yak Chew – premium highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews made from authentic mountain recipes. Delivered across the UK. Grain-free, natural ingredients your dog will love.',
 
   keywords: [
     'highland yak chew',
@@ -111,7 +111,7 @@ export const metadata: Metadata = {
     siteName: 'Highland Yak Chew',
     title: 'Highland Yak Chew – Natural Dog Chews & Treats UK',
     description:
-      'Shop Highland Yak Chew – highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews. Free UK delivery.',
+      'Shop Highland Yak Chew – highland yak chew treats for dogs. 100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting, high-protein dog chews. Delivered across the UK.',
     images: [
       {
         url: '/og-image.jpg',
@@ -129,7 +129,7 @@ export const metadata: Metadata = {
     creator: '@HighlandDogchew',
     title: 'Highland Yak Chew | Premium Yak Milk Dog Chews UK',
     description:
-      '100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting dog chews made from authentic mountain recipes. Free UK delivery.',
+      '100% natural Yak Milk Chews, Himalayan Puff Treats & Highland Mix. Long-lasting dog chews made from authentic mountain recipes. Delivered across the UK.',
     images: ['/og-image.jpg'],
   },
 

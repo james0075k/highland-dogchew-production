@@ -455,7 +455,7 @@ const shippingItems = [
   "Orders ship within 1–2 business days excluding bank holidays",
   "Delivery time varies by location across the UK",
   "Shipping fees shown clearly at checkout",
-  "Free delivery available on qualifying orders",
+  "Flat £1.99 delivery on UK orders",
   "Import taxes or duties apply for international orders",
 ];
 

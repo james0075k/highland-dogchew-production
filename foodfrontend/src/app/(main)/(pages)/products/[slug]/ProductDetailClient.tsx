@@ -350,7 +350,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">Incl. VAT · Free UK delivery over £30</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">Incl. VAT · UK delivery £1.99</p>
 
             <div className="h-px bg-gray-100 dark:bg-[#2a2018] mb-5" />
 
@@ -721,7 +721,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             {/* Trust signals */}
             <div className="grid grid-cols-2 gap-2.5 mb-5">
               {[
-                { icon: Truck, text: 'Free UK delivery over £30' },
+                { icon: Truck, text: 'Flat £1.99 UK delivery' },
                 { icon: RefreshCcw, text: '14-day hassle-free returns' },
                 { icon: Leaf, text: '100% natural ingredients' },
                 { icon: Shield, text: 'Secure checkout' },

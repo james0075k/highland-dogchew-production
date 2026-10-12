@@ -3,13 +3,13 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Highland Yak Milk Chews | Yak Chews for Dogs UK',
   description:
-    'Shop our premium highland yak milk chews for dogs. 100% natural, high-protein, long-lasting hard cheese dog chews. Grain-free. Free UK delivery.',
+    'Shop our premium highland yak milk chews for dogs. 100% natural, high-protein, long-lasting hard cheese dog chews. Grain-free. Delivered across the UK.',
   alternates: {
     canonical: 'https://highlanddogchew.co.uk/products/yak-chews',
   },
   openGraph: {
     title: 'Highland Yak Milk Chews | Yak Chews for Dogs UK',
-    description: 'Premium highland yak milk chews for dogs – natural, long-lasting, high-protein. Free UK delivery.',
+    description: 'Premium highland yak milk chews for dogs – natural, long-lasting, high-protein. Delivered across the UK.',
     url: 'https://highlanddogchew.co.uk/products/yak-chews',
   },
 };

@@ -74,7 +74,7 @@ export const blogPosts: BlogPost[] = [
       {
         question: 'Where can I buy Highland Yak Chew in the UK?',
         answer:
-          'Highland Yak Chew ships across the United Kingdom from highlanddogchew.co.uk. Standard UK delivery is £1.99, delivery is free on orders over £30, and orders typically arrive within 2–5 working days. Returns are accepted within 14 days.',
+          'Highland Yak Chew ships across the United Kingdom from highlanddogchew.co.uk. UK delivery is a flat £1.99 and orders typically arrive within 2–5 working days. Returns are accepted within 14 days.',
       },
     ],
     content: `
@@ -189,7 +189,7 @@ Choose what you genuinely feel is best for your dog. We just think it helps to k
 
 ### Try Highland Yak Chew
 
-We ship across the **United Kingdom** from [highlanddogchew.co.uk](/products) — standard delivery **£1.99**, **free over £30**, typically arriving in **2–5 working days**, with 14-day returns.
+We ship across the **United Kingdom** from [highlanddogchew.co.uk](/products) — flat-rate delivery **£1.99**, typically arriving in **2–5 working days**, with 14-day returns.
 
 - [**Yak Milk Chews**](/products/yak-chews) — the long-lasting hard cheese chew, in three sizes
 - [**Puff Treats**](/products/puff-treats) — light, airy and crunchy; gentler for puppies and senior dogs

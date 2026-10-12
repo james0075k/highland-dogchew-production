@@ -253,7 +253,7 @@ export default function ProductSection({
                         <span className="w-px h-3 bg-gray-300 dark:bg-[#3a2c23]" />
                         <span>Handcrafted in the Himalayas</span>
                         <span className="w-px h-3 bg-gray-300 dark:bg-[#3a2c23]" />
-                        <span>Free UK Delivery</span>
+                        <span>UK Delivery £1.99</span>
                       </div>
                     </div>
                   </div>
