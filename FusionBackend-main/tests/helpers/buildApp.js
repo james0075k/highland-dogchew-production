@@ -6,6 +6,7 @@ import express from 'express';
 import cartPaymentRoute from '../../src/routes/cartPaymentRoute.js';
 import productWebhookRoute from '../../src/routes/productWebhookRoute.js';
 import promoCodeRoute from '../../src/routes/promoCodeRoute.js';
+import promoBannerRoute from '../../src/routes/promoBannerRoute.js';
 import orderRoute from '../../src/routes/orderRoute.js';
 import reviewRoute from '../../src/routes/reviewRoute.js';
 import productRoute from '../../src/routes/productRoute.js';
@@ -22,6 +23,7 @@ export function buildApp() {
   app.use(express.json());
   app.use('/api/cart-payments', cartPaymentRoute);
   app.use('/api/promo', promoCodeRoute);
+  app.use('/api/promo-banner', promoBannerRoute);
   app.use('/api/orders', orderRoute);
   app.use('/api/reviews', reviewRoute);
   app.use('/api/products', productRoute);

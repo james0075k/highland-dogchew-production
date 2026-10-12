@@ -21,6 +21,7 @@ import {
   FiRefreshCw,
   FiPackage,
   FiTag,
+  FiFlag,
   FiSend,
 } from "react-icons/fi";
 import { GiDogBowl } from "react-icons/gi";
@@ -34,6 +35,7 @@ const menuItems = [
   { icon: FiShoppingBag, text: "Orders",        link: "/dashboard/orders" },
   { icon: FiRefreshCw,  text: "Subscriptions", link: "/dashboard/subscriptions" },
   { icon: FiTag,        text: "Promo Codes",   link: "/dashboard/promo-codes" },
+  { icon: FiFlag,       text: "Homepage Banner", link: "/dashboard/promo-banner" },
   { icon: FiPackage,    text: "Stock",          link: "/dashboard/stock" },
   { icon: FiMail, text: "Contact Messages", link: "/dashboard/contact" },
   { icon: FiStar, text: "Reviews", link: "/dashboard/reviews" },

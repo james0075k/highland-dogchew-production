@@ -7,6 +7,7 @@ import {
   FiArrowRight, FiAlertCircle, FiRefreshCw, FiShoppingBag,
   FiTrendingUp, FiTrendingDown, FiUsers, FiMessageCircle, FiAward,
   FiCreditCard, FiRepeat, FiCheckCircle, FiClock, FiXCircle, FiDollarSign,
+  FiFlag,
 } from 'react-icons/fi';
 import { GiDogBowl } from 'react-icons/gi';
 
@@ -497,6 +498,50 @@ interface LiveData {
   error?: boolean;
 }
 
+/* ─── Homepage banner card ─────────────────────────────────────────────────
+   Reads the same public endpoint as the homepage, so it shows exactly what
+   visitors see right now. Self-contained: own fetch, no shared state. */
+function HomepageBannerCard() {
+  const API = process.env.NEXT_PUBLIC_API_URL;
+  const [banner, setBanner] = useState<{ enabled: boolean; leadText: string; code: string | null } | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/promo-banner`, { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then(j => setBanner(j.data))
+      .catch(() => setFailed(true));
+  }, [API]);
+
+  const live = !!banner?.enabled && !!banner.code;
+
+  return (
+    <div style={{ marginTop:16, background:"#fff", border:"1px solid #e2e8f0", borderRadius:16, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, minWidth:0 }}>
+        <div style={{ width:36, height:36, borderRadius:10, background:"#fffbeb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <FiFlag size={16} style={{ color:"#d97706" }} />
+        </div>
+        <div style={{ minWidth:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <p style={{ fontSize:13, fontWeight:700, color:"#0f172a" }}>Homepage banner</p>
+            {banner && (
+              <span style={{ fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:999, background: live ? "#d1fae5" : "#f1f5f9", color: live ? "#047857" : "#475569" }}>
+                {live ? "Live" : "Hidden"}
+              </span>
+            )}
+          </div>
+          <p style={{ fontSize:12, color:"#64748b", marginTop:2, letterSpacing:"0.06em", textTransform:"uppercase" }}>
+            {failed ? "Couldn’t load the banner" : !banner ? "Loading…" : live ? <>{banner.leadText} <strong style={{ color:"#0f172a" }}>{banner.code}</strong></> : "Not showing on the homepage"}
+          </p>
+        </div>
+      </div>
+      <Link href="/dashboard/promo-banner" style={{ fontSize:12, fontWeight:600, color:"#d97706", display:"flex", alignItems:"center", gap:4 }}>
+        Edit <FiArrowRight size={12} />
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Main component ─────────────────────────────────────────────────────── */
 
 export default function AdminDashboard() {
@@ -926,6 +971,9 @@ export default function AdminDashboard() {
 
           {/* ══════════ LIVE VISITORS ══════════ */}
           <LiveVisitorsPanel live={live} samples={liveSamples} now={now} />
+
+          {/* ══════════ HOMEPAGE BANNER ══════════ */}
+          <HomepageBannerCard />
 
           {/* ══════════ ALERTS ══════════ */}
           {(stats.newContacts > 0 || stats.pendingReviews > 0) && (
