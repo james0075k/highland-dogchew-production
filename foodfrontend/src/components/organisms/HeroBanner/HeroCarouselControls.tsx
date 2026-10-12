@@ -50,14 +50,14 @@ export default function HeroCarouselControls({ slideCount }: { slideCount: numbe
     }
   }, [current, slideCount]);
 
-  // Auto-advance. Image slides hold for 6s; video slides play to the end and
+  // Auto-advance. Image slides hold for 1s; video slides play to the end and
   // advance on `ended`, so the transition lands on the film's own scene change.
   useEffect(() => {
     const el = document.querySelector(`.hero-slide-${current}`);
 
     if (!(el instanceof HTMLVideoElement)) {
       if (!isPlaying) return;
-      const t = setTimeout(() => goTo(current + 1), 6000);
+      const t = setTimeout(() => goTo(current + 1), 1000);
       return () => clearTimeout(t);
     }
 
