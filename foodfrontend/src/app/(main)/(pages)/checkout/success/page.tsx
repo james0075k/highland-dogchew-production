@@ -3,9 +3,10 @@
 // Per-request page (reads payment_intent from URL, calls APIs) — opt out of static rendering.
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageLoader from '@/components/atoms/PageLoader';
 import {
   CheckCircle,
   Loader2,
@@ -148,7 +149,7 @@ async function loadOrder(
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessPageContent() {
   const searchParams     = useSearchParams();
   const router           = useRouter();
   // Stripe appends `payment_intent` to the return_url itself; `pi_hint` is our
@@ -854,5 +855,14 @@ function PriceRow({
         {value}
       </span>
     </div>
+  );
+}
+
+// useSearchParams needs a Suspense boundary for the static build.
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <CheckoutSuccessPageContent />
+    </Suspense>
   );
 }

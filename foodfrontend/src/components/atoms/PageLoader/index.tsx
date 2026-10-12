@@ -1,4 +1,7 @@
-export default function Loading() {
+// Full-page brand spinner. Used as a Suspense fallback on pages that read the
+// URL (useSearchParams). Don't reintroduce it as (main)/loading.tsx: a route
+// loading boundary makes Next send 200 before notFound() runs → soft 404s.
+export default function PageLoader() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#FDFAF6] dark:bg-[#1a1209]">
       <div className="flex flex-col items-center gap-4">

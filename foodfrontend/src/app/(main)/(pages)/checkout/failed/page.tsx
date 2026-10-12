@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import PageLoader from '@/components/atoms/PageLoader';
 import { loadStripe, type StripeError } from '@stripe/stripe-js';
 import { XCircle, ShoppingCart, RefreshCw, AlertCircle } from 'lucide-react';
 import { stripeErrorToFriendly, type FriendlyError } from '@/lib/paymentErrors';
@@ -28,7 +29,7 @@ async function getFailureReason(clientSecret: string): Promise<FriendlyError | n
   }
 }
 
-export default function CheckoutFailedPage() {
+function CheckoutFailedPageContent() {
   const searchParams   = useSearchParams();
   const paymentIntent  = searchParams.get('payment_intent');
   const clientSecret   = searchParams.get('payment_intent_client_secret');
@@ -199,5 +200,14 @@ export default function CheckoutFailedPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// useSearchParams needs a Suspense boundary for the static build.
+export default function CheckoutFailedPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <CheckoutFailedPageContent />
+    </Suspense>
   );
 }

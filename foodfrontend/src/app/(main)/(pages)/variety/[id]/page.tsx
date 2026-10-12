@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import VarietyDetailClient from './VarietyDetailClient';
 import { BRAND, BASE_URL, JsonLd, metaDescription, buildBreadcrumbJsonLd } from '@/utils/seo';
 import { varietyPhoto } from '@/app/data/varietyPhotos';
@@ -7,22 +8,26 @@ export const revalidate = 300;
 
 type Props = { params: Promise<{ id: string }> };
 
-async function getVariety(id: string) {
+// `missing` is true only when the API says the id doesn't exist (404, or 400
+// for a malformed id). Other failures (API down) still render the page so a
+// backend blip doesn't turn real flavours into 404s.
+async function getVariety(id: string): Promise<{ variety: any; missing: boolean }> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/variety/${id}/products`, {
       next: { revalidate: 300 },
     });
-    if (!res.ok) return null;
+    if (res.status === 404 || res.status === 400) return { variety: null, missing: true };
+    if (!res.ok) return { variety: null, missing: false };
     const json = await res.json();
-    return json?.data ?? null;
+    return { variety: json?.data ?? null, missing: false };
   } catch {
-    return null;
+    return { variety: null, missing: false };
   }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const variety = await getVariety(id);
+  const { variety } = await getVariety(id);
   if (!variety) return { title: `Flavours | ${BRAND}` };
 
   const url = `${BASE_URL}/variety/${id}`;
@@ -53,7 +58,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
-  const variety = await getVariety(id);
+  const { variety, missing } = await getVariety(id);
+  if (missing) notFound();
 
   const url = `${BASE_URL}/variety/${id}`;
   const breadcrumbJsonLd = variety

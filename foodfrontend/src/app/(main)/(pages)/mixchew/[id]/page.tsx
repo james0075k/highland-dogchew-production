@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import MixChewDetailClient from './MixChewDetailClient';
 import {
   BRAND,
@@ -13,22 +14,26 @@ export const revalidate = 300;
 
 type Props = { params: Promise<{ id: string }> };
 
-async function getProduct(id: string) {
+// `missing` is true only when the API says the id doesn't exist (404, or 400
+// for a malformed id). Other failures (API down) still render the page so a
+// backend blip doesn't turn real products into 404s.
+async function getProduct(id: string): Promise<{ product: any; missing: boolean }> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
       next: { revalidate: 300 },
     });
-    if (!res.ok) return null;
+    if (res.status === 404 || res.status === 400) return { product: null, missing: true };
+    if (!res.ok) return { product: null, missing: false };
     const json = await res.json();
-    return json?.success ? json.data : null;
+    return { product: json?.success ? json.data : null, missing: false };
   } catch {
-    return null;
+    return { product: null, missing: false };
   }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const product = await getProduct(id);
+  const { product } = await getProduct(id);
   if (!product) return { title: `Highland Mix Chews | ${BRAND}` };
 
   // Canonical points to the full product page — /mixchew/[id] is an alternate
@@ -64,7 +69,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const { product, missing } = await getProduct(id);
+  if (missing) notFound();
 
   const url = product?.slug ? `${BASE_URL}/products/${product.slug}` : `${BASE_URL}/mixchew/${id}`;
   const productJsonLd = product ? buildProductJsonLd(product, url) : null;

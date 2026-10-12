@@ -2,8 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import PageLoader from '@/components/atoms/PageLoader';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -503,7 +504,7 @@ function TrackResult({ result }: { result: TrackResult }) {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function MyOrdersPage() {
+function MyOrdersPageContent() {
   const API = process.env.NEXT_PUBLIC_API_URL;
   const searchParams = useSearchParams();
 
@@ -983,5 +984,14 @@ export default function MyOrdersPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// useSearchParams needs a Suspense boundary for the static build.
+export default function MyOrdersPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <MyOrdersPageContent />
+    </Suspense>
   );
 }
